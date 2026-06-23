@@ -7,11 +7,18 @@ export interface ConnectedLine {
   endpoint: "from" | "to";
 }
 
+export interface RevealTarget {
+  element: SVGElement;
+  /** opacity once fully revealed but not yet snapped (1 for nodes, 0.5 for muted/dashed lines) */
+  baseOpacity: number;
+}
+
 export interface DragOptions {
   svg: SVGSVGElement;
   nodeGroup: SVGGElement;
   node: DemoNode;
   connectedLines: ConnectedLine[];
+  revealTargets: RevealTarget[];
   onSnapSuccess: () => void;
 }
 
@@ -42,8 +49,29 @@ function setNodePosition(nodeGroup: SVGGElement, connectedLines: ConnectedLine[]
   }
 }
 
+/** 0 at start, 1 once the dragged node has reached its target */
+function computeRevealProgress(pos: Point, start: Point, target: Point): number {
+  const total = Math.hypot(target.x - start.x, target.y - start.y);
+  if (total === 0) return 1;
+  const remaining = Math.hypot(target.x - pos.x, target.y - pos.y);
+  const raw = 1 - remaining / total;
+  return Math.min(1, Math.max(0, raw));
+}
+
+function applyReveal(progress: number, revealTargets: RevealTarget[]): void {
+  for (const { element, baseOpacity } of revealTargets) {
+    element.style.opacity = String(progress * baseOpacity);
+  }
+}
+
+function clearRevealOverride(revealTargets: RevealTarget[]): void {
+  for (const { element } of revealTargets) {
+    element.style.opacity = "";
+  }
+}
+
 export function attachDrag(options: DragOptions, snapThreshold: number): void {
-  const { svg, nodeGroup, node, connectedLines, onSnapSuccess } = options;
+  const { svg, nodeGroup, node, connectedLines, revealTargets, onSnapSuccess } = options;
   const startPos: Point = node.start ?? { x: node.x, y: node.y };
   const targetPos: Point = { x: node.x, y: node.y };
 
@@ -54,6 +82,7 @@ export function attachDrag(options: DragOptions, snapThreshold: number): void {
     const svgPoint = toSvgPoint(svg, event.clientX, event.clientY);
     currentPos = { x: svgPoint.x - pointerOffset.x, y: svgPoint.y - pointerOffset.y };
     setNodePosition(nodeGroup, connectedLines, currentPos);
+    applyReveal(computeRevealProgress(currentPos, startPos, targetPos), revealTargets);
   }
 
   function onPointerUp(event: PointerEvent): void {
@@ -71,10 +100,14 @@ export function attachDrag(options: DragOptions, snapThreshold: number): void {
       currentPos,
       destination,
       duration,
-      (point) => setNodePosition(nodeGroup, connectedLines, point),
+      (point) => {
+        setNodePosition(nodeGroup, connectedLines, point);
+        applyReveal(computeRevealProgress(point, startPos, targetPos), revealTargets);
+      },
       () => {
         currentPos = destination;
         if (snapped) {
+          clearRevealOverride(revealTargets);
           onSnapSuccess();
         }
       },

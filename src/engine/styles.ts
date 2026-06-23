@@ -58,7 +58,6 @@ const CSS = `
   stroke-width: 1.5;
   stroke-dasharray: 4 4;
   opacity: 0.5;
-  transition: stroke 0.3s ease, opacity 0.3s ease, stroke-width 0.3s ease;
 }
 
 .wd-line--active {
@@ -66,6 +65,7 @@ const CSS = `
   stroke-width: 2.5;
   stroke-dasharray: none;
   opacity: 1;
+  transition: stroke 0.3s ease, opacity 0.3s ease, stroke-width 0.3s ease;
 }
 
 .wd-line--active:nth-of-type(2) { transition-delay: 0.08s; }
@@ -75,7 +75,7 @@ const CSS = `
   .wd-node--beckon .wd-node-shape {
     animation: none;
   }
-  .wd-line {
+  .wd-line--active {
     transition-duration: 0.01s;
     transition-delay: 0s !important;
   }

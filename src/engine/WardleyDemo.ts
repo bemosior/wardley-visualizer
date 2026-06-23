@@ -1,7 +1,7 @@
 import type { DemoConfig } from "../types";
 import { createConnectionLine, createNodeGroup, createSvgRoot } from "./render";
 import { injectStylesOnce } from "./styles";
-import { attachDrag, type ConnectedLine } from "./drag";
+import { attachDrag, type ConnectedLine, type RevealTarget } from "./drag";
 
 export class WardleyDemo {
   private container: HTMLElement;
@@ -47,12 +47,18 @@ export class WardleyDemo {
           endpoint: conn.from === draggableNode.id ? "from" : "to",
         }));
 
+      const revealTargets: RevealTarget[] = lines.map(({ el }) => ({
+        element: el as SVGElement,
+        baseOpacity: 0.5,
+      }));
+
       attachDrag(
         {
           svg: this.svg,
           nodeGroup,
           node: draggableNode,
           connectedLines,
+          revealTargets,
           onSnapSuccess: () => {
             for (const { el } of lines) {
               el.classList.add("wd-line--active");

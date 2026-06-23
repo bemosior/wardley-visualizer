@@ -41,6 +41,7 @@ export function createConnectionLine(
   line.classList.add("wd-line");
   line.dataset.from = conn.from;
   line.dataset.to = conn.to;
+  line.style.opacity = "0";
 
   const from = nodesById.get(conn.from)!;
   const to = nodesById.get(conn.to)!;
