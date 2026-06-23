@@ -56,6 +56,37 @@ const CSS = `
   50% { filter: drop-shadow(0 0 8px rgba(0, 95, 153, 0.55)); }
 }
 
+.wd-target-marker {
+  opacity: 0.6;
+  transition: opacity 0.25s ease;
+}
+
+.wd-target-marker--hidden {
+  opacity: 0;
+}
+
+.wd-target-marker-shape {
+  fill: none;
+  stroke: #999;
+  stroke-width: 1.5;
+  stroke-dasharray: 5 5;
+  animation: wd-target-marker-dash 1.2s linear infinite;
+}
+
+.wd-target-marker-label {
+  font-family: var(--wd-font-ui);
+  font-size: 14px;
+  fill: #999;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  pointer-events: none;
+  user-select: none;
+}
+
+@keyframes wd-target-marker-dash {
+  to { stroke-dashoffset: -10; }
+}
+
 .wd-line {
   stroke: #999;
   stroke-width: 1.5;
@@ -76,6 +107,9 @@ const CSS = `
 
 @media (prefers-reduced-motion: reduce) {
   .wd-node--beckon .wd-node-shape {
+    animation: none;
+  }
+  .wd-target-marker-shape {
     animation: none;
   }
   .wd-line--active {

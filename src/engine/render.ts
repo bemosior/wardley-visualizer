@@ -33,6 +33,24 @@ export function createNodeGroup(node: DemoNode): SVGGElement {
   return g;
 }
 
+export function createTargetMarker(node: DemoNode): SVGGElement {
+  const g = document.createElementNS(SVG_NS, "g") as SVGGElement;
+  g.classList.add("wd-target-marker");
+  g.setAttribute("transform", `translate(${node.x}, ${node.y})`);
+
+  const shape = document.createElementNS(SVG_NS, "circle");
+  shape.setAttribute("r", "28");
+  shape.classList.add("wd-target-marker-shape");
+  g.appendChild(shape);
+
+  const label = document.createElementNS(SVG_NS, "text");
+  label.classList.add("wd-target-marker-label");
+  label.textContent = node.label;
+  g.appendChild(label);
+
+  return g;
+}
+
 export function createConnectionLine(
   conn: DemoConnection,
   nodesById: Map<string, DemoNode>,

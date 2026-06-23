@@ -1,5 +1,5 @@
 import type { DemoConfig } from "../types";
-import { createConnectionLine, createNodeGroup, createSvgRoot } from "./render";
+import { createConnectionLine, createNodeGroup, createSvgRoot, createTargetMarker } from "./render";
 import { injectStylesOnce } from "./styles";
 import { attachDrag, type ConnectedLine, type RevealTarget } from "./drag";
 
@@ -33,6 +33,11 @@ export class WardleyDemo {
       el: createConnectionLine(conn, nodesById),
     }));
 
+    const draggableNode = config.nodes.find((n) => n.draggable);
+    const targetMarker = draggableNode ? createTargetMarker(draggableNode) : null;
+    if (targetMarker) {
+      this.svg.appendChild(targetMarker);
+    }
     for (const { el } of lines) {
       this.svg.appendChild(el);
     }
@@ -40,7 +45,6 @@ export class WardleyDemo {
       this.svg.appendChild(group);
     }
 
-    const draggableNode = config.nodes.find((n) => n.draggable);
     if (draggableNode) {
       const nodeGroup = nodeGroups.get(draggableNode.id)!;
       if (options?.dragHandle) {
@@ -73,6 +77,7 @@ export class WardleyDemo {
             for (const { el } of lines) {
               el.classList.add("wd-line--active");
             }
+            targetMarker?.classList.add("wd-target-marker--hidden");
             config.onComplete?.();
           },
         },
