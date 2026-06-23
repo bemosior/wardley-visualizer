@@ -20,6 +20,8 @@ export interface DragOptions {
   connectedLines: ConnectedLine[];
   revealTargets: RevealTarget[];
   onSnapSuccess: () => void;
+  /** if provided, the drag must be picked up from this element (e.g. a toolbox slot) instead of the node itself */
+  externalHandle?: HTMLElement;
 }
 
 const SNAP_DURATION_MS = 280;
@@ -71,25 +73,24 @@ function clearRevealOverride(revealTargets: RevealTarget[]): void {
 }
 
 export function attachDrag(options: DragOptions, snapThreshold: number): void {
-  const { svg, nodeGroup, node, connectedLines, revealTargets, onSnapSuccess } = options;
+  const { svg, nodeGroup, node, connectedLines, revealTargets, onSnapSuccess, externalHandle } = options;
   const startPos: Point = node.start ?? { x: node.x, y: node.y };
   const targetPos: Point = { x: node.x, y: node.y };
+  const triggerElement: HTMLElement | SVGGElement = externalHandle ?? nodeGroup;
 
-  let pointerOffset: Point = { x: 0, y: 0 };
   let currentPos: Point = { ...startPos };
 
   function onPointerMove(event: PointerEvent): void {
-    const svgPoint = toSvgPoint(svg, event.clientX, event.clientY);
-    currentPos = { x: svgPoint.x - pointerOffset.x, y: svgPoint.y - pointerOffset.y };
+    currentPos = toSvgPoint(svg, event.clientX, event.clientY);
     setNodePosition(nodeGroup, connectedLines, currentPos);
     applyReveal(computeRevealProgress(currentPos, startPos, targetPos), revealTargets);
   }
 
   function onPointerUp(event: PointerEvent): void {
-    nodeGroup.removeEventListener("pointermove", onPointerMove);
-    nodeGroup.removeEventListener("pointerup", onPointerUp);
-    nodeGroup.removeEventListener("pointercancel", onPointerUp);
-    nodeGroup.releasePointerCapture(event.pointerId);
+    triggerElement.removeEventListener("pointermove", onPointerMove as EventListener);
+    triggerElement.removeEventListener("pointerup", onPointerUp as EventListener);
+    triggerElement.removeEventListener("pointercancel", onPointerUp as EventListener);
+    triggerElement.releasePointerCapture(event.pointerId);
 
     const distance = Math.hypot(currentPos.x - targetPos.x, currentPos.y - targetPos.y);
     const snapped = distance <= snapThreshold;
@@ -109,20 +110,25 @@ export function attachDrag(options: DragOptions, snapThreshold: number): void {
         if (snapped) {
           clearRevealOverride(revealTargets);
           onSnapSuccess();
+        } else if (externalHandle) {
+          nodeGroup.style.opacity = "0";
         }
       },
     );
   }
 
-  nodeGroup.addEventListener("pointerdown", (event: PointerEvent) => {
+  triggerElement.addEventListener("pointerdown", ((event: PointerEvent) => {
     nodeGroup.classList.remove("wd-node--beckon");
-    nodeGroup.setPointerCapture(event.pointerId);
+    triggerElement.setPointerCapture(event.pointerId);
 
-    const svgPoint = toSvgPoint(svg, event.clientX, event.clientY);
-    pointerOffset = { x: svgPoint.x - currentPos.x, y: svgPoint.y - currentPos.y };
+    if (externalHandle) {
+      currentPos = toSvgPoint(svg, event.clientX, event.clientY);
+      nodeGroup.style.opacity = "1";
+      setNodePosition(nodeGroup, connectedLines, currentPos);
+    }
 
-    nodeGroup.addEventListener("pointermove", onPointerMove);
-    nodeGroup.addEventListener("pointerup", onPointerUp);
-    nodeGroup.addEventListener("pointercancel", onPointerUp);
-  });
+    triggerElement.addEventListener("pointermove", onPointerMove as EventListener);
+    triggerElement.addEventListener("pointerup", onPointerUp as EventListener);
+    triggerElement.addEventListener("pointercancel", onPointerUp as EventListener);
+  }) as EventListener);
 }

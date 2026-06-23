@@ -94,7 +94,12 @@
       .wd-toolbox-slot--active {
         border: 1px solid #005f99;
         background: #f0f7ff;
-        cursor: default;
+        cursor: grab;
+        touch-action: none;
+      }
+
+      .wd-toolbox-slot--active:active {
+        cursor: grabbing;
       }
 
       .wd-toolbox-slot--active svg {
@@ -149,7 +154,9 @@
 
     <script type="module">
       import WardleyDemo from "/src/index.ts";
-      WardleyDemo.mount(document.getElementById("demo"), WardleyDemo.demos.userNeedDependency);
+      WardleyDemo.mount(document.getElementById("demo"), WardleyDemo.demos.userNeedDependency, {
+        dragHandle: document.querySelector(".wd-toolbox-slot--active"),
+      });
     </script>
   </body>
 </html>

@@ -3,15 +3,20 @@ import { createConnectionLine, createNodeGroup, createSvgRoot } from "./render";
 import { injectStylesOnce } from "./styles";
 import { attachDrag, type ConnectedLine, type RevealTarget } from "./drag";
 
+export interface MountOptions {
+  /** an external element (e.g. a toolbox slot) that the draggable node must be picked up from */
+  dragHandle?: HTMLElement;
+}
+
 export class WardleyDemo {
   private container: HTMLElement;
   private svg: SVGSVGElement;
 
-  static mount(container: HTMLElement, config: DemoConfig): WardleyDemo {
-    return new WardleyDemo(container, config);
+  static mount(container: HTMLElement, config: DemoConfig, options?: MountOptions): WardleyDemo {
+    return new WardleyDemo(container, config, options);
   }
 
-  private constructor(container: HTMLElement, config: DemoConfig) {
+  private constructor(container: HTMLElement, config: DemoConfig, options?: MountOptions) {
     injectStylesOnce();
 
     this.container = container;
@@ -38,7 +43,11 @@ export class WardleyDemo {
     const draggableNode = config.nodes.find((n) => n.draggable);
     if (draggableNode) {
       const nodeGroup = nodeGroups.get(draggableNode.id)!;
-      nodeGroup.classList.add("wd-node--beckon");
+      if (options?.dragHandle) {
+        nodeGroup.style.opacity = "0";
+      } else {
+        nodeGroup.classList.add("wd-node--beckon");
+      }
 
       const connectedLines: ConnectedLine[] = lines
         .filter(({ conn }) => conn.from === draggableNode.id || conn.to === draggableNode.id)
@@ -59,6 +68,7 @@ export class WardleyDemo {
           node: draggableNode,
           connectedLines,
           revealTargets,
+          externalHandle: options?.dragHandle,
           onSnapSuccess: () => {
             for (const { el } of lines) {
               el.classList.add("wd-line--active");

@@ -150,7 +150,12 @@
       .wd-toolbox-slot--active {
         border: 1px solid var(--color-link);
         background: #f0f7ff;
-        cursor: default;
+        cursor: grab;
+        touch-action: none;
+      }
+
+      .wd-toolbox-slot--active:active {
+        cursor: grabbing;
       }
 
       .wd-toolbox-slot--active svg {
@@ -241,8 +246,13 @@
         ],
       };
 
-      WardleyDemo.mount(document.getElementById("demo-a"), config);
-      WardleyDemo.mount(document.getElementById("demo-b"), JSON.parse(JSON.stringify(config)));
+      var instances = document.querySelectorAll(".wd-instance");
+      WardleyDemo.mount(document.getElementById("demo-a"), config, {
+        dragHandle: instances[0].querySelector(".wd-toolbox-slot--active"),
+      });
+      WardleyDemo.mount(document.getElementById("demo-b"), JSON.parse(JSON.stringify(config)), {
+        dragHandle: instances[1].querySelector(".wd-toolbox-slot--active"),
+      });
     </script>
   </body>
 </html>
