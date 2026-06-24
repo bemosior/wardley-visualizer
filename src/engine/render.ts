@@ -69,8 +69,8 @@ export function createConnectionLine(
   return line;
 }
 
-const FLOW_PARTICLE_COUNT = 3;
-const FLOW_PARTICLE_RADIUS = "2.5";
+const FLOW_PARTICLE_COUNT = 1;
+const FLOW_PARTICLE_RADIUS = "4.5";
 
 /**
  * decorative traveling-spark overlay for a completed connection: returns FLOW_PARTICLE_COUNT

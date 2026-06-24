@@ -118,7 +118,7 @@ const CSS = `
   filter: drop-shadow(0 0 3px rgba(126, 200, 255, 0.9));
   pointer-events: none;
   offset-rotate: 0deg;
-  animation: wd-particle-travel 1.8s linear infinite;
+  animation: wd-particle-travel 2.0s linear infinite;
 }
 
 @keyframes wd-particle-travel {
