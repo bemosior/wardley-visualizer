@@ -95,8 +95,8 @@
       }
 
       .wd-toolbox-slot svg {
-        width: 36px;
-        height: 36px;
+        width: 64px;
+        height: 64px;
         filter: grayscale(1);
         opacity: 0.4;
       }
@@ -160,12 +160,14 @@
         line-height: 1.6;
         color: var(--color-ink);
         margin: 0;
+      }
+      .wd-answer {
         opacity: 0;
         transform: translateX(8px);
         transition: opacity 0.5s ease, transform 0.5s ease;
       }
 
-      .wd-explanation--visible {
+      .wd-answer--visible {
         opacity: 1;
         transform: translateX(0);
       }
@@ -174,7 +176,6 @@
   <body>
     <section class="hero">
       <div class="hero-inner">
-        <h3>What is a <em>Value Chain</em>?</h3>
         <div class="demo-row">
           <div class="wd-instance">
             <aside class="wd-toolbox">
@@ -193,8 +194,10 @@
             </aside>
             <div id="demo-a" class="wd-canvas"></div>
           </div>
-          <p id="explanation" class="wd-explanation">
-            <strong>Answer</strong><br/>A <em>Value Chain</em> is how <em>Users</em> get their <em>User Needs</em> met, thanks to the <em>Capabilities</em> they depend on.
+
+          <p class="wd-explanation">
+            <span><strong>What is a <em>Value Chain</em>?</strong><br/></span>
+            <span id="vc-answer" class="wd-answer">A <em>Value Chain</em> shows how <em>Users</em> get their <em>User Needs</em> met, as a result of the <em>Capabilities</em> they depend on.</span>
           </p>
         </div>
       </div>
@@ -206,25 +209,25 @@
         viewBox: { width: 400, height: 520 },
         snapThreshold: 30,
         nodes: [
-          { id: "user", label: "User", x: 200, y: 82, draggable: false },
-          { id: "need", label: "User Need", x: 200, y: 237, draggable: true, start: { x: 25, y: 237 } },
-          { id: "dependency-1", label: "Capability", x: 130, y: 392, draggable: false },
-          { id: "dependency-2", label: "Capability", x: 270, y: 392, draggable: false },
+          { id: "user", label: "User", x: 200, y: 100, draggable: false },
+          { id: "need", label: "User Need", x: 200, y: 284, draggable: true, start: { x: 25, y: 237 } },
+          { id: "capability-1", label: "Capability", x: 130, y: 470, draggable: false },
+          { id: "capability-2", label: "Capability", x: 270, y: 470, draggable: false },
         ],
         connections: [
           { from: "user", to: "need" },
-          { from: "need", to: "dependency-1" },
-          { from: "need", to: "dependency-2" },
+          { from: "need", to: "capability-1" },
+          { from: "need", to: "capability-2" },
         ],
       };
 
       var dragHandle = document.querySelector(".wd-toolbox-slot--active");
-      var explanation = document.getElementById("explanation");
+      var answer = document.getElementById("vc-answer");
       config.onComplete = function () {
         dragHandle.classList.remove("wd-toolbox-slot--active");
         dragHandle.title = "Not available yet";
         setTimeout(function () {
-          explanation.classList.add("wd-explanation--visible");
+          answer.classList.add("wd-answer--visible");
         }, 500);
       };
 

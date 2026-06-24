@@ -1,7 +1,7 @@
 import type { DemoConnection, DemoNode } from "../types";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
-export const NODE_RADIUS = 28;
+export const NODE_RADIUS = 48;
 
 export function createSvgRoot(viewBox: { width: number; height: number }): SVGSVGElement {
   const svg = document.createElementNS(SVG_NS, "svg") as SVGSVGElement;
