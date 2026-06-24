@@ -69,20 +69,32 @@ export function createConnectionLine(
   return line;
 }
 
-/** decorative traveling-pulse overlay for a completed connection; only ever created post-snap, so final x/y is always correct */
-export function createFlowLine(conn: DemoConnection, nodesById: Map<string, DemoNode>): SVGLineElement {
-  const line = document.createElementNS(SVG_NS, "line") as SVGLineElement;
-  line.classList.add("wd-flow-line");
-  line.dataset.from = conn.from;
-  line.dataset.to = conn.to;
+const FLOW_PARTICLE_COUNT = 3;
+const FLOW_PARTICLE_RADIUS = "2.5";
 
+/**
+ * decorative traveling-spark overlay for a completed connection: returns FLOW_PARTICLE_COUNT
+ * <circle> elements, each riding the from->to line via CSS offset-path. Only ever created
+ * post-snap, so final x/y is always correct. Caller is responsible for animation-delay
+ * (depends on both connection index and particle index) and DOM insertion order.
+ */
+export function createFlowParticles(
+  conn: DemoConnection,
+  nodesById: Map<string, DemoNode>,
+): SVGCircleElement[] {
   const from = nodesById.get(conn.from)!;
   const to = nodesById.get(conn.to)!;
+  const path = `path("M ${from.x},${from.y} L ${to.x},${to.y}")`;
 
-  line.setAttribute("x1", String(from.x));
-  line.setAttribute("y1", String(from.y));
-  line.setAttribute("x2", String(to.x));
-  line.setAttribute("y2", String(to.y));
-
-  return line;
+  const particles: SVGCircleElement[] = [];
+  for (let i = 0; i < FLOW_PARTICLE_COUNT; i++) {
+    const circle = document.createElementNS(SVG_NS, "circle") as SVGCircleElement;
+    circle.classList.add("wd-flow-particle");
+    circle.dataset.from = conn.from;
+    circle.dataset.to = conn.to;
+    circle.setAttribute("r", FLOW_PARTICLE_RADIUS);
+    circle.style.offsetPath = path;
+    particles.push(circle);
+  }
+  return particles;
 }

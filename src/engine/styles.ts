@@ -96,19 +96,19 @@ const CSS = `
 .wd-line--active:nth-of-type(2) { transition-delay: 0.08s; }
 .wd-line--active:nth-of-type(3) { transition-delay: 0.16s; }
 
-.wd-flow-line {
-  fill: none;
-  stroke: var(--wd-color-flow, #7ec8ff);
-  stroke-width: 2.5;
-  stroke-linecap: round;
-  stroke-dasharray: 6 18;
-  opacity: 0.9;
+.wd-flow-particle {
+  fill: var(--wd-color-flow, #7ec8ff);
+  filter: drop-shadow(0 0 3px rgba(126, 200, 255, 0.9));
   pointer-events: none;
-  animation: wd-flow-dash 1.4s linear infinite;
+  offset-rotate: 0deg;
+  animation: wd-particle-travel 1.8s linear infinite;
 }
 
-@keyframes wd-flow-dash {
-  to { stroke-dashoffset: 24; }
+@keyframes wd-particle-travel {
+  0% { offset-distance: 100%; opacity: 0; }
+  10% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { offset-distance: 0%; opacity: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -122,7 +122,7 @@ const CSS = `
     transition-duration: 0.01s;
     transition-delay: 0s !important;
   }
-  .wd-flow-line {
+  .wd-flow-particle {
     display: none;
   }
 }

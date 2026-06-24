@@ -1,5 +1,5 @@
 import type { DemoConfig } from "../types";
-import { createConnectionLine, createFlowLine, createNodeGroup, createSvgRoot, createTargetMarker } from "./render";
+import { createConnectionLine, createFlowParticles, createNodeGroup, createSvgRoot, createTargetMarker } from "./render";
 import { injectStylesOnce } from "./styles";
 import { attachDrag, type ConnectedLine, type RevealTarget } from "./drag";
 
@@ -8,8 +8,13 @@ export interface MountOptions {
   dragHandle?: HTMLElement;
 }
 
+const FLOW_PARTICLE_COUNT = 3;
+const FLOW_PARTICLE_CYCLE = 1.8;
+/** seconds between each particle's start within one line's travel cycle, for an evenly spaced trailing chain */
+const FLOW_PARTICLE_STAGGER = FLOW_PARTICLE_CYCLE / FLOW_PARTICLE_COUNT;
+
 /** negative delay so the User<-Need segment stays permanently phase-shifted behind the lead (Dependency<-Need) segments */
-const FLOW_STAGGER_DELAY = "-0.47s";
+const FLOW_STAGGER_DELAY = -0.47;
 
 export class WardleyDemo {
   private container: HTMLElement;
@@ -84,11 +89,13 @@ export class WardleyDemo {
             targetMarker?.classList.add("wd-target-marker--hidden");
 
             config.connections.forEach((conn, index) => {
-              const flowLine = createFlowLine(conn, nodesById);
-              if (index === 0) {
-                flowLine.style.animationDelay = FLOW_STAGGER_DELAY;
-              }
-              this.svg.insertBefore(flowLine, firstNodeGroup);
+              const segmentDelay = index === 0 ? FLOW_STAGGER_DELAY : 0;
+              const particles = createFlowParticles(conn, nodesById);
+              particles.forEach((particle, i) => {
+                const delay = segmentDelay + -(i * FLOW_PARTICLE_STAGGER);
+                particle.style.animationDelay = `${delay}s`;
+                this.svg.insertBefore(particle, firstNodeGroup);
+              });
             });
 
             config.onComplete?.();
