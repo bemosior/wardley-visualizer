@@ -5,3 +5,7 @@ export interface Component {
   label: string;
   kind: ComponentKind;
 }
+
+export function relabelComponent(component: Component, label: string): Component {
+  return { ...component, label };
+}

@@ -1,4 +1,4 @@
-import type { Component } from "./component";
+import { relabelComponent, type Component } from "./component";
 import type { Dependency } from "./dependency";
 
 /**
@@ -39,4 +39,19 @@ export function valueChainDependencies(chain: ValueChain): Dependency[] {
     { from: chain.user.id, to: chain.need.id },
     ...chain.capabilities.map((c) => ({ from: chain.need.id, to: c.id })),
   ];
+}
+
+export function relabelUser(chain: ValueChain, label: string): ValueChain {
+  return { ...chain, user: relabelComponent(chain.user, label) };
+}
+
+export function relabelNeed(chain: ValueChain, label: string): ValueChain {
+  return { ...chain, need: relabelComponent(chain.need, label) };
+}
+
+export function relabelCapability(chain: ValueChain, id: string, label: string): ValueChain {
+  return {
+    ...chain,
+    capabilities: chain.capabilities.map((c) => (c.id === id ? relabelComponent(c, label) : c)),
+  };
 }
