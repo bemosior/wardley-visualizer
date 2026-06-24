@@ -83,4 +83,13 @@ describe("layoutValueChain overrides", () => {
 
     expect(need.start).toEqual({ x: 10, y: 20 });
   });
+
+  it("marks no node draggable when draggable: false is passed", () => {
+    const config = layoutValueChain(chainWithCapabilities(2), { draggable: false });
+
+    for (const node of config.nodes) {
+      expect(node.draggable).toBe(false);
+      expect(node.start).toBeUndefined();
+    }
+  });
 });

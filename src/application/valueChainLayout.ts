@@ -20,6 +20,8 @@ export interface ValueChainLayoutOptions {
   capabilityGap?: number;
   /** the Need's pre-drag starting position; defaults level with needY, near the left edge */
   needStart?: Point;
+  /** mark the Need node draggable (with a pre-drag `start` position); set false for flows with no drag step, e.g. Phase 1's form sequence */
+  draggable?: boolean;
   onComplete?: () => void;
 }
 
@@ -43,6 +45,7 @@ export function layoutValueChain(chain: ValueChain, options: ValueChainLayoutOpt
   const capabilityY = options.capabilityY ?? DEFAULT_CAPABILITY_Y;
   const capabilityGap = options.capabilityGap ?? DEFAULT_CAPABILITY_GAP;
   const needStart = options.needStart ?? { x: DEFAULT_NEED_START_X, y: needY };
+  const draggableEnabled = options.draggable ?? true;
   const centerX = viewBox.width / 2;
 
   const positions = new Map<string, Point>();
@@ -55,7 +58,7 @@ export function layoutValueChain(chain: ValueChain, options: ValueChainLayoutOpt
 
   const nodes: DemoNode[] = valueChainComponents(chain).map((component) => {
     const pos = positions.get(component.id)!;
-    const draggable = component.id === chain.need.id;
+    const draggable = draggableEnabled && component.id === chain.need.id;
     return {
       id: component.id,
       label: component.label,

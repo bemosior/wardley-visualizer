@@ -79,6 +79,38 @@ describe("WardleyDemo.relabelNode", () => {
   });
 });
 
+describe("WardleyDemo.celebrate", () => {
+  function buildDemo(): { demo: WardleyDemo; container: HTMLElement } {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const demo = WardleyDemo.mount(container, {
+      viewBox: { width: 400, height: 300 },
+      nodes: [
+        { id: "user", label: "User", x: 200, y: 50, draggable: false },
+        { id: "need", label: "Need", x: 200, y: 150, draggable: false },
+      ],
+      connections: [{ from: "user", to: "need" }],
+      snapThreshold: 30,
+    });
+    return { demo, container };
+  }
+
+  it("activates every line and charges every node", () => {
+    const { demo, container } = buildDemo();
+    demo.celebrate("need");
+
+    expect(container.querySelector(".wd-line")!.classList.contains("wd-line--active")).toBe(true);
+    expect(container.querySelector('[data-node-id="user"]')!.classList.contains("wd-node--charged")).toBe(true);
+    expect(container.querySelector('[data-node-id="need"]')!.classList.contains("wd-node--charged")).toBe(true);
+  });
+
+  it("does nothing if the node id isn't registered", () => {
+    const { demo, container } = buildDemo();
+    expect(() => demo.celebrate("missing")).not.toThrow();
+    expect(container.querySelector(".wd-line")!.classList.contains("wd-line--active")).toBe(false);
+  });
+});
+
 describe("WardleyDemo.runDragStep", () => {
   function buildAutoWiredDemo(onComplete: () => void, snapThreshold = 30) {
     const container = document.createElement("div");

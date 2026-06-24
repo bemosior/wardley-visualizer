@@ -59,23 +59,24 @@ Four layers, strict one-way dependency (lower layers know nothing about higher o
 - [x] `needCatalog.ts` with `{id, label}` shape.
 - [x] Removed the toolbox-toggling duplication between `index.html` and `preview.html` (both now just call `WardleyDemo.demos.userNeedDependency(...)`).
 
-## Phase 1 — Personalize the value chain (not started — primitives exist, flow doesn't)
+## Phase 1 — Personalize the value chain (done)
 
-Goal: the Toolbox becomes a 5-step data-entry sequence; no dragging. Order: pick
-a need from `NEED_CATALOG` → type a User → type Capability 1 → Capability 2 →
-Capability 3 → celebrate.
-
-Concrete plan:
-1. In `src/demos/userNeedDependency.ts`, replace the current single-shot `runValueChainScenario` body with a step sequence (an `async` function or a small step-runner is fine — there's no existing `Scenario` *type* to conform to, despite the function's name; build whatever's simplest).
-2. Build the initial `ValueChain` with **placeholder labels** (as today: "User"/"Need"/"Capability") via `createValueChain`, then `layoutValueChain(chain, { ...})` — but pass an option (add one to `ValueChainLayoutOptions` in `valueChainLayout.ts`) so **no** node is marked `draggable`. Mount via `WardleyDemo.mount` with this config; with nothing draggable, the constructor's auto-drag-step is a no-op.
-3. Step 1 — need: `panel.showField({ type: "select", prompt: "...", options: NEED_CATALOG.map(n => ({ value: n.id, label: n.label })) })`. On resolve, look up the chosen `NeedOption`, `relabelNeed(chain, option.label)`, and call `demo.relabelNode(chain.need.id, option.label)` to update the rendered SVG text.
-4. Step 2 — user: `panel.showField({ type: "text", prompt: "Who has this need?", placeholder: "..." })`. On resolve, `relabelUser` + `demo.relabelNode(chain.user.id, value)`.
-5. Steps 3–5 — capabilities: loop over `chain.capabilities` (3 of them — update the seed spec in `userNeedDependency.ts` from 2 to 3 capability entries, matching the forecast's "three specific components"), one `showField` text prompt each, `relabelCapability(chain, capability.id, value)` + `demo.relabelNode(capability.id, value)` per answer.
-6. After the last capability, call `panel.clear()` (or similar) and fire the existing celebration path — reuse `WardleyDemo`'s firework/flow-particle effects (`celebrateSnap` is private and snap-triggered only, so for Phase 1 you'll likely want a small public method on `WardleyDemo`, e.g. `celebrate(nodeId)`, that runs the same visual payoff without requiring a drag/snap to have happened — check whether extracting that makes sense vs. duplicating a smaller effect).
-7. Keep `ValueChainScenarioOptions` (`canvas`, `toolbox`, `onCelebrate`, `layout`, `config`) as the function's external contract — host pages (`index.html`, `preview.html`) shouldn't need to change for this phase.
-8. Update/extend `src/demos/userNeedDependency.test.ts` for the new step sequence (it currently only tests the Phase-0 drag interaction).
-
-Open question to settle before coding: does `WardleyDemo` need a public, non-drag celebration method, or should Phase 1's celebration be a simpler effect (e.g. just the firework burst, no flow particles since there's no "snap" to anchor them to)? Decide based on what looks right when you try it, not in the abstract.
+- [x] `Toolbox` is now a 5-step data-entry sequence (no dragging): pick a need
+      from `NEED_CATALOG` → type a User → type Capability 1 → 2 → 3 → celebrate.
+- [x] `layoutValueChain` gained a `draggable?: boolean` option (default `true`,
+      Phase 1 passes `false`) so no node is marked draggable and the
+      constructor's auto-drag-step is a no-op.
+- [x] `runValueChainScenario` (`src/demos/userNeedDependency.ts`) is now `async`,
+      walking `panel.showField` calls in sequence and relabeling both the domain
+      `ValueChain` (via `relabelNeed`/`relabelUser`/`relabelCapability`) and the
+      rendered nodes (`demo.relabelNode`) as each answer comes in.
+- [x] `WardleyDemo` gained a public `celebrate(nodeId)` method — activates all
+      lines, charges every node, plays flow particles, and fires a firework
+      burst centered on `nodeId`, without requiring a drag/snap. `celebrateSnap`
+      was refactored to share the same `activateLines`/`spawnFlowParticles`/
+      `fireworkAt` helpers.
+- [x] Verified end-to-end in the dev server: form steps relabel nodes live,
+      final celebration charges the chain and fires `onCelebrate`.
 
 ## Phase 2 — Evolution (not started; needs new abstractions)
 

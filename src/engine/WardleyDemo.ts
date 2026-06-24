@@ -168,9 +168,7 @@ export class WardleyDemo {
     targetMarker: SVGGElement,
     options: DragStepOptions,
   ): void {
-    for (const { el } of this.lines) {
-      el.classList.add("wd-line--active");
-    }
+    this.activateLines();
     targetMarker.classList.add("wd-target-marker--hidden");
 
     nodeGroup.classList.add("wd-node--charged");
@@ -183,6 +181,36 @@ export class WardleyDemo {
       }
     }
 
+    this.spawnFlowParticles();
+    this.fireworkAt(node.x, node.y);
+
+    options.onComplete?.();
+  }
+
+  /**
+   * non-drag celebration: activates every line, charges every node, plays flow
+   * particles and a firework burst centered on `nodeId`. For flows (e.g. Phase 1's
+   * form sequence) that finish without a drag/snap to anchor the celebration to.
+   */
+  celebrate(nodeId: string): void {
+    const node = this.nodesById.get(nodeId);
+    if (!node) return;
+
+    this.activateLines();
+    for (const group of this.nodeGroups.values()) {
+      group.classList.add("wd-node--charged");
+    }
+    this.spawnFlowParticles();
+    this.fireworkAt(node.x, node.y);
+  }
+
+  private activateLines(): void {
+    for (const { el } of this.lines) {
+      el.classList.add("wd-line--active");
+    }
+  }
+
+  private spawnFlowParticles(): void {
     this.lines.forEach(({ conn }, index) => {
       const segmentDelay = index === 0 ? FLOW_STAGGER_DELAY : 0;
       const particles = createFlowParticles(conn, this.nodesById);
@@ -192,13 +220,16 @@ export class WardleyDemo {
         this.particleLayer.appendChild(particle);
       });
     });
+  }
 
+  /** spawns a one-shot firework burst at the given viewBox coordinates, in container pixel space */
+  private fireworkAt(x: number, y: number): void {
     const svgRect = this.svg.getBoundingClientRect();
     const containerRect = this.container.getBoundingClientRect();
     const scaleX = svgRect.width / this.viewBox.width;
     const scaleY = svgRect.height / this.viewBox.height;
-    const pxX = svgRect.left - containerRect.left + node.x * scaleX;
-    const pxY = svgRect.top - containerRect.top + node.y * scaleY;
+    const pxX = svgRect.left - containerRect.left + x * scaleX;
+    const pxY = svgRect.top - containerRect.top + y * scaleY;
     const shells = createFireworkShells(pxX, pxY);
     for (const shell of shells) {
       this.container.appendChild(shell);
@@ -208,8 +239,6 @@ export class WardleyDemo {
         shell.remove();
       }
     }, FIREWORK_CLEANUP_MS);
-
-    options.onComplete?.();
   }
 
   destroy(): void {
