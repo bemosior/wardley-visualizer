@@ -75,82 +75,6 @@
         padding: 1rem 0.5rem;
       }
 
-      .wd-toolbox-slot {
-        position: relative;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.3rem;
-        padding: 0.5rem 0.4rem;
-        margin-bottom: 0.4rem;
-        border: 1px dashed #d1d5db;
-        border-radius: 6px;
-        background: #fff;
-        cursor: not-allowed;
-        user-select: none;
-      }
-
-      .wd-toolbox-slot:last-child {
-        margin-bottom: 0;
-      }
-
-      .wd-toolbox-slot svg {
-        width: 64px;
-        height: 64px;
-        filter: grayscale(1);
-        opacity: 0.4;
-      }
-
-      .wd-toolbox-slot circle {
-        fill: #fff;
-        stroke: var(--color-ink);
-        stroke-width: 1.5;
-      }
-
-      .wd-toolbox-slot text {
-        font-family: var(--font-ui);
-        font-size: 10px;
-        fill: var(--color-ink);
-        text-anchor: middle;
-        dominant-baseline: middle;
-      }
-
-      .wd-toolbox-slot-label {
-        font-family: var(--font-ui);
-        font-size: 0.65rem;
-        color: #999;
-      }
-
-      .wd-toolbox-slot--active {
-        border: 1px solid var(--color-link);
-        background: #f0f7ff;
-        cursor: grab;
-        touch-action: none;
-      }
-
-      .wd-toolbox-slot--active:active {
-        cursor: grabbing;
-      }
-
-      .wd-toolbox-slot--active svg {
-        filter: none;
-        opacity: 1;
-      }
-
-      .wd-toolbox-slot--active circle {
-        animation: wd-toolbox-pulse 1.8s ease-in-out infinite;
-      }
-
-      .wd-toolbox-slot--active .wd-toolbox-slot-label {
-        color: var(--color-link);
-        font-weight: 600;
-      }
-
-      @keyframes wd-toolbox-pulse {
-        0%, 100% { filter: drop-shadow(0 0 0 rgba(0, 95, 153, 0)); }
-        50% { filter: drop-shadow(0 0 6px rgba(0, 95, 153, 0.55)); }
-      }
-
       .wd-explanation {
         flex: 1;
         min-width: 220px;
@@ -178,20 +102,7 @@
       <div class="hero-inner">
         <div class="demo-row">
           <div class="wd-instance">
-            <aside class="wd-toolbox">
-              <div class="wd-toolbox-slot" title="Not available yet">
-                <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" /><text x="32" y="33">User</text></svg>
-                <span class="wd-toolbox-slot-label">Who It's For</span>
-              </div>
-              <div class="wd-toolbox-slot wd-toolbox-slot--active" title="Drag this onto the canvas">
-                <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" /><text x="32" y="33">User Need</text></svg>
-                <span class="wd-toolbox-slot-label">What They Get</span>
-              </div>
-              <div class="wd-toolbox-slot" title="Not available yet">
-                <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" /><text x="32" y="33">Capability</text></svg>
-                <span class="wd-toolbox-slot-label">How They Get It</span>
-              </div>
-            </aside>
+            <aside id="toolbox-a" class="wd-toolbox"></aside>
             <div id="demo-a" class="wd-canvas"></div>
           </div>
 
@@ -205,38 +116,32 @@
 
     <script src="./dist/wardley-demo.js"></script>
     <script>
-      var config = {
-        viewBox: { width: 400, height: 520 },
-        snapThreshold: 30,
-        nodes: [
-          { id: "user", label: "User", x: 200, y: 100, draggable: false },
-          { id: "need", label: "User Need", x: 200, y: 284, draggable: true, start: { x: 25, y: 237 } },
-          { id: "capability-1", label: "Capability", x: 130, y: 450, draggable: false },
-          { id: "capability-2", label: "Capability", x: 270, y: 450, draggable: false },
-          { id: "capability-3", label: "Capability", x: 200, y: 550, draggable: false },
-        ],
-        connections: [
-          { from: "user", to: "need" },
-          { from: "need", to: "capability-1" },
-          { from: "need", to: "capability-2" },
-          { from: "need", to: "capability-3" },
-        ],
-      };
-
-      var dragHandle = document.querySelector(".wd-toolbox-slot--active");
       var answer = document.getElementById("vc-answer");
-      config.onComplete = function () {
-        dragHandle.classList.remove("wd-toolbox-slot--active");
-        dragHandle.title = "Not available yet";
-        setTimeout(function () {
-          answer.classList.add("wd-answer--visible");
-        }, 500);
-      };
-
-      WardleyDemo.mount(document.getElementById("demo-a"), config, { dragHandle: dragHandle });
-
-      document.querySelectorAll(".wd-toolbox-slot text").forEach(function (text) {
-        WardleyDemo.fitNodeLabel(text, 26);
+      WardleyDemo.demos.userNeedDependency({
+        canvas: document.getElementById("demo-a"),
+        toolbox: document.getElementById("toolbox-a"),
+        onCelebrate: function () {
+          setTimeout(function () {
+            answer.classList.add("wd-answer--visible");
+          }, 500);
+        },
+        config: {
+          viewBox: { width: 400, height: 520 },
+          snapThreshold: 30,
+          nodes: [
+            { id: "user", label: "User", x: 200, y: 100, draggable: false },
+            { id: "need", label: "User Need", x: 200, y: 284, draggable: true, start: { x: 25, y: 237 } },
+            { id: "capability-1", label: "Capability", x: 130, y: 450, draggable: false },
+            { id: "capability-2", label: "Capability", x: 270, y: 450, draggable: false },
+            { id: "capability-3", label: "Capability", x: 200, y: 550, draggable: false },
+          ],
+          connections: [
+            { from: "user", to: "need" },
+            { from: "need", to: "capability-1" },
+            { from: "need", to: "capability-2" },
+            { from: "need", to: "capability-3" },
+          ],
+        },
       });
     </script>
   </body>

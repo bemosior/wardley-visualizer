@@ -1,7 +1,8 @@
 const STYLE_ID = "wardley-demo-styles";
 
 const CSS = `
-.wardley-demo-root {
+.wardley-demo-root,
+.wd-panel {
   --wd-color-ink: #1a1a1a;
   --wd-color-link: #005f99;
   --wd-color-link-hover: #003d6b;
@@ -10,6 +11,9 @@ const CSS = `
   --wd-color-stage-3: #2d6648;
   --wd-color-flow: #7ec8ff;
   --wd-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.wardley-demo-root {
   display: block;
   width: 100%;
   position: relative;
@@ -148,7 +152,118 @@ const CSS = `
   100% { box-shadow: var(--wd-fw-end); opacity: 0; }
 }
 
+.wd-panel-slot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.75rem 0.5rem;
+  margin-bottom: 0.5rem;
+  border: 1px dashed var(--wd-color-border);
+  border-radius: 8px;
+  background: #fff;
+  cursor: not-allowed;
+  user-select: none;
+}
+
+.wd-panel-slot:last-child {
+  margin-bottom: 0;
+}
+
+.wd-panel-slot svg {
+  width: 64px;
+  height: 64px;
+  filter: grayscale(1);
+  opacity: 0.4;
+}
+
+.wd-panel-slot circle {
+  fill: #fff;
+  stroke: var(--wd-color-ink);
+  stroke-width: 1.5;
+}
+
+.wd-panel-slot text {
+  font-family: var(--wd-font-ui);
+  font-size: 11px;
+  fill: var(--wd-color-ink);
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.wd-panel-slot-label {
+  font-family: var(--wd-font-ui);
+  font-size: 0.7rem;
+  color: #999;
+}
+
+.wd-panel-slot--active {
+  border: 1px solid var(--wd-color-link);
+  background: #f0f7ff;
+  cursor: grab;
+  touch-action: none;
+}
+
+.wd-panel-slot--active:active {
+  cursor: grabbing;
+}
+
+.wd-panel-slot--active svg {
+  filter: none;
+  opacity: 1;
+}
+
+.wd-panel-slot--active circle {
+  animation: wd-panel-pulse 1.8s ease-in-out infinite;
+}
+
+.wd-panel-slot--active .wd-panel-slot-label {
+  color: var(--wd-color-link);
+  font-weight: 600;
+}
+
+@keyframes wd-panel-pulse {
+  0%, 100% { filter: drop-shadow(0 0 0 rgba(0, 95, 153, 0)); }
+  50% { filter: drop-shadow(0 0 6px rgba(0, 95, 153, 0.55)); }
+}
+
+.wd-panel-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.wd-panel-form-prompt {
+  font-family: var(--wd-font-ui);
+  font-size: 0.85rem;
+  color: var(--wd-color-ink);
+}
+
+.wd-panel-form-input {
+  font-family: var(--wd-font-ui);
+  font-size: 0.9rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--wd-color-border);
+  border-radius: 6px;
+}
+
+.wd-panel-form-submit {
+  font-family: var(--wd-font-ui);
+  font-size: 0.85rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--wd-color-link);
+  border-radius: 6px;
+  background: var(--wd-color-link);
+  color: #fff;
+  cursor: pointer;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .wd-panel-slot--active circle {
+    animation: none;
+  }
+
   .wd-node--beckon .wd-node-shape {
     animation: none;
   }
