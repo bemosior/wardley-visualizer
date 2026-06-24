@@ -1,5 +1,12 @@
 import type { DemoConfig } from "../types";
-import { createConnectionLine, createFlowParticles, createNodeGroup, createSvgRoot, createTargetMarker } from "./render";
+import {
+  createConnectionLine,
+  createFlowParticles,
+  createNodeGroup,
+  createSvgRoot,
+  createTargetMarker,
+  fitNodeLabel,
+} from "./render";
 import { injectStylesOnce } from "./styles";
 import { attachDrag, type ConnectedLine, type RevealTarget } from "./drag";
 
@@ -55,6 +62,12 @@ export class WardleyDemo {
     }
     for (const group of nodeGroups.values()) {
       this.svg.appendChild(group);
+    }
+    for (const group of nodeGroups.values()) {
+      const label = group.querySelector<SVGTextElement>(".wd-node-label");
+      if (label) {
+        fitNodeLabel(label);
+      }
     }
 
     if (draggableNode) {

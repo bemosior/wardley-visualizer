@@ -1,6 +1,7 @@
 import type { DemoConnection, DemoNode } from "../types";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
+export const NODE_RADIUS = 28;
 
 export function createSvgRoot(viewBox: { width: number; height: number }): SVGSVGElement {
   const svg = document.createElementNS(SVG_NS, "svg") as SVGSVGElement;
@@ -21,7 +22,7 @@ export function createNodeGroup(node: DemoNode): SVGGElement {
   g.setAttribute("transform", `translate(${pos.x}, ${pos.y})`);
 
   const shape = document.createElementNS(SVG_NS, "circle");
-  shape.setAttribute("r", "28");
+  shape.setAttribute("r", String(NODE_RADIUS));
   shape.classList.add("wd-node-shape");
   g.appendChild(shape);
 
@@ -33,13 +34,25 @@ export function createNodeGroup(node: DemoNode): SVGGElement {
   return g;
 }
 
+const LABEL_PADDING = 12;
+
+/** shrinks a label's rendered width to fit inside its node if it would otherwise overflow; leaves short labels untouched */
+export function fitNodeLabel(label: SVGTextElement, radius: number = NODE_RADIUS): void {
+  const maxWidth = radius * 2 - LABEL_PADDING;
+  const actualWidth = label.getComputedTextLength();
+  if (actualWidth > maxWidth) {
+    label.setAttribute("textLength", String(maxWidth));
+    label.setAttribute("lengthAdjust", "spacingAndGlyphs");
+  }
+}
+
 export function createTargetMarker(node: DemoNode): SVGGElement {
   const g = document.createElementNS(SVG_NS, "g") as SVGGElement;
   g.classList.add("wd-target-marker");
   g.setAttribute("transform", `translate(${node.x}, ${node.y})`);
 
   const shape = document.createElementNS(SVG_NS, "circle");
-  shape.setAttribute("r", "28");
+  shape.setAttribute("r", String(NODE_RADIUS));
   shape.classList.add("wd-target-marker-shape");
   g.appendChild(shape);
 

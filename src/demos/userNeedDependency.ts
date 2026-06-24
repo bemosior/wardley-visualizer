@@ -6,8 +6,8 @@ export const userNeedDependencyDemo: DemoConfig = {
   nodes: [
     { id: "user", label: "User", x: 200, y: -6, draggable: false },
     { id: "need", label: "Need", x: 200, y: 76, draggable: true, start: { x: 35, y: 76 } },
-    { id: "dependency-1", label: "Dependency", x: 130, y: 157, draggable: false },
-    { id: "dependency-2", label: "Dependency", x: 270, y: 157, draggable: false },
+    { id: "dependency-1", label: "Capability", x: 130, y: 157, draggable: false },
+    { id: "dependency-2", label: "Capability", x: 270, y: 157, draggable: false },
   ],
   connections: [
     { from: "user", to: "need" },
