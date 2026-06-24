@@ -111,3 +111,36 @@ export function createFlowParticles(
   }
   return particles;
 }
+
+const FIREWORK_PARTICLE_COUNT = 14;
+const FIREWORK_COLOR_CLASSES = ["wd-firework-particle--a", "wd-firework-particle--b", "wd-firework-particle--c"];
+
+/**
+ * one-shot celebratory burst centered on (x, y): returns a single <g> containing
+ * FIREWORK_PARTICLE_COUNT small circles, each animating outward to a randomized
+ * angle/distance via a CSS custom property and fading out. Caller appends it once
+ * (on top of everything else) and is responsible for removing it once finished.
+ */
+export function createFireworkBurst(x: number, y: number): SVGGElement {
+  const g = document.createElementNS(SVG_NS, "g") as SVGGElement;
+  g.classList.add("wd-firework");
+  g.setAttribute("transform", `translate(${x}, ${y})`);
+
+  for (let i = 0; i < FIREWORK_PARTICLE_COUNT; i++) {
+    const angle = (i / FIREWORK_PARTICLE_COUNT) * 360 + (Math.random() * 16 - 8);
+    const distance = 32 + Math.random() * 26;
+    const radians = (angle * Math.PI) / 180;
+    const dx = Math.cos(radians) * distance;
+    const dy = Math.sin(radians) * distance;
+
+    const particle = document.createElementNS(SVG_NS, "circle") as SVGCircleElement;
+    particle.classList.add("wd-firework-particle", FIREWORK_COLOR_CLASSES[i % FIREWORK_COLOR_CLASSES.length]);
+    particle.setAttribute("r", "2.5");
+    particle.style.setProperty("--wd-fw-dx", `${dx}`);
+    particle.style.setProperty("--wd-fw-dy", `${dy}`);
+    particle.style.animationDelay = `${Math.random() * 0.1}s`;
+    g.appendChild(particle);
+  }
+
+  return g;
+}

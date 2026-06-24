@@ -100,6 +100,22 @@
         max-width: 500px;
         margin: 4rem auto;
       }
+
+      .wd-explanation {
+        max-width: 280px;
+        margin: 6rem 2rem 0 0;
+        font-size: 1.05rem;
+        line-height: 1.6;
+        color: #1a1a1a;
+        opacity: 0;
+        transform: translateX(8px);
+        transition: opacity 0.5s ease, transform 0.5s ease;
+      }
+
+      .wd-explanation--visible {
+        opacity: 1;
+        transform: translateX(0);
+      }
     </style>
   </head>
   <body>
@@ -122,9 +138,15 @@
 
     <div id="demo" class="wd-canvas"></div>
 
+    <p id="explanation" class="wd-explanation">
+      Users depend on the fulfillment of their User Needs, which depend on the Capabilities that
+      come together to meet them.
+    </p>
+
     <script type="module">
       import WardleyDemo from "/src/index.ts";
       const dragHandle = document.querySelector(".wd-toolbox-slot--active");
+      const explanation = document.getElementById("explanation");
       WardleyDemo.mount(
         document.getElementById("demo"),
         {
@@ -132,6 +154,7 @@
           onComplete: () => {
             dragHandle.classList.remove("wd-toolbox-slot--active");
             dragHandle.title = "Not available yet";
+            explanation.classList.add("wd-explanation--visible");
           },
         },
         { dragHandle },

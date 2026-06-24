@@ -1,6 +1,7 @@
 import type { DemoConfig } from "../types";
 import {
   createConnectionLine,
+  createFireworkBurst,
   createFlowParticles,
   createNodeGroup,
   createSvgRoot,
@@ -25,6 +26,9 @@ const FLOW_STAGGER_DELAY = -0.47;
 
 /** delay so the root node's idle "charged" glow stays permanently phase-shifted behind the draggable node's */
 const CHARGED_STAGGER_DELAY = "0.4s";
+
+/** firework particle animation is 0.9s plus up to 0.1s random per-particle delay; pad slightly before cleanup */
+const FIREWORK_CLEANUP_MS = 1100;
 
 export class WardleyDemo {
   private container: HTMLElement;
@@ -124,6 +128,10 @@ export class WardleyDemo {
                 this.svg.insertBefore(particle, firstNodeGroup);
               });
             });
+
+            const firework = createFireworkBurst(draggableNode.x, draggableNode.y);
+            this.svg.appendChild(firework);
+            setTimeout(() => firework.remove(), FIREWORK_CLEANUP_MS);
 
             config.onComplete?.();
           },

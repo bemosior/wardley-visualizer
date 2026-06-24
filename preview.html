@@ -149,6 +149,25 @@
         0%, 100% { filter: drop-shadow(0 0 0 rgba(0, 95, 153, 0)); }
         50% { filter: drop-shadow(0 0 6px rgba(0, 95, 153, 0.55)); }
       }
+
+      .wd-explanation {
+        flex: 1;
+        min-width: 220px;
+        max-width: 260px;
+        text-align: left;
+        font-size: 1.05rem;
+        line-height: 1.6;
+        color: var(--color-ink);
+        margin: 1.5rem 0 0;
+        opacity: 0;
+        transform: translateX(8px);
+        transition: opacity 0.5s ease, transform 0.5s ease;
+      }
+
+      .wd-explanation--visible {
+        opacity: 1;
+        transform: translateX(0);
+      }
     </style>
   </head>
   <body>
@@ -174,6 +193,10 @@
             </aside>
             <div id="demo-a" class="wd-canvas"></div>
           </div>
+          <p id="explanation" class="wd-explanation">
+            Users depend on the fulfillment of their User Needs, which depend on the Capabilities
+            that come together to meet them.
+          </p>
         </div>
       </div>
     </section>
@@ -197,9 +220,11 @@
       };
 
       var dragHandle = document.querySelector(".wd-toolbox-slot--active");
+      var explanation = document.getElementById("explanation");
       config.onComplete = function () {
         dragHandle.classList.remove("wd-toolbox-slot--active");
         dragHandle.title = "Not available yet";
+        explanation.classList.add("wd-explanation--visible");
       };
 
       WardleyDemo.mount(document.getElementById("demo-a"), config, { dragHandle: dragHandle });

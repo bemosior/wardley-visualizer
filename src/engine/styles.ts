@@ -9,6 +9,9 @@ const CSS = `
   --wd-color-bg-soft: #f5f5f5;
   --wd-color-stage-3: #2d6648;
   --wd-color-flow: #7ec8ff;
+  --wd-color-celebrate-1: #f4b942;
+  --wd-color-celebrate-2: #ff6b6b;
+  --wd-color-celebrate-3: #005f99;
   --wd-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   display: block;
   width: 100%;
@@ -128,6 +131,23 @@ const CSS = `
   100% { offset-distance: 0%; opacity: 0; }
 }
 
+.wd-firework {
+  pointer-events: none;
+}
+
+.wd-firework-particle {
+  animation: wd-firework 0.9s ease-out forwards;
+}
+
+.wd-firework-particle--a { fill: var(--wd-color-celebrate-1, #f4b942); }
+.wd-firework-particle--b { fill: var(--wd-color-celebrate-2, #ff6b6b); }
+.wd-firework-particle--c { fill: var(--wd-color-celebrate-3, #005f99); }
+
+@keyframes wd-firework {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--wd-fw-dx), var(--wd-fw-dy)) scale(0.3); opacity: 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .wd-node--beckon .wd-node-shape {
     animation: none;
@@ -144,6 +164,9 @@ const CSS = `
   }
   .wd-node--charged .wd-node-shape {
     animation: none;
+  }
+  .wd-firework {
+    display: none;
   }
 }
 `;
