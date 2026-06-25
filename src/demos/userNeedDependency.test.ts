@@ -171,6 +171,36 @@ describe("runValueChainScenario", () => {
 
     expect(onEvolutionReady).toHaveBeenCalledOnce();
     expect(nextControl.querySelector(".wd-next-link")).toBeNull();
+
+    expect(canvas.querySelector('[data-node-id="user"]')!.classList.contains("wd-node--charged")).toBe(false);
+    expect(canvas.querySelector('[data-node-id="need"]')!.classList.contains("wd-node--charged")).toBe(false);
+  });
+
+  it("swaps the Toolbox to a Need-label/Genesis placeholder once Phase 2 begins", async () => {
+    const canvas = document.createElement("div");
+    const toolbox = document.createElement("div");
+    const nextControl = document.createElement("div");
+    document.body.append(canvas, toolbox, nextControl);
+    runValueChainScenario({ canvas, toolbox, nextControl });
+    await completeDragStep(toolbox, nextControl);
+
+    const need = NEED_CATALOG[0];
+    submitSelect(toolbox, need.id);
+    await flush();
+    submitText(toolbox, "A commuter");
+    await flush();
+    submitText(toolbox, "A kettle");
+    await flush();
+    submitText(toolbox, "Water");
+    await flush();
+    submitText(toolbox, "Electricity");
+    await flush();
+
+    clickNext(nextControl);
+    await flush();
+
+    expect(toolbox.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe(need.label);
+    expect(toolbox.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe("Genesis");
   });
 
   it("does not advance on a whitespace-only capability answer", async () => {

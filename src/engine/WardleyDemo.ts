@@ -44,9 +44,13 @@ const FIREWORK_CLEANUP_MS = 1700;
 const FIREWORK_BURST_STAGGER_MS = 250;
 
 /** how long the map caption (e.g. "Let's turn it into a Wardley Map!") stays fully visible before fading out */
-const MAP_CAPTION_VISIBLE_MS = 2200;
-/** matches .wd-map-caption's opacity transition duration, so cleanup removes the element only after it's invisible */
-const MAP_CAPTION_FADE_MS = 600;
+const MAP_CAPTION_VISIBLE_MS = 5200;
+/**
+ * matches .wd-map-caption's opacity transition duration, so cleanup removes the element only
+ * after it's invisible. Exported so callers (e.g. `runValueChainScenario`) can stagger other
+ * fade-ins to start only once the caption has finished appearing.
+ */
+export const MAP_CAPTION_FADE_MS = 600;
 
 export class WardleyDemo {
   private container: HTMLElement;
@@ -294,6 +298,18 @@ export class WardleyDemo {
     }
     setNodePosition(nodeGroup, connectedLines, { x: node.x, y: node.y });
     this.celebrateSnap(node, nodeGroup, targetMarker, options);
+  }
+
+  /**
+   * removes the idle "charged" pulsing glow from the given nodes, without touching anything
+   * else (lines stay active, flow particles keep running). Used when Phase 2's map backdrop
+   * appears — the glow is a Phase 0/1 "this connection is alive" cue that competes with the
+   * evolution-axis drag interaction Phase 2 wants the visitor's attention on instead.
+   */
+  stopCharging(nodeIds: string[]): void {
+    for (const id of nodeIds) {
+      this.nodeGroups.get(id)?.classList.remove("wd-node--charged");
+    }
   }
 
   /**

@@ -136,3 +136,18 @@ describe("Panel.showEmpty", () => {
     expect(content!.children.length).toBe(0);
   });
 });
+
+describe("Panel.showPlaceholder", () => {
+  it("renders the heading and subheading inside a .wd-panel-content placeholder", () => {
+    const container = makeContainer();
+    const panel = new Panel(container);
+    panel.showField({ type: "text", prompt: "Who has this need?" });
+
+    panel.showPlaceholder("Hot, drinkable tea", "Genesis");
+
+    const content = container.querySelector(".wd-panel-content");
+    expect(content).not.toBeNull();
+    expect(container.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Hot, drinkable tea");
+    expect(container.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe("Genesis");
+  });
+});

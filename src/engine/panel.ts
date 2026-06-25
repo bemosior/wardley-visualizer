@@ -167,6 +167,32 @@ export class Panel {
     this.container.appendChild(content);
   }
 
+  /**
+   * renders a heading + subheading placeholder at full panel height, fading in after `delayMs`
+   * (used to stagger this behind the map caption's own fade-in); stands in for Phase 2's
+   * instrument-panel mode (not built yet)
+   */
+  showPlaceholder(heading: string, subheading: string, delayMs = 0): void {
+    this.clear();
+    const content = document.createElement("div");
+    content.classList.add("wd-panel-content", "wd-panel-content--top", "wd-panel-placeholder");
+
+    const headingEl = document.createElement("div");
+    headingEl.classList.add("wd-panel-placeholder-heading");
+    headingEl.textContent = heading;
+
+    const subheadingEl = document.createElement("div");
+    subheadingEl.classList.add("wd-panel-placeholder-subheading");
+    subheadingEl.textContent = subheading;
+
+    content.append(headingEl, subheadingEl);
+    this.container.appendChild(content);
+
+    // deferred via setTimeout (same trick as WardleyDemo's showMapCaption) so the browser paints
+    // the initial opacity:0 first, then `delayMs` later starts this fading in.
+    setTimeout(() => content.classList.add("wd-panel-placeholder--visible"), delayMs);
+  }
+
   clear(): void {
     this.container.innerHTML = "";
   }

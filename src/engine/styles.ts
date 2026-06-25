@@ -218,6 +218,35 @@ const CSS = `
   justify-content: center;
 }
 
+.wd-panel-content--top {
+  justify-content: flex-start;
+}
+
+.wd-panel-placeholder {
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.wd-panel-placeholder--visible {
+  opacity: 1;
+}
+
+.wd-panel-placeholder-heading {
+  font-family: var(--wd-font-ui);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--wd-color-ink);
+  text-align: center;
+}
+
+.wd-panel-placeholder-subheading {
+  font-family: var(--wd-font-ui);
+  font-size: 0.85rem;
+  color: #999;
+  text-align: center;
+  margin-top: 0.25rem;
+}
+
 .wd-next-link {
   display: block;
   font-family: var(--wd-font-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);

@@ -1,4 +1,4 @@
-import { WardleyDemo } from "../engine/WardleyDemo";
+import { WardleyDemo, MAP_CAPTION_FADE_MS } from "../engine/WardleyDemo";
 import { Panel, type PanelDragSlot } from "../engine/panel";
 import { showNextLink } from "../engine/nextLink";
 import { createValueChain, relabelCapability, relabelNeed, relabelUser } from "../domain/valueChain";
@@ -60,6 +60,9 @@ export interface ValueChainScenarioOptions {
  * The Toolbox is then emptied to a full-height placeholder (`Panel.showEmpty`)
  * rather than collapsed — it stays in place, ready for Phase 2's content —
  * and a second "Next" link gates the move into Phase 2 (`onEvolutionReady`).
+ * Once that fires, the Toolbox swaps to `Panel.showPlaceholder` showing the
+ * Need's label and its starting evolution stage ("Genesis") — a stand-in for
+ * the instrument-panel mode Phase 2 hasn't built yet.
  */
 export async function runValueChainScenario(options: ValueChainScenarioOptions): Promise<WardleyDemo> {
   let chain = seedValueChain;
@@ -122,6 +125,8 @@ export async function runValueChainScenario(options: ValueChainScenarioOptions):
   await showNextLink(options.nextControl);
   const scale = demo.captureScale();
   options.onEvolutionReady?.();
+  demo.stopCharging([chain.user.id, chain.need.id]);
+  panel.showPlaceholder(chain.need.label, "Genesis", MAP_CAPTION_FADE_MS);
   demo.showMapBackdrop(
     scale,
     options.toolbox.getBoundingClientRect().height,

@@ -198,6 +198,43 @@ describe("WardleyDemo.relabelNode", () => {
   });
 });
 
+describe("WardleyDemo.stopCharging", () => {
+  it("removes the charged glow from the given nodes without affecting others or the active lines", () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const demo = WardleyDemo.mount(container, {
+      viewBox: { width: 400, height: 300 },
+      nodes: [
+        { id: "user", label: "User", x: 200, y: 50, draggable: false },
+        { id: "need", label: "Need", x: 200, y: 150, draggable: true, start: { x: 20, y: 150 } },
+      ],
+      connections: [{ from: "user", to: "need" }],
+      snapThreshold: 30,
+    });
+    demo.skipDrag();
+    expect(container.querySelector('[data-node-id="user"]')!.classList.contains("wd-node--charged")).toBe(true);
+    expect(container.querySelector('[data-node-id="need"]')!.classList.contains("wd-node--charged")).toBe(true);
+
+    demo.stopCharging(["user", "need"]);
+
+    expect(container.querySelector('[data-node-id="user"]')!.classList.contains("wd-node--charged")).toBe(false);
+    expect(container.querySelector('[data-node-id="need"]')!.classList.contains("wd-node--charged")).toBe(false);
+    expect(container.querySelector(".wd-line")!.classList.contains("wd-line--active")).toBe(true);
+  });
+
+  it("does nothing if a node id isn't registered", () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const demo = WardleyDemo.mount(container, {
+      viewBox: { width: 400, height: 300 },
+      nodes: [{ id: "user", label: "User", x: 200, y: 50, draggable: false }],
+      connections: [],
+      snapThreshold: 30,
+    });
+    expect(() => demo.stopCharging(["missing"])).not.toThrow();
+  });
+});
+
 describe("WardleyDemo.celebrateAll", () => {
   function buildDemo(): { demo: WardleyDemo; container: HTMLElement } {
     const container = document.createElement("div");
