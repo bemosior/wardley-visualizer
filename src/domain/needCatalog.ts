@@ -9,10 +9,10 @@ export interface NeedOption {
  * the same pattern later.
  */
 export const NEED_CATALOG: NeedOption[] = [
-  { id: "hot-tea", label: "Hot tea" },
-  { id: "message-a-friend", label: "Message a friend" },
-  { id: "fresh-grocery-delivery", label: "Fresh grocery delivery" },
-  { id: "transport-to-the-airport", label: "Transport to the airport" },
-  { id: "document-signed", label: "Document signed" },
-  { id: "photos-printed", label: "Photos printed" },
+  { id: "hot-tea", label: "Hot Tea" },
+  { id: "messaging-with-friends", label: "Messaging with Friends" },
+  { id: "fresh-grocery-delivery", label: "Fresh Grocery Delivery" },
+  { id: "transport-to-the-airport", label: "Transport to the Airport" },
+  { id: "documents-signed", label: "Documents Signed" },
+  { id: "photos-printed", label: "Photos Printed" },
 ];

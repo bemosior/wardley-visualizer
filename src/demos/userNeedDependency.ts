@@ -88,7 +88,7 @@ export async function runValueChainScenario(options: ValueChainScenarioOptions):
 
   const userLabel = await panel.showField({
     type: "text",
-    prompt: "Who has this need?",
+    prompt: "Who needs " + needOption.label + "?",
     placeholder: "Commuter",
   });
   chain = relabelUser(chain, userLabel);
