@@ -58,10 +58,11 @@
 
     <div id="demo" class="wd-canvas"></div>
 
-    <p class="wd-explanation">
+    <div class="wd-explanation">
       <span><strong>What is a <em>Value Chain</em>?</strong><br/></span>
       <span id="vc-answer" class="wd-answer">A <em>Value Chain</em> shows how <em>Users</em> get their <em>User Needs</em> met, as a result of the <em>Capabilities</em> they depend on.</span>
-    </p>
+      <div id="vc-next"></div>
+    </div>
 
     <script type="module">
       import WardleyDemo from "/src/index.ts";
@@ -69,6 +70,7 @@
       WardleyDemo.demos.userNeedDependency({
         canvas: document.getElementById("demo"),
         toolbox: document.getElementById("toolbox"),
+        nextControl: document.getElementById("vc-next"),
         onNeedPlaced: () => answer.classList.add("wd-answer--visible"),
       });
     </script>

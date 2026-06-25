@@ -1,5 +1,6 @@
 import { WardleyDemo } from "../engine/WardleyDemo";
 import { Panel, type PanelDragSlot } from "../engine/panel";
+import { showNextLink } from "../engine/nextLink";
 import { createValueChain, relabelCapability, relabelNeed, relabelUser } from "../domain/valueChain";
 import { layoutValueChain, type ValueChainLayoutOptions } from "../application/valueChainLayout";
 import { NEED_CATALOG } from "../domain/needCatalog";
@@ -21,17 +22,16 @@ const PANEL_SLOTS: PanelDragSlot[] = [
   { id: "capability", iconText: "Capability", label: "How They Get It", active: false },
 ];
 
-/** stagger between the Need's snap (Phase 0 done) and the Toolbox switching into the Phase 1 form, so a host's reveal tied to onNeedPlaced is visible first */
-const TOOLBOX_STAGGER_MS = 500;
-
-function wait(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 export interface ValueChainScenarioOptions {
   canvas: HTMLElement;
   toolbox: HTMLElement;
-  /** fires as soon as the Need snaps into place (Phase 0 done), before the Toolbox switches into the Phase 1 form */
+  /**
+   * host-supplied container for the "Next" link that gates the switch from
+   * Phase 0 into the Phase 1 form — typically placed beneath the host's own
+   * explanation text, not inside the Toolbox.
+   */
+  nextControl: HTMLElement;
+  /** fires as soon as the Need snaps into place (Phase 0 done); the scenario then shows a "Next" link in `nextControl` and waits for the visitor to click it before switching the Toolbox into the Phase 1 form */
   onNeedPlaced?: () => void;
   onCelebrate?: () => void;
   /** override the generated layout's geometry; ignored if `config` is supplied */
@@ -47,11 +47,11 @@ export interface ValueChainScenarioOptions {
 }
 
 /**
- * One continuous flow: drag the generic Need into place (Phase 0), then the
- * Toolbox walks the visitor through a 5-step form (need -> user -> 3
- * capabilities) that relabels each placeholder node as its answer comes in
- * (Phase 1), celebrating once more at the end now that the chain is fully
- * personalized.
+ * One continuous flow: drag the generic Need into place (Phase 0), wait for
+ * the visitor to click the "Next" link rendered into `nextControl`, then the
+ * Toolbox walks them through a 5-step form (need -> user -> 3 capabilities)
+ * that relabels each placeholder node as its answer comes in (Phase 1),
+ * celebrating once more at the end now that the chain is fully personalized.
  */
 export async function runValueChainScenario(options: ValueChainScenarioOptions): Promise<WardleyDemo> {
   let chain = seedValueChain;
@@ -75,7 +75,7 @@ export async function runValueChainScenario(options: ValueChainScenarioOptions):
   });
 
   options.onNeedPlaced?.();
-  await wait(TOOLBOX_STAGGER_MS);
+  await showNextLink(options.nextControl);
 
   const needId = await panel.showField({
     type: "select",

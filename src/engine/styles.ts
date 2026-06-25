@@ -159,6 +159,20 @@ const CSS = `
   justify-content: center;
 }
 
+.wd-next-link {
+  display: inline-block;
+  margin-top: 0.75rem;
+  font-family: var(--wd-font-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+  font-size: 0.85rem;
+  color: var(--wd-color-link, #005f99);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.wd-next-link:hover {
+  color: var(--wd-color-link-hover, #003d6b);
+}
+
 .wd-panel-slot {
   position: relative;
   display: flex;

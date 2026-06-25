@@ -24,7 +24,8 @@ Four layers, strict one-way dependency (lower layers know nothing about higher o
     - **Important gotcha:** the constructor auto-runs `runDragStep` for whichever node in `config.nodes` has `draggable: true` (at most one). If a phase has *no* drag step (Phase 1 doesn't), make sure no node in the initial `DemoConfig` is `draggable: true` — otherwise `mount` will wire a drag step you didn't ask for.
   - `panel.ts` — `Panel`, the toolbox abstraction. One `Panel` instance owns a container element and swaps between modes. **The toolbox must stay a constant height across every mode/phase** — hosts like `preview.html` size the toolbox card to its content, and a content jump (e.g. 3 drag slots vs. one form field) reads as a layout glitch. Every mode wraps its rendered content in a `wd-panel-content` div (`styles.ts`: `min-height: 360px`); a future instrument-panel (Phase 2) or Q&A (Phase 3) mode must reuse that same class rather than appending raw content, and if its content would exceed 360px, raise the shared constant rather than letting one mode silently grow past the others.
     - `showDragHandles(slots: PanelDragSlot[])` → `PanelDragHandle` (used by Phase 0).
-    - `showField(field: PanelField)` → `Promise<string>`, resolves with the trimmed answer once the visitor submits (`type: "select"` or `type: "text"`). Already built and unit-tested; **not yet wired into any Scenario**.
+    - `showField(field: PanelField)` → `Promise<string>`, resolves with the trimmed answer once the visitor submits (`type: "select"` or `type: "text"`). Wired into Phase 1's 5-step form sequence (`userNeedDependency.ts`).
+  - `nextLink.ts` — `showNextLink(container: HTMLElement)` → `Promise<void>`, a standalone (non-Toolbox) helper that appends a small "Next" link into whatever container it's given and resolves once clicked. Used to gate a step transition behind a deliberate visitor action instead of a guessed timer. Deliberately not a `Panel` method — it renders into host-owned page regions outside the Toolbox (e.g. beneath a host's own explanation text), so it can't assume `.wd-panel`'s CSS variable scope; its `.wd-next-link` style (`styles.ts`) carries explicit fallback colors for that reason.
     - Not yet built: an "instrument panel" mode (live evolutionary-characteristics readout, Phase 2) and a "Q&A" mode (Phase 3). See those phases below for what they need.
   - `styles.ts` — `injectStylesOnce`, all CSS-in-JS class names (`wd-node`, `wd-panel-*`, etc.).
 
@@ -65,10 +66,17 @@ One continuous flow, not a replacement of Phase 0 — the drag step still
 happens first, then the Toolbox continues into the 5-step form:
 
 - [x] Drag the generic Need into place (unchanged Phase 0 step, same
-      `panel.showDragHandles`/`runDragStep` wiring as before), **then** the
-      Toolbox becomes a 5-step data-entry sequence: pick a need from
-      `NEED_CATALOG` → type a User → type Capability 1 → 2 → 3 → celebrate.
-      Both phases run against the same mounted `WardleyDemo` instance/canvas.
+      `panel.showDragHandles`/`runDragStep` wiring as before). A "Next" link
+      (`showNextLink()`, `src/engine/nextLink.ts`) then renders into the
+      host-supplied `nextControl` element — placed beneath the host's own
+      explanation text in `index.html`/`preview.html` (`#vc-next`, a sibling
+      of `#vc-answer` inside `.wd-explanation`), *not* inside the Toolbox —
+      and the scenario waits for the visitor to click it before the Toolbox
+      becomes a 5-step data-entry sequence: pick a need from `NEED_CATALOG` →
+      type a User → type Capability 1 → 2 → 3 → celebrate. Both phases run
+      against the same mounted `WardleyDemo` instance/canvas.
+      `ValueChainScenarioOptions.nextControl` is required — any new host page
+      embedding this scenario must supply that container.
 - [x] `runValueChainScenario` (`src/demos/userNeedDependency.ts`) is now
       `async`: it `await`s a `Promise` wrapping the drag step's `onComplete`
       callback, then walks `panel.showField` calls in sequence, relabeling
