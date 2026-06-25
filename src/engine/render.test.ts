@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createMapBackdrop, createMapCaption } from "./render";
+import { createMapBackdrop, createMapCaption, genesisCenterX } from "./render";
 
 describe("createMapBackdrop", () => {
   it("renders 4 equal-width bands spanning the viewBox, in stage order", () => {
@@ -46,6 +46,19 @@ describe("createMapBackdrop", () => {
     expect(divider.getAttribute("y1")).toBe("0");
     expect(divider.getAttribute("y2")).toBe("520");
     expect(label.getAttribute("y")).toBe("506");
+  });
+});
+
+describe("genesisCenterX", () => {
+  it("matches the x of the Genesis band's own centered label", () => {
+    const g = createMapBackdrop({ width: 400, height: 300 });
+    const genesisLabel = g.querySelector(".wd-backdrop-label")!;
+
+    expect(genesisCenterX(400)).toBe(Number(genesisLabel.getAttribute("x")));
+  });
+
+  it("is one eighth of the viewBox width", () => {
+    expect(genesisCenterX(800)).toBe(100);
   });
 });
 

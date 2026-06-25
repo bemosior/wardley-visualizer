@@ -132,6 +132,11 @@ export async function runValueChainScenario(options: ValueChainScenarioOptions):
     options.toolbox.getBoundingClientRect().height,
     "Now let's turn your *Value Chain*\r\ninto a *Wardley Map*!",
   );
+  // staggered by the same delay as the Toolbox placeholder's fade-in (panel.showPlaceholder
+  // above), so the Need visibly settles into Genesis in step with the rest of Phase 2's reveal
+  // rather than sliding immediately while the caption/placeholder are still fading in.
+  setTimeout(() => demo.slideToGenesis(chain.need.id), MAP_CAPTION_FADE_MS);
+  demo.beckonNode(chain.need.id);
 
   return demo;
 }

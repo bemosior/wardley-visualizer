@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { runValueChainScenario } from "./userNeedDependency";
+import { MAP_CAPTION_FADE_MS } from "../engine/WardleyDemo";
 import { NEED_CATALOG } from "../domain/needCatalog";
 
 function drag(handle: Element, to: { x: number; y: number }): void {
@@ -164,6 +165,7 @@ describe("runValueChainScenario", () => {
     expect(onEvolutionReady).not.toHaveBeenCalled();
     expect(canvas.querySelector(".wd-backdrop")).toBeNull();
 
+    vi.useFakeTimers();
     clickNext(nextControl);
     await flush();
 
@@ -174,6 +176,14 @@ describe("runValueChainScenario", () => {
 
     expect(canvas.querySelector('[data-node-id="user"]')!.classList.contains("wd-node--charged")).toBe(false);
     expect(canvas.querySelector('[data-node-id="need"]')!.classList.contains("wd-node--charged")).toBe(false);
+    expect(canvas.querySelector('[data-node-id="need"]')!.classList.contains("wd-node--beckon")).toBe(true);
+
+    // the slide to Genesis is staggered behind the Toolbox placeholder's own fade-in delay
+    // (MAP_CAPTION_FADE_MS), not immediate
+    expect(canvas.querySelector('[data-node-id="need"]')!.getAttribute("transform")).not.toMatch(/^translate\(50,/);
+    vi.advanceTimersByTime(MAP_CAPTION_FADE_MS);
+    expect(canvas.querySelector('[data-node-id="need"]')!.getAttribute("transform")).toMatch(/^translate\(50,/);
+    vi.useRealTimers();
   });
 
   it("swaps the Toolbox to a Need-label/Genesis placeholder once Phase 2 begins", async () => {

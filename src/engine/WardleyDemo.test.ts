@@ -235,6 +235,85 @@ describe("WardleyDemo.stopCharging", () => {
   });
 });
 
+describe("WardleyDemo.beckonNode", () => {
+  it("adds the beckon pulse to the given node, leaving others untouched", () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const demo = WardleyDemo.mount(container, {
+      viewBox: { width: 400, height: 300 },
+      nodes: [
+        { id: "user", label: "User", x: 200, y: 50, draggable: false },
+        { id: "need", label: "Need", x: 200, y: 150, draggable: false },
+      ],
+      connections: [{ from: "user", to: "need" }],
+      snapThreshold: 30,
+    });
+
+    demo.beckonNode("need");
+
+    expect(container.querySelector('[data-node-id="need"]')!.classList.contains("wd-node--beckon")).toBe(true);
+    expect(container.querySelector('[data-node-id="user"]')!.classList.contains("wd-node--beckon")).toBe(false);
+  });
+
+  it("does nothing if the node id isn't registered", () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const demo = WardleyDemo.mount(container, {
+      viewBox: { width: 400, height: 300 },
+      nodes: [{ id: "user", label: "User", x: 200, y: 50, draggable: false }],
+      connections: [],
+      snapThreshold: 30,
+    });
+    expect(() => demo.beckonNode("missing")).not.toThrow();
+  });
+});
+
+describe("WardleyDemo.slideToGenesis", () => {
+  function buildDemo(): { demo: WardleyDemo; container: HTMLElement } {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const demo = WardleyDemo.mount(container, {
+      viewBox: { width: 400, height: 300 },
+      nodes: [
+        { id: "user", label: "User", x: 200, y: 50, draggable: false },
+        { id: "need", label: "Need", x: 200, y: 150, draggable: true, start: { x: 20, y: 150 } },
+      ],
+      connections: [{ from: "user", to: "need" }],
+      snapThreshold: 30,
+    });
+    return { demo, container };
+  }
+
+  it("moves the node and its connected line endpoint to the Genesis column's center x, keeping y", () => {
+    const { demo, container } = buildDemo();
+
+    demo.slideToGenesis("need");
+
+    expect(container.querySelector('[data-node-id="need"]')!.getAttribute("transform")).toBe("translate(50, 150)");
+    expect(container.querySelector(".wd-line")!.getAttribute("x2")).toBe("50");
+    expect(container.querySelector(".wd-line")!.getAttribute("y2")).toBe("150");
+  });
+
+  it("respawns flow particles touching the moved node riding the line's new position", () => {
+    const { demo, container } = buildDemo();
+    demo.skipDrag();
+    expect(container.querySelectorAll(".wd-flow-particle").length).toBeGreaterThan(0);
+
+    demo.slideToGenesis("need");
+
+    const particles = container.querySelectorAll<SVGCircleElement>(".wd-flow-particle");
+    expect(particles.length).toBeGreaterThan(0);
+    particles.forEach((particle) => {
+      expect(particle.style.offsetPath).toContain("L 50,150");
+    });
+  });
+
+  it("does nothing if the node id isn't registered", () => {
+    const { demo } = buildDemo();
+    expect(() => demo.slideToGenesis("missing")).not.toThrow();
+  });
+});
+
 describe("WardleyDemo.celebrateAll", () => {
   function buildDemo(): { demo: WardleyDemo; container: HTMLElement } {
     const container = document.createElement("div");

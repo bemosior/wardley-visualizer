@@ -10,9 +10,11 @@ import {
   createSvgRoot,
   createTargetMarker,
   fitNodeLabel,
+  genesisCenterX,
 } from "./render";
 import { injectStylesOnce } from "./styles";
 import { attachDrag, setNodePosition, type ConnectedLine, type RevealTarget } from "./drag";
+import { animateTo } from "./animate";
 
 export interface MountOptions {
   /** an external element (e.g. a toolbox slot) that the draggable node must be picked up from */
@@ -301,6 +303,14 @@ export class WardleyDemo {
   }
 
   /**
+   * adds the inviting "beckon" pulse (the same cue Phase 0 uses on the undragged Need) to a
+   * node, e.g. to prompt the visitor toward Phase 2's evolution-axis drag once the map appears.
+   */
+  beckonNode(nodeId: string): void {
+    this.nodeGroups.get(nodeId)?.classList.add("wd-node--beckon");
+  }
+
+  /**
    * removes the idle "charged" pulsing glow from the given nodes, without touching anything
    * else (lines stay active, flow particles keep running). Used when Phase 2's map backdrop
    * appears — the glow is a Phase 0/1 "this connection is alive" cue that competes with the
@@ -310,6 +320,41 @@ export class WardleyDemo {
     for (const id of nodeIds) {
       this.nodeGroups.get(id)?.classList.remove("wd-node--charged");
     }
+  }
+
+  /**
+   * animates a node (and its connected lines) horizontally to the center of the map's Genesis
+   * column, keeping its current y — used right as Phase 2's map backdrop appears, so the Need
+   * visibly settles onto its starting evolution stage instead of just appearing there already
+   * placed. Updates the node's stored position and respawns flow particles on lines touching it
+   * afterward, so the particle flow keeps tracking the line's new path. A no-op if the node id
+   * isn't registered.
+   */
+  slideToGenesis(nodeId: string, durationMs = 700): void {
+    const node = this.nodesById.get(nodeId);
+    const nodeGroup = this.nodeGroups.get(nodeId);
+    if (!node || !nodeGroup) return;
+
+    const connectedLines: ConnectedLine[] = this.lines
+      .filter(({ conn }) => conn.from === nodeId || conn.to === nodeId)
+      .map(({ conn, el }) => ({
+        line: el,
+        endpoint: conn.from === nodeId ? "from" : "to",
+      }));
+
+    const from = { x: node.x, y: node.y };
+    const to = { x: genesisCenterX(this.viewBox.width), y: node.y };
+
+    animateTo(
+      from,
+      to,
+      durationMs,
+      (point) => setNodePosition(nodeGroup, connectedLines, point),
+      () => {
+        node.x = to.x;
+        this.respawnFlowParticlesTouching(nodeId);
+      },
+    );
   }
 
   /**
@@ -334,14 +379,28 @@ export class WardleyDemo {
   }
 
   private spawnFlowParticles(): void {
+    this.lines.forEach((_, index) => this.spawnParticlesForLine(index));
+  }
+
+  private spawnParticlesForLine(index: number): void {
+    const { conn } = this.lines[index];
+    const segmentDelay = index === 0 ? FLOW_STAGGER_DELAY : 0;
+    const particles = createFlowParticles(conn, this.nodesById);
+    particles.forEach((particle, i) => {
+      const delay = segmentDelay + -(i * FLOW_PARTICLE_STAGGER);
+      particle.style.animationDelay = `${delay}s`;
+      this.particleLayer.appendChild(particle);
+    });
+  }
+
+  /** removes and respawns the flow particles for every line touching `nodeId`, against its current (post-move) position — keeps the particles riding the line instead of a stale pre-move path */
+  private respawnFlowParticlesTouching(nodeId: string): void {
     this.lines.forEach(({ conn }, index) => {
-      const segmentDelay = index === 0 ? FLOW_STAGGER_DELAY : 0;
-      const particles = createFlowParticles(conn, this.nodesById);
-      particles.forEach((particle, i) => {
-        const delay = segmentDelay + -(i * FLOW_PARTICLE_STAGGER);
-        particle.style.animationDelay = `${delay}s`;
-        this.particleLayer.appendChild(particle);
-      });
+      if (conn.from !== nodeId && conn.to !== nodeId) return;
+      this.particleLayer
+        .querySelectorAll(`[data-from="${conn.from}"][data-to="${conn.to}"]`)
+        .forEach((el) => el.remove());
+      this.spawnParticlesForLine(index);
     });
   }
 

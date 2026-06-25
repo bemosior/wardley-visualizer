@@ -121,6 +121,11 @@ const BACKDROP_LABEL_INSET = 14;
  * on the map, not just a clipped slice of it — the viewBox itself, not this function, is what
  * should stay landscape-shaped if that's a goal.
  */
+/** x-coordinate of the center of the Genesis column (the leftmost evolution-stage band) for a given viewBox width — shares the band math with `createMapBackdrop` rather than duplicating it in callers that need to position a node within that column. */
+export function genesisCenterX(viewBoxWidth: number): number {
+  return viewBoxWidth / EVOLUTION_STAGES.length / 2;
+}
+
 export function createMapBackdrop(viewBox: { width: number; height: number }): SVGGElement {
   const g = document.createElementNS(SVG_NS, "g") as SVGGElement;
   g.classList.add("wd-backdrop");
