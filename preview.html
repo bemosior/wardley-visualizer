@@ -47,7 +47,7 @@
         display: flex;
         align-items: center;
         gap: 2rem;
-        justify-content: center;
+        justify-content: flex-start;
         flex-wrap: wrap;
       }
 
@@ -60,9 +60,17 @@
         max-width: 380px;
       }
 
+      .wd-instance--expanded {
+        max-width: none;
+      }
+
       .wd-instance .wd-canvas {
         flex: 1;
         max-width: 260px;
+      }
+
+      .wd-instance .wd-canvas--expanded {
+        max-width: none;
       }
 
       /* compact toolbox, mirrors index.html's dev sandbox but card-style (not a full-height sidebar) */
@@ -87,9 +95,21 @@
         transition: opacity 0.5s ease;
       }
 
+      /*
+       * Collapses out of the flex layout instantly (no transition on the sizing properties) so
+       * the .wd-instance/.wd-canvas siblings can claim the freed space and have their final size
+       * measurable synchronously — see showMapBackdrop()'s JS-side viewBox width calculation,
+       * which needs the layout to have already settled by the time it runs.
+       */
       .wd-explanation--hidden {
         opacity: 0;
         pointer-events: none;
+        flex: 0 1 0;
+        min-width: 0;
+        max-width: 0;
+        max-height: 0;
+        margin: 0;
+        overflow: hidden;
       }
       .wd-answer {
         opacity: 0;
@@ -140,6 +160,8 @@
         },
         onEvolutionReady: function () {
           explanation.classList.add("wd-explanation--hidden");
+          document.querySelector(".wd-instance").classList.add("wd-instance--expanded");
+          document.getElementById("demo-a").classList.add("wd-canvas--expanded");
         },
         config: {
           viewBox: { width: 400, height: 520 },

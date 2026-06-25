@@ -140,7 +140,7 @@ describe("runValueChainScenario", () => {
     expect(onCelebrate).toHaveBeenCalledOnce();
   });
 
-  it("shows a second Next link after celebrating, and fires onEvolutionReady when clicked", async () => {
+  it("shows a second Next link after celebrating, reveals the map backdrop only once it's clicked, and fires onEvolutionReady", async () => {
     const onEvolutionReady = vi.fn();
     const canvas = document.createElement("div");
     const toolbox = document.createElement("div");
@@ -162,9 +162,12 @@ describe("runValueChainScenario", () => {
 
     expect(nextControl.querySelector(".wd-next-link")).not.toBeNull();
     expect(onEvolutionReady).not.toHaveBeenCalled();
+    expect(canvas.querySelector(".wd-backdrop")).toBeNull();
 
     clickNext(nextControl);
     await flush();
+
+    expect(canvas.querySelector(".wd-backdrop")).not.toBeNull();
 
     expect(onEvolutionReady).toHaveBeenCalledOnce();
     expect(nextControl.querySelector(".wd-next-link")).toBeNull();

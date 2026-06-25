@@ -4,6 +4,7 @@ import {
   createFireworkShells,
   createFlowParticles,
   createLayer,
+  createMapBackdrop,
   createNodeGroup,
   createSvgRoot,
   createTargetMarker,
@@ -46,7 +47,8 @@ export class WardleyDemo {
   private svg: SVGSVGElement;
   private viewBox: { width: number; height: number };
 
-  /** fixed z-order, bottom to top: target markers, connection lines, flow particles, node groups */
+  /** fixed z-order, bottom to top: map backdrop, target markers, connection lines, flow particles, node groups */
+  private backdropLayer: SVGGElement;
   private markerLayer: SVGGElement;
   private lineLayer: SVGGElement;
   private particleLayer: SVGGElement;
@@ -79,11 +81,12 @@ export class WardleyDemo {
     this.svg = createSvgRoot(config.viewBox);
     this.container.appendChild(this.svg);
 
+    this.backdropLayer = createLayer();
     this.markerLayer = createLayer();
     this.lineLayer = createLayer();
     this.particleLayer = createLayer();
     this.nodeLayer = createLayer();
-    this.svg.append(this.markerLayer, this.lineLayer, this.particleLayer, this.nodeLayer);
+    this.svg.append(this.backdropLayer, this.markerLayer, this.lineLayer, this.particleLayer, this.nodeLayer);
 
     for (const node of config.nodes) {
       this.addNode(node);
@@ -101,6 +104,43 @@ export class WardleyDemo {
         onComplete: config.onComplete,
       });
     }
+  }
+
+  /**
+   * snapshots the demo's current on-screen scale (rendered pixels per viewBox unit). Call this
+   * immediately before triggering whatever host-side layout change (e.g. collapsing the
+   * explanation column) will give this demo's container more width, then pass the result to
+   * `showMapBackdrop` once that resize has happened — that's what lets the map widen the viewBox
+   * without changing how big or where any already-placed node renders. Returns 0 in environments
+   * with no real layout (e.g. tests), which `showMapBackdrop` treats as "don't resize."
+   */
+  captureScale(): number {
+    const rect = this.container.getBoundingClientRect();
+    return rect.width / this.viewBox.width;
+  }
+
+  /**
+   * renders the evolution-axis map backdrop into the backdrop layer, behind everything else; safe
+   * to call once, any time after mount. `scale` must be the value `captureScale()` returned just
+   * before the container was resized — width is widened to exactly fill the container's new width
+   * at that same scale, and (if `targetHeightPx` is given, e.g. a sibling toolbox's measured
+   * height) height is extended downward to reach it at that same scale too — never shrunk below
+   * the existing viewBox, so every existing node keeps its current pixel size and position; only
+   * new map area becomes visible alongside/beneath them. A non-positive `scale` (the default in
+   * environments with no real layout) is a no-op and the backdrop renders at the existing viewBox
+   * size.
+   */
+  showMapBackdrop(scale: number, targetHeightPx?: number): void {
+    const rect = this.container.getBoundingClientRect();
+    if (rect.width > 0 && scale > 0) {
+      const mapWidth = Math.max(this.viewBox.width, rect.width / scale);
+      const mapHeight = targetHeightPx
+        ? Math.max(this.viewBox.height, targetHeightPx / scale)
+        : this.viewBox.height;
+      this.viewBox = { width: mapWidth, height: mapHeight };
+      this.svg.setAttribute("viewBox", `0 0 ${this.viewBox.width} ${this.viewBox.height}`);
+    }
+    this.backdropLayer.appendChild(createMapBackdrop(this.viewBox));
   }
 
   /** registers a node's data and renders its group into the node layer, at its `start` position if draggable */

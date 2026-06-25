@@ -8,7 +8,10 @@ const CSS = `
   --wd-color-link-hover: #003d6b;
   --wd-color-border: #e5e5e5;
   --wd-color-bg-soft: #f5f5f5;
-  --wd-color-stage-3: #2d6648;
+  --wd-color-stage-genesis: #8e44ad;
+  --wd-color-stage-custom: #2980b9;
+  --wd-color-stage-product: #27ae60;
+  --wd-color-stage-commodity: #7f8c8d;
   --wd-color-flow: #7ec8ff;
   --wd-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
@@ -25,6 +28,41 @@ const CSS = `
   width: 100%;
   height: auto;
   overflow: visible;
+}
+
+.wd-backdrop-band {
+  opacity: 0.12;
+}
+
+.wd-backdrop-band--genesis {
+  fill: var(--wd-color-stage-genesis);
+}
+
+.wd-backdrop-band--custom {
+  fill: var(--wd-color-stage-custom);
+}
+
+.wd-backdrop-band--product {
+  fill: var(--wd-color-stage-product);
+}
+
+.wd-backdrop-band--commodity {
+  fill: var(--wd-color-stage-commodity);
+}
+
+.wd-backdrop-divider {
+  stroke: var(--wd-color-border);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+}
+
+.wd-backdrop-label {
+  font-family: var(--wd-font-ui);
+  font-size: 10px;
+  fill: #999;
+  text-anchor: middle;
+  pointer-events: none;
+  user-select: none;
 }
 
 .wd-node-shape {

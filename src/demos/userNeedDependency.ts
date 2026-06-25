@@ -120,7 +120,9 @@ export async function runValueChainScenario(options: ValueChainScenarioOptions):
   options.onCelebrate?.();
 
   await showNextLink(options.nextControl);
+  const scale = demo.captureScale();
   options.onEvolutionReady?.();
+  demo.showMapBackdrop(scale, options.toolbox.getBoundingClientRect().height);
 
   return demo;
 }

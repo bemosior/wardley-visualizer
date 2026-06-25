@@ -15,19 +15,34 @@
         align-items: flex-start;
       }
 
+      .wd-instance {
+        display: flex;
+        align-items: flex-start;
+        flex: 1;
+      }
+
       .wd-toolbox {
         width: 140px;
-        min-height: 100vh;
         background: #f5f5f5;
         border-right: 1px solid #e5e5e5;
         padding: 1.25rem 0.75rem;
         flex-shrink: 0;
       }
 
+      /*
+       * No horizontal auto-centering: the canvas always sits flush against the toolbox, so its
+       * left edge never moves when .wd-canvas--expanded later lifts max-width — only the right
+       * edge grows into the space the explanation column frees up. An auto-centered canvas would
+       * instantly re-center (jump) the instant its width changed, dragging every node with it.
+       */
       .wd-canvas {
         flex: 1;
         max-width: 500px;
-        margin: 4rem auto;
+        margin: 4rem 0;
+      }
+
+      .wd-canvas--expanded {
+        max-width: none;
       }
 
       .wd-explanation {
@@ -42,9 +57,21 @@
         transition: opacity 0.5s ease;
       }
 
+      /*
+       * Collapses out of the flex layout instantly (no transition on the sizing properties) so
+       * .wd-canvas can claim the freed space and have its final size measurable synchronously —
+       * see showMapBackdrop()'s JS-side viewBox width calculation, which needs the layout to have
+       * already settled by the time it runs.
+       */
       .wd-explanation--hidden {
         opacity: 0;
         pointer-events: none;
+        flex: 0 1 0;
+        min-width: 0;
+        max-width: 0;
+        max-height: 0;
+        margin: 0;
+        overflow: hidden;
       }
 
       .wd-answer {
@@ -66,9 +93,10 @@
     </style>
   </head>
   <body>
-    <aside id="toolbox" class="wd-toolbox"></aside>
-
-    <div id="demo" class="wd-canvas"></div>
+    <div class="wd-instance">
+      <aside id="toolbox" class="wd-toolbox"></aside>
+      <div id="demo" class="wd-canvas"></div>
+    </div>
 
     <div class="wd-explanation">
       <span><strong>What is a <em>Value Chain</em>?</strong><br/></span>
@@ -96,7 +124,10 @@
         toolbox,
         nextControl,
         onNeedPlaced: () => answer.classList.add("wd-answer--visible"),
-        onEvolutionReady: () => explanation.classList.add("wd-explanation--hidden"),
+        onEvolutionReady: () => {
+          explanation.classList.add("wd-explanation--hidden");
+          document.getElementById("demo").classList.add("wd-canvas--expanded");
+        },
         onMount: autopilot?.onMount,
       });
     </script>

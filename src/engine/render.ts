@@ -111,6 +111,54 @@ export function fitNodeLabel(label: SVGTextElement, radius: number = NODE_RADIUS
   }
 }
 
+const EVOLUTION_STAGES = ["Genesis", "Custom-Built", "Product", "Commodity"] as const;
+const EVOLUTION_STAGE_CLASSES = ["genesis", "custom", "product", "commodity"] as const;
+const BACKDROP_LABEL_INSET = 14;
+
+/**
+ * the four evolution-axis stage bands + dividers + labels, rendered behind everything else.
+ * Spans the full viewBox so every node in the value chain (User down through Capabilities) sits
+ * on the map, not just a clipped slice of it — the viewBox itself, not this function, is what
+ * should stay landscape-shaped if that's a goal.
+ */
+export function createMapBackdrop(viewBox: { width: number; height: number }): SVGGElement {
+  const g = document.createElementNS(SVG_NS, "g") as SVGGElement;
+  g.classList.add("wd-backdrop");
+
+  const bandWidth = viewBox.width / EVOLUTION_STAGES.length;
+
+  EVOLUTION_STAGES.forEach((stage, i) => {
+    const x = i * bandWidth;
+
+    const band = document.createElementNS(SVG_NS, "rect");
+    band.classList.add("wd-backdrop-band", `wd-backdrop-band--${EVOLUTION_STAGE_CLASSES[i]}`);
+    band.setAttribute("x", String(x));
+    band.setAttribute("y", "0");
+    band.setAttribute("width", String(bandWidth));
+    band.setAttribute("height", String(viewBox.height));
+    g.appendChild(band);
+
+    if (i > 0) {
+      const divider = document.createElementNS(SVG_NS, "line");
+      divider.classList.add("wd-backdrop-divider");
+      divider.setAttribute("x1", String(x));
+      divider.setAttribute("y1", "0");
+      divider.setAttribute("x2", String(x));
+      divider.setAttribute("y2", String(viewBox.height));
+      g.appendChild(divider);
+    }
+
+    const label = document.createElementNS(SVG_NS, "text");
+    label.classList.add("wd-backdrop-label");
+    label.textContent = stage;
+    label.setAttribute("x", String(x + bandWidth / 2));
+    label.setAttribute("y", String(viewBox.height - BACKDROP_LABEL_INSET));
+    g.appendChild(label);
+  });
+
+  return g;
+}
+
 export function createTargetMarker(node: DemoNode): SVGGElement {
   const g = document.createElementNS(SVG_NS, "g") as SVGGElement;
   g.classList.add("wd-target-marker");

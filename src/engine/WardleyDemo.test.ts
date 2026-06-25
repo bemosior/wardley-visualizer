@@ -51,6 +51,87 @@ describe("WardleyDemo.addConnection", () => {
   });
 });
 
+describe("WardleyDemo.showMapBackdrop", () => {
+  it("appends the backdrop into the layer that is the SVG's first child, behind everything else", () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const demo = WardleyDemo.mount(container, {
+      viewBox: { width: 400, height: 300 },
+      nodes: [{ id: "user", label: "User", x: 200, y: 50, draggable: false }],
+      connections: [],
+      snapThreshold: 30,
+    });
+
+    demo.showMapBackdrop(demo.captureScale());
+
+    const svg = container.querySelector("svg")!;
+    const backdropLayer = svg.firstElementChild!;
+    expect(backdropLayer.querySelector(".wd-backdrop")).not.toBeNull();
+  });
+
+  it("widens the viewBox to fill the container's new width without changing the passed-in scale", () => {
+    const container = document.createElement("div");
+    Object.defineProperty(container, "getBoundingClientRect", {
+      value: () => ({ width: 800, height: 0, top: 0, left: 0, right: 0, bottom: 0, x: 0, y: 0, toJSON() {} }),
+    });
+    document.body.appendChild(container);
+    const demo = WardleyDemo.mount(container, {
+      viewBox: { width: 400, height: 300 },
+      nodes: [{ id: "user", label: "User", x: 200, y: 50, draggable: false }],
+      connections: [],
+      snapThreshold: 30,
+    });
+
+    // simulates the scale captured while the container was still 400px wide (scale 1), before a
+    // host-side resize doubled it to 800px — showMapBackdrop must widen the viewBox to 800 to
+    // keep that same scale, not leave it at the old 400.
+    demo.showMapBackdrop(1);
+
+    const svg = container.querySelector("svg")!;
+    expect(svg.getAttribute("viewBox")).toBe("0 0 800 300");
+  });
+
+  it("extends the viewBox height downward to reach targetHeightPx at the same scale, without changing it", () => {
+    const container = document.createElement("div");
+    Object.defineProperty(container, "getBoundingClientRect", {
+      value: () => ({ width: 400, height: 0, top: 0, left: 0, right: 0, bottom: 0, x: 0, y: 0, toJSON() {} }),
+    });
+    document.body.appendChild(container);
+    const demo = WardleyDemo.mount(container, {
+      viewBox: { width: 400, height: 300 },
+      nodes: [{ id: "user", label: "User", x: 200, y: 50, draggable: false }],
+      connections: [],
+      snapThreshold: 30,
+    });
+
+    // scale 1, target height 600 -> viewBox height must grow to 600 (600 / 1), not shrink or
+    // change the scale; the existing node at y:50 must stay exactly where it is.
+    demo.showMapBackdrop(1, 600);
+
+    const svg = container.querySelector("svg")!;
+    expect(svg.getAttribute("viewBox")).toBe("0 0 400 600");
+  });
+
+  it("never shrinks the viewBox height below its current value, even if targetHeightPx implies a smaller one", () => {
+    const container = document.createElement("div");
+    Object.defineProperty(container, "getBoundingClientRect", {
+      value: () => ({ width: 400, height: 0, top: 0, left: 0, right: 0, bottom: 0, x: 0, y: 0, toJSON() {} }),
+    });
+    document.body.appendChild(container);
+    const demo = WardleyDemo.mount(container, {
+      viewBox: { width: 400, height: 300 },
+      nodes: [{ id: "user", label: "User", x: 200, y: 50, draggable: false }],
+      connections: [],
+      snapThreshold: 30,
+    });
+
+    demo.showMapBackdrop(1, 100);
+
+    const svg = container.querySelector("svg")!;
+    expect(svg.getAttribute("viewBox")).toBe("0 0 400 300");
+  });
+});
+
 describe("WardleyDemo.relabelNode", () => {
   it("updates a node's label text", () => {
     const demo = mountEmpty();
