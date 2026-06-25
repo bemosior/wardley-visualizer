@@ -182,3 +182,72 @@ describe("WardleyDemo.runDragStep", () => {
     expect(completedB).toHaveBeenCalledOnce();
   });
 });
+
+describe("WardleyDemo.skipDrag", () => {
+  function buildAutoWiredDemo(onComplete: () => void) {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const config: DemoConfig = {
+      viewBox: { width: 400, height: 300 },
+      nodes: [
+        { id: "user", label: "User", x: 200, y: 50, draggable: false },
+        { id: "need", label: "Need", x: 200, y: 150, draggable: true, start: { x: 20, y: 150 } },
+      ],
+      connections: [{ from: "user", to: "need" }],
+      snapThreshold: 30,
+      onComplete,
+    };
+    const demo = WardleyDemo.mount(container, config);
+    return { demo, container };
+  }
+
+  it("completes the pending drag instantly: places the node at its target and fires onComplete", () => {
+    const onComplete = vi.fn();
+    const { demo, container } = buildAutoWiredDemo(onComplete);
+
+    demo.skipDrag();
+
+    expect(container.querySelector('[data-node-id="need"]')!.getAttribute("transform")).toBe("translate(200, 150)");
+    expect(onComplete).toHaveBeenCalledOnce();
+  });
+
+  it("hides the target marker and charges the node, same as a real snap", () => {
+    const { demo, container } = buildAutoWiredDemo(vi.fn());
+
+    demo.skipDrag();
+
+    expect(container.querySelector(".wd-target-marker")!.classList.contains("wd-target-marker--hidden")).toBe(true);
+    expect(container.querySelector('[data-node-id="need"]')!.classList.contains("wd-node--charged")).toBe(true);
+  });
+
+  it("restores the node's opacity when the drag was wired to an external handle", () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const handle = document.createElement("div");
+    document.body.appendChild(handle);
+    const demo = WardleyDemo.mount(
+      container,
+      {
+        viewBox: { width: 400, height: 300 },
+        nodes: [{ id: "need", label: "Need", x: 200, y: 150, draggable: true, start: { x: 20, y: 150 } }],
+        connections: [],
+        snapThreshold: 30,
+      },
+      { dragHandle: handle },
+    );
+
+    demo.skipDrag();
+
+    expect(container.querySelector('[data-node-id="need"]')!.getAttribute("style")).not.toContain("opacity: 0");
+  });
+
+  it("is a no-op if no drag step is pending", () => {
+    const onComplete = vi.fn();
+    const { demo } = buildAutoWiredDemo(onComplete);
+    demo.skipDrag();
+    onComplete.mockClear();
+
+    expect(() => demo.skipDrag()).not.toThrow();
+    expect(onComplete).not.toHaveBeenCalled();
+  });
+});

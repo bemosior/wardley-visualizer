@@ -38,7 +38,7 @@ function toSvgPoint(svg: SVGSVGElement, clientX: number, clientY: number): Point
   return { x: transformed.x, y: transformed.y };
 }
 
-function setNodePosition(nodeGroup: SVGGElement, connectedLines: ConnectedLine[], pos: Point): void {
+export function setNodePosition(nodeGroup: SVGGElement, connectedLines: ConnectedLine[], pos: Point): void {
   nodeGroup.setAttribute("transform", `translate(${pos.x}, ${pos.y})`);
   for (const { line, endpoint } of connectedLines) {
     if (endpoint === "from") {

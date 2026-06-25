@@ -10,7 +10,7 @@ import {
   fitNodeLabel,
 } from "./render";
 import { injectStylesOnce } from "./styles";
-import { attachDrag, type ConnectedLine, type RevealTarget } from "./drag";
+import { attachDrag, setNodePosition, type ConnectedLine, type RevealTarget } from "./drag";
 
 export interface MountOptions {
   /** an external element (e.g. a toolbox slot) that the draggable node must be picked up from */
@@ -55,6 +55,15 @@ export class WardleyDemo {
   private nodesById = new Map<string, DemoNode>();
   private nodeGroups = new Map<string, SVGGElement>();
   private lines: { conn: DemoConnection; el: SVGLineElement }[] = [];
+
+  /** the in-flight drag step, if any — lets `skipDrag()` complete it without a real pointer gesture */
+  private pendingDrag?: {
+    node: DemoNode;
+    nodeGroup: SVGGElement;
+    connectedLines: ConnectedLine[];
+    targetMarker: SVGGElement;
+    options: DragStepOptions;
+  };
 
   static mount(container: HTMLElement, config: DemoConfig, options?: MountOptions): WardleyDemo {
     return new WardleyDemo(container, config, options);
@@ -148,6 +157,8 @@ export class WardleyDemo {
       baseOpacity: 0.5,
     }));
 
+    this.pendingDrag = { node, nodeGroup, connectedLines, targetMarker, options };
+
     attachDrag(
       {
         svg: this.svg,
@@ -169,6 +180,7 @@ export class WardleyDemo {
     targetMarker: SVGGElement,
     options: DragStepOptions,
   ): void {
+    this.pendingDrag = undefined;
     this.activateLines();
     targetMarker.classList.add("wd-target-marker--hidden");
 
@@ -186,6 +198,24 @@ export class WardleyDemo {
     this.fireworkAt(node.x, node.y);
 
     options.onComplete?.();
+  }
+
+  /**
+   * completes the in-flight drag step instantly, without a real pointer gesture — places the
+   * node at its target and runs the same `celebrateSnap` flourish a real snap would. A no-op if
+   * no drag step is pending (e.g. it already snapped, or this config has no draggable node).
+   * Dev/testing convenience for jumping straight past Phase 0 — see `src/dev/autopilot.ts`.
+   */
+  skipDrag(): void {
+    const pending = this.pendingDrag;
+    if (!pending) return;
+    const { node, nodeGroup, connectedLines, targetMarker, options } = pending;
+    nodeGroup.classList.remove("wd-node--beckon");
+    if (options.dragHandle) {
+      nodeGroup.style.opacity = "1";
+    }
+    setNodePosition(nodeGroup, connectedLines, { x: node.x, y: node.y });
+    this.celebrateSnap(node, nodeGroup, targetMarker, options);
   }
 
   /**

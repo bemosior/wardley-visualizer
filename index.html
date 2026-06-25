@@ -78,14 +78,26 @@
 
     <script type="module">
       import WardleyDemo from "/src/index.ts";
+      import { attachAutopilot, parseSkipTarget } from "/src/dev/autopilot.ts";
       const answer = document.getElementById("vc-answer");
       const explanation = document.querySelector(".wd-explanation");
+      const toolbox = document.getElementById("toolbox");
+      const nextControl = document.getElementById("vc-next");
+
+      // Dev-only test shortcut: reload with ?skipTo=phase1 | celebrate | phase2 to jump
+      // straight past earlier phases instead of replaying drag + 5 form fields by hand.
+      const skipTarget = parseSkipTarget(location.search);
+      const autopilot = skipTarget
+        ? attachAutopilot({ toolbox, nextControl, target: skipTarget })
+        : undefined;
+
       WardleyDemo.demos.userNeedDependency({
         canvas: document.getElementById("demo"),
-        toolbox: document.getElementById("toolbox"),
-        nextControl: document.getElementById("vc-next"),
+        toolbox,
+        nextControl,
         onNeedPlaced: () => answer.classList.add("wd-answer--visible"),
         onEvolutionReady: () => explanation.classList.add("wd-explanation--hidden"),
+        onMount: autopilot?.onMount,
       });
     </script>
   </body>

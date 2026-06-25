@@ -35,6 +35,8 @@ export interface ValueChainScenarioOptions {
   /** fires as soon as the Need snaps into place (Phase 0 done); the scenario then shows a "Next" link in `nextControl` and waits for the visitor to click it before switching the Toolbox into the Phase 1 form */
   onNeedPlaced?: () => void;
   onCelebrate?: () => void;
+  /** fires right after the canvas mounts, before the drag step resolves — lets a caller grab the `WardleyDemo` instance early enough to call `skipDrag()` (see `src/dev/autopilot.ts`) */
+  onMount?: (demo: WardleyDemo) => void;
   /** fires once the visitor clicks the second "Next" link (shown in `nextControl` after the celebration) — the signal that Phase 2 starts */
   onEvolutionReady?: () => void;
   /** override the generated layout's geometry; ignored if `config` is supplied */
@@ -78,6 +80,7 @@ export async function runValueChainScenario(options: ValueChainScenarioOptions):
       },
       { dragHandle: dragHandle.activeElement },
     );
+    options.onMount?.(demo);
   });
 
   options.onNeedPlaced?.();
