@@ -107,7 +107,7 @@ export async function runValueChainScenario(options: ValueChainScenarioOptions):
   }
 
   panel.clear();
-  demo.celebrate(chain.need.id);
+  demo.celebrateAll();
   options.onCelebrate?.();
 
   return demo;

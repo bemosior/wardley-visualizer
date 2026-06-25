@@ -79,7 +79,7 @@ describe("WardleyDemo.relabelNode", () => {
   });
 });
 
-describe("WardleyDemo.celebrate", () => {
+describe("WardleyDemo.celebrateAll", () => {
   function buildDemo(): { demo: WardleyDemo; container: HTMLElement } {
     const container = document.createElement("div");
     document.body.appendChild(container);
@@ -95,20 +95,29 @@ describe("WardleyDemo.celebrate", () => {
     return { demo, container };
   }
 
-  it("activates every line and fires a firework, without charging nodes that weren't already charged", () => {
+  it("activates every line and fires one firework per node, without charging nodes that weren't already charged", () => {
+    vi.useFakeTimers();
     const { demo, container } = buildDemo();
-    demo.celebrate("need");
+    demo.celebrateAll();
 
     expect(container.querySelector(".wd-line")!.classList.contains("wd-line--active")).toBe(true);
-    expect(container.querySelector(".wd-firework-shell")).not.toBeNull();
+    vi.advanceTimersByTime(1000);
+    expect(container.querySelectorAll(".wd-firework-shell").length).toBeGreaterThanOrEqual(2);
     expect(container.querySelector('[data-node-id="user"]')!.classList.contains("wd-node--charged")).toBe(false);
     expect(container.querySelector('[data-node-id="need"]')!.classList.contains("wd-node--charged")).toBe(false);
+    vi.useRealTimers();
   });
 
-  it("does nothing if the node id isn't registered", () => {
-    const { demo, container } = buildDemo();
-    expect(() => demo.celebrate("missing")).not.toThrow();
-    expect(container.querySelector(".wd-line")!.classList.contains("wd-line--active")).toBe(false);
+  it("bursts the topmost node (lowest y) first", () => {
+    vi.useFakeTimers();
+    const { demo } = buildDemo();
+    const spy = vi.spyOn(demo as any, "fireworkAt");
+    demo.celebrateAll();
+
+    vi.runAllTimers();
+    expect(spy.mock.calls[0]).toEqual([200, 50]);
+    expect(spy.mock.calls[1]).toEqual([200, 150]);
+    vi.useRealTimers();
   });
 });
 

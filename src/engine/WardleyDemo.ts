@@ -39,6 +39,7 @@ const CHARGED_STAGGER_DELAY = "0.4s";
 
 /** firework shell animation is 1.1s plus up to ~0.36s shell stagger; pad before cleanup */
 const FIREWORK_CLEANUP_MS = 1700;
+const FIREWORK_BURST_STAGGER_MS = 250;
 
 export class WardleyDemo {
   private container: HTMLElement;
@@ -188,18 +189,18 @@ export class WardleyDemo {
   }
 
   /**
-   * non-drag celebration: fires a firework burst centered on `nodeId`. For flows
-   * (e.g. Phase 1's form sequence) that finish without a drag/snap to anchor the
-   * celebration to. The lines/charging/flow-particle animations from Phase 0's
-   * `celebrateSnap` are already running continuously by this point and aren't
-   * re-triggered here.
+   * non-drag celebration: fires one firework burst per node, top to bottom. For
+   * flows (e.g. Phase 1's form sequence) that finish without a drag/snap to
+   * anchor the celebration to. The lines/charging/flow-particle animations from
+   * Phase 0's `celebrateSnap` are already running continuously by this point
+   * and aren't re-triggered here.
    */
-  celebrate(nodeId: string): void {
-    const node = this.nodesById.get(nodeId);
-    if (!node) return;
-
+  celebrateAll(): void {
     this.activateLines();
-    this.fireworkAt(node.x, node.y);
+    const orderedNodes = [...this.nodesById.values()].sort((a, b) => a.y - b.y);
+    orderedNodes.forEach((node, i) => {
+      setTimeout(() => this.fireworkAt(node.x, node.y), i * FIREWORK_BURST_STAGGER_MS);
+    });
   }
 
   private activateLines(): void {
