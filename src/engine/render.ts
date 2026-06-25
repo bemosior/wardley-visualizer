@@ -42,9 +42,67 @@ export function createNodeGroup(node: DemoNode): SVGGElement {
 const LABEL_PADDING = 12;
 const LABEL_MIN_FONT_SIZE = 9;
 
-/** shrinks a label's font-size to fit inside its node if it would otherwise overflow; leaves short labels untouched */
+/** measures the rendered width of `text` as a tspan of `label`, without disturbing label's existing content */
+function measureTspanWidth(label: SVGTextElement, text: string): number {
+  const tspan = document.createElementNS(SVG_NS, "tspan");
+  tspan.textContent = text;
+  label.appendChild(tspan);
+  const width = tspan.getComputedTextLength();
+  label.removeChild(tspan);
+  return width;
+}
+
+/** greedily wraps `words` into the fewest lines that each fit within maxWidth, at label's current font size */
+function wrapWords(label: SVGTextElement, words: string[], maxWidth: number): string[] {
+  const lines: string[] = [];
+  let currentLine = "";
+  for (const word of words) {
+    const candidate = currentLine ? `${currentLine} ${word}` : word;
+    if (currentLine && measureTspanWidth(label, candidate) > maxWidth) {
+      lines.push(currentLine);
+      currentLine = word;
+    } else {
+      currentLine = candidate;
+    }
+  }
+  if (currentLine) lines.push(currentLine);
+  return lines;
+}
+
+/**
+ * fits a label inside its node, first by word-wrapping it onto multiple centered lines, falling back
+ * to shrinking the font-size (the original behavior) only if wrapping can't make it fit. Leaves
+ * short labels untouched.
+ */
 export function fitNodeLabel(label: SVGTextElement, radius: number = NODE_RADIUS): void {
   const maxWidth = radius * 2 - LABEL_PADDING;
+  const originalText = label.textContent ?? "";
+  if (label.getComputedTextLength() <= maxWidth) return;
+
+  const words = originalText.trim().split(/\s+/).filter(Boolean);
+  if (words.length > 1) {
+    label.textContent = "";
+    const lineHeight = parseFloat(getComputedStyle(label).fontSize) * 1.2;
+    const maxLines = Math.max(1, Math.floor((radius * 2 - LABEL_PADDING) / lineHeight));
+    const lines = wrapWords(label, words, maxWidth);
+    const fits =
+      lines.length > 1 && lines.length <= maxLines && lines.every((line) => measureTspanWidth(label, line) <= maxWidth);
+
+    if (fits) {
+      const startDy = -((lines.length - 1) / 2) * lineHeight;
+      lines.forEach((line, i) => {
+        const tspan = document.createElementNS(SVG_NS, "tspan");
+        tspan.textContent = line;
+        tspan.setAttribute("x", label.getAttribute("x") ?? "0");
+        tspan.setAttribute("dy", `${i === 0 ? startDy : lineHeight}`);
+        label.appendChild(tspan);
+      });
+      return;
+    }
+
+    label.textContent = originalText;
+  }
+
   const actualWidth = label.getComputedTextLength();
   if (actualWidth > maxWidth) {
     const currentFontSize = parseFloat(getComputedStyle(label).fontSize);

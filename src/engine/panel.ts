@@ -52,6 +52,7 @@ export class Panel {
 
     const content = document.createElement("div");
     content.classList.add("wd-panel-content");
+    const iconLabels: SVGTextElement[] = [];
 
     for (const slot of slots) {
       const wrapper = document.createElement("div");
@@ -82,7 +83,7 @@ export class Panel {
 
       wrapper.append(svg, caption);
       content.appendChild(wrapper);
-      fitNodeLabel(text, ICON_RADIUS);
+      iconLabels.push(text);
 
       if (slot.active) {
         active = wrapper;
@@ -90,6 +91,9 @@ export class Panel {
     }
 
     this.container.appendChild(content);
+    for (const text of iconLabels) {
+      fitNodeLabel(text, ICON_RADIUS);
+    }
 
     if (!active) {
       throw new Error("Panel.showDragHandles requires exactly one active slot");
