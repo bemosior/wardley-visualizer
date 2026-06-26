@@ -375,8 +375,9 @@ export class WardleyDemo {
    * wires Phase 2's evolution-axis interaction for an already-registered node: free horizontal
    * drag (no snap, no auto-commit) with live `onPositionChange(stageLabel)` callbacks, and a
    * returned `confirm()` the caller invokes once the visitor has committed to where they dropped
-   * it — that re-charges the node, respawns flow particles on its lines, and fires a firework at
-   * its final position as the "placement confirmed" cue.
+   * it — that stops the beckon pulse, respawns flow particles on its lines, and fires a firework
+   * at its final position as the "placement confirmed" cue. Doesn't re-add the "charged" glow
+   * `stopCharging` cleared going into Phase 2 — it'd compete with the evolution-drag interaction.
    */
   runEvolutionDragStep(nodeId: string, options: EvolutionDragStepOptions = {}): EvolutionDragHandle {
     const node = this.nodesById.get(nodeId)!;
@@ -388,6 +389,8 @@ export class WardleyDemo {
         line: el,
         endpoint: conn.from === nodeId ? "from" : "to",
       }));
+
+    nodeGroup.classList.add("wd-node--draggable");
 
     const handle = attachAxisDrag({
       svg: this.svg,
@@ -403,8 +406,9 @@ export class WardleyDemo {
     return {
       confirm: () => {
         handle.confirm((x) => {
+          nodeGroup.classList.remove("wd-node--draggable");
+          nodeGroup.classList.remove("wd-node--beckon");
           this.respawnFlowParticlesTouching(nodeId);
-          nodeGroup.classList.add("wd-node--charged");
           this.fireworkAt(x, node.y);
         });
       },

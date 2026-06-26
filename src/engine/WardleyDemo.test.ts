@@ -557,7 +557,7 @@ describe("WardleyDemo.runEvolutionDragStep", () => {
     expect(container.querySelector('[data-node-id="need"]')!.getAttribute("transform")).toBe("translate(150, 150)");
   });
 
-  it("confirm() charges the node, respawns its flow particles, and stops further dragging", () => {
+  it("confirm() stops the beckon pulse, respawns flow particles, and stops further dragging, without re-charging the node", () => {
     const { demo, container } = buildDemo();
     const evolutionStep = demo.runEvolutionDragStep("need");
     const nodeGroup = container.querySelector('[data-node-id="need"]')!;
@@ -565,7 +565,8 @@ describe("WardleyDemo.runEvolutionDragStep", () => {
 
     evolutionStep.confirm();
 
-    expect(nodeGroup.classList.contains("wd-node--charged")).toBe(true);
+    expect(nodeGroup.classList.contains("wd-node--charged")).toBe(false);
+    expect(nodeGroup.classList.contains("wd-node--beckon")).toBe(false);
     expect(container.querySelectorAll(".wd-flow-particle").length).toBeGreaterThan(0);
 
     dragAxis(nodeGroup, 150, 250);
