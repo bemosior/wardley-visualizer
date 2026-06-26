@@ -154,12 +154,12 @@ describe("WardleyDemo.showMapBackdrop", () => {
     expect(caption.getAttribute("x")).toBe("600");
     expect(caption.classList.contains("wd-map-caption--visible")).toBe(false);
 
-    // advance only past the 0ms fade-in timer, not the later 2200ms fade-out one (which
+    // advance only past the 0ms fade-in timer, not the later 5200ms fade-out one (which
     // `runOnlyPendingTimers` would also fire here, since both are already pending).
     vi.advanceTimersByTime(0);
     expect(caption.classList.contains("wd-map-caption--visible")).toBe(true);
 
-    vi.advanceTimersByTime(2200);
+    vi.advanceTimersByTime(5200);
     expect(caption.classList.contains("wd-map-caption--visible")).toBe(false);
     expect(container.querySelector(".wd-map-caption")).not.toBeNull();
 
