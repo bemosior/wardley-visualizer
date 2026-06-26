@@ -1,5 +1,6 @@
 import { fitNodeLabel } from "./render";
 import { injectStylesOnce } from "./styles";
+import { showNextLink } from "./nextLink";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const ICON_RADIUS = 26;
@@ -191,6 +192,16 @@ export class Panel {
     // deferred via setTimeout (same trick as WardleyDemo's showMapCaption) so the browser paints
     // the initial opacity:0 first, then `delayMs` later starts this fading in.
     setTimeout(() => content.classList.add("wd-panel-placeholder--visible"), delayMs);
+  }
+
+  /**
+   * appends a confirm link (the same `showNextLink` control) into the currently-rendered
+   * `.wd-panel-content`, so it shows up inside the Toolbox instead of a host-page element;
+   * resolves once clicked, then removes itself.
+   */
+  confirmPlacement(label = "Confirm placement"): Promise<void> {
+    const content = this.container.querySelector<HTMLElement>(".wd-panel-content") ?? this.container;
+    return showNextLink(content, label);
   }
 
   /** updates the subheading text of an already-rendered `showPlaceholder`; a no-op if the panel isn't currently in that mode */

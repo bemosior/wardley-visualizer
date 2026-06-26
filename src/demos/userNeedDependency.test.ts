@@ -30,6 +30,11 @@ function clickNext(nextControl: HTMLElement): void {
   nextControl.querySelector<HTMLAnchorElement>(".wd-next-link")!.click();
 }
 
+/** the evolution step's "Confirm placement" link renders inside the Toolbox, not nextControl */
+function clickConfirm(toolbox: HTMLElement): void {
+  toolbox.querySelector<HTMLAnchorElement>(".wd-next-link")!.click();
+}
+
 function buildScenario(onCelebrate: () => void) {
   const canvas = document.createElement("div");
   const toolbox = document.createElement("div");
@@ -240,12 +245,12 @@ describe("runValueChainScenario", () => {
     runValueChainScenario({ canvas, toolbox, nextControl });
     await reachEvolutionStep(toolbox, nextControl);
 
-    expect(nextControl.querySelector(".wd-next-link")).toBeNull();
+    expect(toolbox.querySelector(".wd-next-link")).toBeNull();
 
     drag(canvas.querySelector('[data-node-id="need"]')!, { x: 150, y: 76 });
     await flush();
 
-    const confirmLink = nextControl.querySelector<HTMLAnchorElement>(".wd-next-link");
+    const confirmLink = toolbox.querySelector<HTMLAnchorElement>(".wd-next-link");
     expect(confirmLink).not.toBeNull();
     expect(confirmLink!.textContent).toBe("Confirm placement");
     vi.useRealTimers();
@@ -271,7 +276,7 @@ describe("runValueChainScenario", () => {
     expect(toolbox.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe("Product");
     expect(resolved).toBe(false);
 
-    clickNext(nextControl);
+    clickConfirm(toolbox);
     await flush();
 
     // the scenario doesn't resolve yet — Capability-1/2/3 still have to go through
@@ -285,14 +290,14 @@ describe("runValueChainScenario", () => {
   /** drags a node to (x, y) and clicks the resulting "Confirm placement" link — the same pattern used for the Need and each capability's evolution step */
   async function confirmEvolutionStep(
     canvas: HTMLElement,
-    nextControl: HTMLElement,
+    toolbox: HTMLElement,
     nodeId: string,
     x: number,
     y: number,
   ): Promise<void> {
     drag(canvas.querySelector(`[data-node-id="${nodeId}"]`)!, { x, y });
     await flush();
-    clickNext(nextControl);
+    clickConfirm(toolbox);
     await flush();
   }
 
@@ -307,22 +312,22 @@ describe("runValueChainScenario", () => {
       resolved = true;
     });
     await reachEvolutionStep(toolbox, nextControl);
-    await confirmEvolutionStep(canvas, nextControl, "need", 150, 76);
+    await confirmEvolutionStep(canvas, toolbox, "need", 150, 76);
 
     expect(toolbox.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("A kettle");
     expect(canvas.querySelector('[data-node-id="dependency-1"]')!.getAttribute("transform")).toMatch(
       /^translate\(50,/,
     );
 
-    await confirmEvolutionStep(canvas, nextControl, "dependency-1", 150, 157);
+    await confirmEvolutionStep(canvas, toolbox, "dependency-1", 150, 157);
     expect(toolbox.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Water");
     expect(resolved).toBe(false);
 
-    await confirmEvolutionStep(canvas, nextControl, "dependency-2", 150, 157);
+    await confirmEvolutionStep(canvas, toolbox, "dependency-2", 150, 157);
     expect(toolbox.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Electricity");
     expect(resolved).toBe(false);
 
-    await confirmEvolutionStep(canvas, nextControl, "dependency-3", 150, 157);
+    await confirmEvolutionStep(canvas, toolbox, "dependency-3", 150, 157);
 
     expect(resolved).toBe(true);
     expect(toolbox.querySelector(".wd-panel-placeholder-heading")).toBeNull();

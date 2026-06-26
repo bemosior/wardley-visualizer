@@ -261,6 +261,11 @@ const CSS = `
   color: var(--wd-color-link-hover, #003d6b);
 }
 
+.wd-panel-placeholder .wd-next-link {
+  text-align: center;
+  margin-top: 0.75rem;
+}
+
 .wd-panel-slot {
   position: relative;
   display: flex;

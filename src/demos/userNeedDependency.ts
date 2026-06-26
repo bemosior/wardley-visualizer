@@ -19,19 +19,15 @@ const seedValueChain = createValueChain({
 /**
  * wires `WardleyDemo.runEvolutionDragStep` for one node and resolves once the visitor confirms
  * its placement — shared by the Need's evolution step and the Capability-1/2/3 loop that repeats
- * the same interaction after it.
+ * the same interaction after it. The "Confirm placement" link renders inside the Toolbox
+ * (`panel.confirmPlacement`), not the host's `nextControl`, since it's hidden during Phase 2.
  */
-function awaitEvolutionConfirm(
-  demo: WardleyDemo,
-  panel: Panel,
-  nextControl: HTMLElement,
-  nodeId: string,
-): Promise<void> {
+function awaitEvolutionConfirm(demo: WardleyDemo, panel: Panel, nodeId: string): Promise<void> {
   return new Promise<void>((resolve) => {
     const evolutionStep = demo.runEvolutionDragStep(nodeId, {
       onPositionChange: (stageLabel) => panel.updatePlaceholderSubheading(stageLabel),
       onReadyToConfirm: () => {
-        showNextLink(nextControl, "Confirm placement").then(() => {
+        panel.confirmPlacement().then(() => {
           evolutionStep.confirm();
           resolve();
         });
@@ -89,7 +85,9 @@ export interface ValueChainScenarioOptions {
  * the instrument-panel mode Phase 2 hasn't built yet, though its subheading
  * already updates live (`Panel.updatePlaceholderSubheading`) as the visitor
  * drags the Need along the evolution axis (`demo.runEvolutionDragStep`). A
- * "Confirm placement" link (the same `showNextLink` control, relabeled)
+ * "Confirm placement" link (`Panel.confirmPlacement`, rendered inside the
+ * Toolbox itself rather than `nextControl` — `nextControl` lives inside the
+ * host's `.wd-explanation` block, which is hidden for the rest of Phase 2)
  * appears the first time the Need is dropped, and resolves this function
  * once clicked. The same drag-confirm pattern then repeats for Capability-1/2/3
  * in turn (each slides into the Genesis column, beckons, and gets its own
@@ -170,13 +168,13 @@ export async function runValueChainScenario(options: ValueChainScenarioOptions):
   setTimeout(() => demo.slideToGenesis(chain.need.id), MAP_CAPTION_FADE_MS);
   demo.beckonNode(chain.need.id);
 
-  await awaitEvolutionConfirm(demo, panel, options.nextControl, chain.need.id);
+  await awaitEvolutionConfirm(demo, panel, chain.need.id);
 
   for (const capability of chain.capabilities) {
     panel.showPlaceholder(capability.label, "Genesis");
     demo.beckonNode(capability.id);
     demo.slideToGenesis(capability.id);
-    await awaitEvolutionConfirm(demo, panel, options.nextControl, capability.id);
+    await awaitEvolutionConfirm(demo, panel, capability.id);
   }
 
   panel.showEmpty();

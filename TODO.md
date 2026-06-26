@@ -164,11 +164,18 @@ left-right along its evolution axis one at a time, sees live characteristics
       (`src/demos/userNeedDependency.ts`) wires it right after `demo.beckonNode`:
       `onPositionChange` calls a new `Panel.updatePlaceholderSubheading(text)` so
       the Toolbox's "Genesis" subheading updates live as the visitor drags; the
-      first time the node is released (`onReadyToConfirm`), a `showNextLink`
-      (now takes an optional `label` param) appears reading "Confirm placement"
-      instead of "Next" — clicking it calls `confirm()` and resolves the
-      scenario's promise. No instrument-panel/characteristics content yet (see
-      below) — just the live stage name.
+      first time the node is released (`onReadyToConfirm`), a confirm link
+      appears reading "Confirm placement" — clicking it calls `confirm()` and
+      resolves the scenario's promise. No instrument-panel/characteristics
+      content yet (see below) — just the live stage name.
+      **Fix:** this link was originally rendered via `showNextLink(nextControl,
+      ...)`, same as the Phase 0→1 and Phase 1→2 gates — but `nextControl`
+      lives inside the host's `.wd-explanation` block, which `onEvolutionReady`
+      already hides for the rest of Phase 2, so the link silently rendered
+      into an invisible container. `Panel` gained `confirmPlacement(label?)`,
+      which appends the same `showNextLink` control into the Toolbox's own
+      `.wd-panel-content` instead; `awaitEvolutionConfirm` now calls
+      `panel.confirmPlacement()` and no longer takes a `nextControl` param.
 - [x] Repeated the drag-confirm step for Capability-1/2/3. `userNeedDependency.ts`
       factors the wait-for-confirm wiring into a shared `awaitEvolutionConfirm`
       helper (used by the Need too) and, after the Need's `confirm()`, loops over
