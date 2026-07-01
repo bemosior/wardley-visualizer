@@ -4,6 +4,7 @@ import { showNextLink } from "../engine/nextLink";
 import { createValueChain, relabelCapability, relabelNeed, relabelUser } from "../domain/valueChain";
 import { layoutValueChain, type ValueChainLayoutOptions } from "../application/valueChainLayout";
 import { NEED_CATALOG } from "../domain/needCatalog";
+import type { EvolutionStage } from "../domain/evolution";
 import type { DemoConfig } from "../engine/types";
 
 const seedValueChain = createValueChain({
@@ -30,7 +31,7 @@ function awaitEvolutionConfirm(
 ): Promise<void> {
   return new Promise<void>((resolve) => {
     const evolutionStep = demo.runEvolutionDragStep(nodeId, {
-      onPositionChange: (stageLabel) => panel.updatePlaceholderSubheading(stageLabel),
+      onPositionChange: (stageLabel) => panel.updateInstrumentPanel(stageLabel as EvolutionStage),
       onReadyToConfirm: () => {
         panel.confirmPlacement().then(() => {
           evolutionStep.confirm();
@@ -90,11 +91,11 @@ export interface ValueChainScenarioOptions {
  * The Toolbox is then emptied to a full-height placeholder (`Panel.showEmpty`)
  * rather than collapsed — it stays in place, ready for Phase 2's content —
  * and a second "Next" link gates the move into Phase 2 (`onEvolutionReady`).
- * Once that fires, the Toolbox swaps to `Panel.showPlaceholder` showing the
- * Need's label and its starting evolution stage ("Genesis") — a stand-in for
- * the instrument-panel mode Phase 2 hasn't built yet, though its subheading
- * already updates live (`Panel.updatePlaceholderSubheading`) as the visitor
- * drags the Need along the evolution axis (`demo.runEvolutionDragStep`). A
+ * Once that fires, the Toolbox swaps to `Panel.showInstrumentPanel` showing the
+ * Need's label, its starting evolution stage ("Genesis"), and the matching
+ * characteristics text from `domain/evolution.ts` — updating live
+ * (`Panel.updateInstrumentPanel`) as the visitor drags the Need along the
+ * evolution axis (`demo.runEvolutionDragStep`). A
  * "Confirm placement" link (`Panel.confirmPlacement`, rendered inside the
  * Toolbox itself rather than `nextControl` — `nextControl` lives inside the
  * host's `.wd-explanation` block, which is hidden for the rest of Phase 2)
@@ -166,7 +167,7 @@ export async function runValueChainScenario(options: ValueChainScenarioOptions):
   const scale = demo.captureScale();
   options.onEvolutionReady?.();
   demo.stopCharging([chain.user.id, chain.need.id]);
-  panel.showPlaceholder(chain.need.label, "Genesis", MAP_CAPTION_FADE_MS);
+  panel.showInstrumentPanel(chain.need.label, "need", "Genesis", MAP_CAPTION_FADE_MS);
   demo.showMapBackdrop(
     scale,
     options.toolbox.getBoundingClientRect().height,
@@ -181,7 +182,7 @@ export async function runValueChainScenario(options: ValueChainScenarioOptions):
   await awaitEvolutionConfirm(demo, panel, chain.need.id, options.onEvolutionStep);
 
   for (const capability of chain.capabilities) {
-    panel.showPlaceholder(capability.label, "Genesis");
+    panel.showInstrumentPanel(capability.label, "capability", "Genesis");
     demo.beckonNode(capability.id);
     demo.slideToGenesis(capability.id);
     await awaitEvolutionConfirm(demo, panel, capability.id, options.onEvolutionStep);

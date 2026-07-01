@@ -1,6 +1,10 @@
 import { fitNodeLabel } from "./render";
 import { injectStylesOnce } from "./styles";
 import { showNextLink } from "./nextLink";
+import { characteristicsFor, type EvolutionStage } from "../domain/evolution";
+
+/** the two component kinds that travel along the evolution axis — User never does */
+export type EvolutionKind = "need" | "capability";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const ICON_RADIUS = 26;
@@ -33,12 +37,14 @@ export type PanelField =
 
 /**
  * the side panel ("toolbox"): a single region that swaps between interaction
- * modes as the tutorial progresses. Today: drag-handle (pick up a node) and
- * form (answer one prompt at a time). Later phases add an instrument-panel
- * readout (Phase 2) and a Q&A mode (Phase 3) — not built yet.
+ * modes as the tutorial progresses. Today: drag-handle (pick up a node), form
+ * (answer one prompt at a time), and instrument-panel (live evolution-stage
+ * characteristics readout, Phase 2). A Q&A mode (Phase 3) is not built yet.
  */
 export class Panel {
   private container: HTMLElement;
+  /** the kind currently rendered by `showInstrumentPanel`, so `updateInstrumentPanel` knows which characteristics table to read from */
+  private instrumentKind: EvolutionKind | null = null;
 
   constructor(container: HTMLElement) {
     injectStylesOnce();
@@ -195,6 +201,46 @@ export class Panel {
   }
 
   /**
+   * live-updating readout for Phase 2's evolution drag: heading (the node's label) + current
+   * stage name + real characteristics text (`domain/evolution.ts`'s `characteristicsFor`) for
+   * that stage/kind. Reuses `showPlaceholder`'s layout/fade-in so it stays visually consistent
+   * with the rest of Phase 2; `updateInstrumentPanel` then swaps stage + characteristics as the
+   * visitor drags, without a full re-render.
+   */
+  showInstrumentPanel(heading: string, kind: EvolutionKind, initialStage: EvolutionStage, delayMs = 0): void {
+    this.clear();
+    this.instrumentKind = kind;
+    const content = document.createElement("div");
+    content.classList.add("wd-panel-content", "wd-panel-content--top", "wd-panel-placeholder");
+
+    const headingEl = document.createElement("div");
+    headingEl.classList.add("wd-panel-placeholder-heading");
+    headingEl.textContent = heading;
+
+    const stageEl = document.createElement("div");
+    stageEl.classList.add("wd-panel-placeholder-subheading");
+    stageEl.textContent = initialStage;
+
+    const characteristicsEl = document.createElement("div");
+    characteristicsEl.classList.add("wd-panel-instrument-characteristics");
+    characteristicsEl.textContent = characteristicsFor(kind, initialStage);
+
+    content.append(headingEl, stageEl, characteristicsEl);
+    this.container.appendChild(content);
+
+    setTimeout(() => content.classList.add("wd-panel-placeholder--visible"), delayMs);
+  }
+
+  /** updates the stage name + characteristics text of an already-rendered `showInstrumentPanel`; a no-op if the panel isn't currently in that mode */
+  updateInstrumentPanel(stage: EvolutionStage): void {
+    if (!this.instrumentKind) return;
+    const stageEl = this.container.querySelector<HTMLElement>(".wd-panel-placeholder-subheading");
+    const characteristicsEl = this.container.querySelector<HTMLElement>(".wd-panel-instrument-characteristics");
+    if (stageEl) stageEl.textContent = stage;
+    if (characteristicsEl) characteristicsEl.textContent = characteristicsFor(this.instrumentKind, stage);
+  }
+
+  /**
    * appends a confirm link (the same `showNextLink` control) into the currently-rendered
    * `.wd-panel-content`, so it shows up inside the Toolbox instead of a host-page element;
    * resolves once clicked, then removes itself.
@@ -214,5 +260,6 @@ export class Panel {
 
   clear(): void {
     this.container.innerHTML = "";
+    this.instrumentKind = null;
   }
 }

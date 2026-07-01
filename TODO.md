@@ -100,7 +100,7 @@ happens first, then the Toolbox continues into the 5-step form:
       embed: drag snaps and charges the chain, form steps relabel nodes live,
       final celebration re-charges everything and fires `onCelebrate`.
 
-## Phase 2 — Evolution (entry gate, map backdrop, and drag-confirm for all four nodes done; full instrument-panel not started)
+## Phase 2 — Evolution (entry gate, map backdrop, drag-confirm, characteristics data, and instrument-panel readout all done; stage-dependent flow animation not started)
 
 Goal: a Wardley map backdrop appears behind the value chain; User floats above
 it, Need + Capabilities sit on it; visitor drags each of Need/Capability-1/2/3
@@ -185,9 +185,10 @@ left-right along its evolution axis one at a time, sees live characteristics
       (`panel.showEmpty()`) and `demo.celebrateAll()` fires once more as the
       "all four placed" finale.
 
+- [x] **Evolutionary-characteristics data.** `src/domain/evolution.ts` exports `EVOLUTION_STAGES`, `EvolutionStage`, and `characteristicsFor(kind, stage)`, with text split by `ComponentKind` (`need` vs `capability`) per the forecast ("characteristics relevant to capabilities instead of user needs"). Throws for `"user"`, which never travels the evolution axis.
+- [x] **Live-updating "instrument panel" Panel mode.** `panel.ts`'s `Panel` gained `showInstrumentPanel(heading, kind, initialStage, delayMs?)` and `updateInstrumentPanel(stage)`, rendering heading + live stage name + real characteristics text from `domain/evolution.ts` (reusing `showPlaceholder`'s layout/fade-in CSS, new `.wd-panel-instrument-characteristics` class in `styles.ts`). `userNeedDependency.ts` now calls `showInstrumentPanel` (instead of `showPlaceholder`) for the Need and each Capability's evolution step, and `awaitEvolutionConfirm`'s `onPositionChange` calls `updateInstrumentPanel` instead of `updatePlaceholderSubheading`.
+
 Still missing, not yet built:
-- **Evolutionary-characteristics data.** No data module for this yet. Needs a small domain module (e.g. `src/domain/evolution.ts`) mapping evolution-stage (continuous x-position, or a discretized stage enum) → characteristics text, probably split by `ComponentKind` (`need` vs `capability`) per the forecast ("characteristics relevant to capabilities instead of user needs").
-- **Live-updating "instrument panel" Panel mode.** `panel.ts`'s `Panel` class needs a new method, e.g. `showInstrumentPanel(...)`, that re-renders real characteristics text (once `domain/evolution.ts` exists) as drag position changes, rather than the simple stage-name label `updatePlaceholderSubheading` shows today. This is the mode `panel.ts`'s own doc comment already flags as deferred.
 - **Stage-dependent flow animation.** The "genesis sputters / commodity flows smoothly" requirement means `createFlowParticles` (`render.ts`) and its CSS (`styles.ts`) need parameters for particle count/speed/regularity driven by evolution stage, not just the fixed `FLOW_PARTICLE_COUNT`/timing constants `WardleyDemo.ts` uses today.
 
 ## Phase 3 — Thinking with the map (not started; needs new abstractions)

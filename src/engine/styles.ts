@@ -247,6 +247,16 @@ const CSS = `
   margin-top: 0.25rem;
 }
 
+.wd-panel-instrument-characteristics {
+  font-family: var(--wd-font-ui);
+  font-size: 0.8rem;
+  color: var(--wd-color-ink);
+  text-align: center;
+  line-height: 1.35;
+  margin-top: 0.75rem;
+  padding: 0 0.5rem;
+}
+
 .wd-next-link {
   display: block;
   font-family: var(--wd-font-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
