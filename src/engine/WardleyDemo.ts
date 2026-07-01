@@ -18,7 +18,7 @@ import {
 } from "./render";
 import { injectStylesOnce } from "./styles";
 import { attachAxisDrag, attachDrag, setNodePosition, type ConnectedLine, type RevealTarget } from "./drag";
-import { animateTo } from "./animate";
+import { animateTo, type Point } from "./animate";
 
 export interface MountOptions {
   /** an external element (e.g. a toolbox slot) that the draggable node must be picked up from */
@@ -364,7 +364,10 @@ export class WardleyDemo {
       from,
       to,
       durationMs,
-      (point) => setNodePosition(nodeGroup, connectedLines, point),
+      (point) => {
+        setNodePosition(nodeGroup, connectedLines, point);
+        this.updateFlowParticlePaths(nodeId, point);
+      },
       () => {
         node.x = to.x;
         this.setNodeStage(nodeId, "Genesis");
@@ -400,7 +403,10 @@ export class WardleyDemo {
       connectedLines,
       minX: NODE_RADIUS,
       maxX: this.viewBox.width - NODE_RADIUS,
-      onPositionChange: (x) => options.onPositionChange?.(stageLabelAt(x, this.viewBox.width)),
+      onPositionChange: (x) => {
+        options.onPositionChange?.(stageLabelAt(x, this.viewBox.width));
+        this.updateFlowParticlePaths(nodeId, { x, y: node.y });
+      },
       onFirstRelease: options.onReadyToConfirm,
     });
 
@@ -474,6 +480,27 @@ export class WardleyDemo {
     if (this.nodeStage.get(nodeId) === stage) return;
     this.nodeStage.set(nodeId, stage);
     this.respawnFlowParticlesTouching(nodeId);
+  }
+
+  /**
+   * live-repoints the offset-path of every flow particle riding a line touching `nodeId`, given
+   * that node's in-flight position — used while a node is being animated/dragged (before its
+   * stored x/y are updated) so the particles keep tracking the line instead of visibly lagging
+   * behind it. Cheaper than `respawnFlowParticlesTouching` and doesn't reset each particle's
+   * animation phase, which a mid-drag respawn would (a visible stutter on every pointer move).
+   */
+  private updateFlowParticlePaths(nodeId: string, pos: Point): void {
+    this.lines.forEach(({ conn }) => {
+      if (conn.from !== nodeId && conn.to !== nodeId) return;
+      const from = conn.from === nodeId ? pos : this.nodesById.get(conn.from)!;
+      const to = conn.to === nodeId ? pos : this.nodesById.get(conn.to)!;
+      const path = `path("M ${from.x},${from.y} L ${to.x},${to.y}")`;
+      this.particleLayer
+        .querySelectorAll<SVGCircleElement>(`[data-from="${conn.from}"][data-to="${conn.to}"]`)
+        .forEach((el) => {
+          el.style.offsetPath = path;
+        });
+    });
   }
 
   /** removes and respawns the flow particles for every line touching `nodeId`, against its current (post-move) position — keeps the particles riding the line instead of a stale pre-move path */
