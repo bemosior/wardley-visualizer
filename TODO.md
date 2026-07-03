@@ -75,12 +75,14 @@ Patterns pulled from summarized playtester notes in `feedback/*.txt` — see tho
 files for full context per reviewer. Ordered roughly by how many independent
 testers hit the same thing (strongest signal first).
 
-- [ ] **Fix: need-topic content leaks across examples.** Selecting one topic
-      (e.g. "fresh grocery delivery") surfaces suggestions/placeholders from a
+- [x] **Fix: need-topic content leaks across examples.** Selecting one topic
+      (e.g. "fresh grocery delivery") surfaced suggestions/placeholders from a
       different topic (tea example: "commuter", "kettle", "kettle"). Hit
-      independently by two testers (`pablogil.txt`, `velocirachael.txt`) — a
-      real bug, not a one-off, likely in whatever wires `NEED_CATALOG`
-      selection to dependent dropdown/placeholder content.
+      independently by two testers (`pablogil.txt`, `velocirachael.txt`). Fixed
+      by giving each `NeedOption` in `needCatalog.ts` its own `userPlaceholder`
+      and `capabilityPlaceholders`, and wiring `userNeedDependency.ts`'s form
+      steps to use the selected need's placeholders instead of the hardcoded
+      tea-example ones.
 - [ ] **Add a visible "this is draggable" affordance.** Multiple testers
       (`jamesfairbairn.txt`, `joeltosi.txt`) didn't realize a node/capability
       could be dragged until they accidentally clicked it first — no visual

@@ -123,6 +123,27 @@ describe("runValueChainScenario", () => {
     expect(canvas.querySelector('[data-node-id="dependency-3"] .wd-node-label')!.textContent).toBe("Electricity");
   });
 
+  it("shows placeholders matching the selected need, not a different need's example", async () => {
+    const { toolbox, nextControl } = buildScenario(vi.fn());
+    await completeDragStep(toolbox, nextControl);
+
+    const grocery = NEED_CATALOG.find((need) => need.id === "fresh-grocery-delivery")!;
+    submitSelect(toolbox, grocery.id);
+    await flush();
+
+    expect(toolbox.querySelector<HTMLInputElement>(".wd-panel-form-input")!.placeholder).toBe(
+      grocery.userPlaceholder,
+    );
+    submitText(toolbox, "A home cook");
+    await flush();
+
+    for (const placeholder of grocery.capabilityPlaceholders) {
+      expect(toolbox.querySelector<HTMLInputElement>(".wd-panel-form-input")!.placeholder).toBe(placeholder);
+      submitText(toolbox, "answer");
+      await flush();
+    }
+  });
+
   it("empties the panel to a full-height placeholder and fires onCelebrate once the last capability is answered", async () => {
     const onCelebrate = vi.fn();
     const { toolbox, nextControl } = buildScenario(onCelebrate);
