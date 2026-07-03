@@ -83,11 +83,16 @@ testers hit the same thing (strongest signal first).
       and `capabilityPlaceholders`, and wiring `userNeedDependency.ts`'s form
       steps to use the selected need's placeholders instead of the hardcoded
       tea-example ones.
-- [ ] **Add a visible "this is draggable" affordance.** Multiple testers
+- [x] **Add a visible "this is draggable" affordance.** Multiple testers
       (`jamesfairbairn.txt`, `joeltosi.txt`) didn't realize a node/capability
       could be dragged until they accidentally clicked it first — no visual
       cue (cursor, glow, handle) currently signals draggability before the
-      first interaction.
+      first interaction. Addressed by the `wd-node--beckon` pulse (already
+      wired to the toolbox's active drag slot for Phase 0/1, and to
+      `beckonNode` calls before each Phase 2 evolution-drag step) plus the
+      directional `wd-node-chevron` cues added alongside `runEvolutionDragStep`
+      (`chevrons`, `unsubtle beckon`, `WIP to help focus during evolution
+      dragging` commits).
 - [ ] **Clarify the opening frame before Phase 0/1 starts.** Five separate
       testers (`jamesfairbairn.txt`, `joeltosi.txt`, `joshkruszynski.txt`,
       `tomgeraghty.txt`, `pablogil.txt`) got lost before or during the
