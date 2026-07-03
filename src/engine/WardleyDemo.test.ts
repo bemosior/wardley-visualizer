@@ -403,11 +403,11 @@ describe("WardleyDemo.getNodePixelPosition", () => {
     expect(demo.getNodePixelPosition("missing")).toBeNull();
   });
 
-  it("returns a container-pixel position for a registered node", () => {
+  it("returns a container-pixel position and on-screen radius for a registered node", () => {
     const demo = buildDemo();
     const pos = demo.getNodePixelPosition("need");
     expect(pos).not.toBeNull();
-    expect(pos).toEqual({ x: expect.any(Number), y: expect.any(Number) });
+    expect(pos).toEqual({ x: expect.any(Number), y: expect.any(Number), radius: expect.any(Number) });
   });
 });
 

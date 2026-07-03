@@ -7,6 +7,12 @@ import type { Question, QuestionOption } from "../domain/questionBank";
 /** how long the "talking" bob animation plays before the mascot settles back to idle */
 const TALK_DURATION_MS = 600;
 
+/** matches `.wardley-demo-root .wd-mascot-avatar`'s width in styles.ts, so the avatar can be centered under a node */
+const AVATAR_WIDTH = 40;
+
+/** vertical breathing room between a node's edge and the avatar planted below it */
+const NODE_CLEARANCE = 12;
+
 /**
  * the mascot's speech-bubble guide — replaces the sidebar Toolbox for Phase 2 (Evolution) onward.
  * Composes a `Panel` pointed at a floating, node-anchored bubble instead of a fixed sidebar, so
@@ -54,11 +60,15 @@ export class Mascot {
     window.removeEventListener("resize", this.resizeHandler);
   }
 
-  /** positions the bubble+avatar at `pos` (container-pixel space, from `WardleyDemo.getNodePixelPosition`) and remembers `nodeId` so a window resize re-tracks it */
-  moveTo(nodeId: string, pos: { x: number; y: number }): void {
+  /**
+   * positions the bubble+avatar just below `pos` (container-pixel space, from
+   * `WardleyDemo.getNodePixelPosition`), offset by `pos.radius` so the avatar is planted clear of
+   * the node's circle instead of covering it, and remembers `nodeId` so a window resize re-tracks it
+   */
+  moveTo(nodeId: string, pos: { x: number; y: number; radius?: number }): void {
     this.currentAnchorNodeId = nodeId;
-    this.root.style.left = `${pos.x}px`;
-    this.root.style.top = `${pos.y}px`;
+    this.root.style.left = `${pos.x - AVATAR_WIDTH / 2}px`;
+    this.root.style.top = `${pos.y + (pos.radius ?? 0) + NODE_CLEARANCE}px`;
   }
 
   setState(state: MascotState): void {

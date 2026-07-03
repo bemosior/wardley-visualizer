@@ -44,32 +44,32 @@ describe("Mascot.mount / unmount", () => {
 });
 
 describe("Mascot.moveTo", () => {
-  it("positions the root at the given pixel coordinates", () => {
+  it("plants the root below-and-centered on the given node, clear of its radius", () => {
     const mascot = new Mascot(makeHost(), buildDemo());
 
-    mascot.moveTo("need", { x: 10, y: 20 });
+    mascot.moveTo("need", { x: 10, y: 20, radius: 50 });
 
     const root = (mascot as any).root as HTMLElement;
-    expect(root.style.left).toBe("10px");
-    expect(root.style.top).toBe("20px");
+    expect(root.style.left).toBe("-10px"); // 10 - AVATAR_WIDTH / 2 (40 / 2)
+    expect(root.style.top).toBe("82px"); // 20 + radius(50) + NODE_CLEARANCE(12)
   });
 
   it("re-tracks the last-moved node's position on window resize", () => {
     const demo = buildDemo();
-    const spy = vi.spyOn(demo, "getNodePixelPosition").mockReturnValue({ x: 5, y: 6 });
+    const spy = vi.spyOn(demo, "getNodePixelPosition").mockReturnValue({ x: 5, y: 6, radius: 0 });
     const host = makeHost();
     const mascot = new Mascot(host, demo);
     mascot.mount();
-    mascot.moveTo("need", { x: 1, y: 1 });
+    mascot.moveTo("need", { x: 1, y: 1, radius: 0 });
     spy.mockClear();
-    spy.mockReturnValue({ x: 42, y: 43 });
+    spy.mockReturnValue({ x: 42, y: 43, radius: 0 });
 
     window.dispatchEvent(new Event("resize"));
 
     expect(spy).toHaveBeenCalledWith("need");
     const root = (mascot as any).root as HTMLElement;
-    expect(root.style.left).toBe("42px");
-    expect(root.style.top).toBe("43px");
+    expect(root.style.left).toBe("22px"); // 42 - AVATAR_WIDTH / 2
+    expect(root.style.top).toBe("55px"); // 43 + radius(0) + NODE_CLEARANCE(12)
   });
 
   it("stops tracking resizes after unmount", () => {

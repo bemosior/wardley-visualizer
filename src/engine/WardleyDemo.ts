@@ -578,13 +578,16 @@ export class WardleyDemo {
 
   /**
    * a node's current position in container-pixel space (the same coordinate space `fireworkAt`
-   * uses) — null if the node id isn't registered. Public so callers (e.g. a mascot/guide overlay)
-   * can anchor UI near a node without duplicating this conversion.
+   * uses), plus its on-screen radius — null if the node id isn't registered. Public so callers
+   * (e.g. a mascot/guide overlay) can anchor UI near a node without duplicating this conversion,
+   * and can use `radius` to offset themselves clear of the node's circle instead of covering it.
    */
-  getNodePixelPosition(nodeId: string): Point | null {
+  getNodePixelPosition(nodeId: string): (Point & { radius: number }) | null {
     const node = this.nodesById.get(nodeId);
     if (!node) return null;
-    return this.viewBoxToContainerPx(node.x, node.y);
+    const pos = this.viewBoxToContainerPx(node.x, node.y);
+    const scaleX = this.svg.getBoundingClientRect().width / this.viewBox.width;
+    return { ...pos, radius: NODE_RADIUS * scaleX };
   }
 
   /** spawns a one-shot firework burst at the given viewBox coordinates, in container pixel space */
