@@ -1,0 +1,10 @@
+Take this FWIW:
+- I confess I initially did not see the dotted circle
+- tea-based placeholders after I selected photo printing COULD be confusing (I think I know these stories from Simon, but if I didn’t I might be scratching my head)
+- didn’t notice I had added the first “capability” component after clicking, missed the 2/3
+- left column should be wider, dawg
+- Not sure if it’s too much to fit into the tutorial, but explaining evolution and the counter examples (producing your own electricity for the kettle, for instance) might help people understand the implications of commodotizing / industrializing things and then building on them?
+- the components I picked ended up being things that would be “external” (photo printing needs a phone, but a photo printing service isn’t providing it’s own phone?) -- I understand it's still in the chain, but I wonder if choosing the elements for ones self is actually useful on the first go?
+- maybe starting with the tea kettle, and letting people self-assign, and then checking their answers accordingly? THEN letting them free ball a bit? I’ve personally experienced ALOT of getting lost in the sauce with Wardley Maps, just wondering if I have the vocab right and struggling with the interpretation aspects
+
+

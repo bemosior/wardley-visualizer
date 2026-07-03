@@ -1,0 +1,5 @@
+What do yo do? Interact with moveable and fill form objectsin "What does the user need?" the drop downs do not change to match the topic. When I select fresh grocery delivery it give suggestions for the tea (commuter, kettle, kettle)
+genesis, custom built, product and commodity
+I had difficulty noticing these options were color coded. I didn't understand what sliding the bubble did, why things changed in the test box to the left as I did. I have high eye pressure and had a migraine at the time. My eyes literally could not see the color bars - higher contrast or bold colored might be better? A thick border around each? edit: this may also be due to display setting on individual monitors
+I do have to say this explains the purpose of wardley maps better that the WM website. I was disappointed the wardley maps website did not have this clickndrag bubble feature, a visual, and Im a visual creature
+

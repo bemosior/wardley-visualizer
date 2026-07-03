@@ -1,0 +1,10 @@
+Is nice!
+I had a bit of a bug that I artificially reproduced at the beginning here. Dragging the User Need node after a few half-hearted clicks, it got stuck inside the box that contains it. 
+Apart from that, thoughts on the first screen -
+Took me a few seconds to grok what was happening here. “What is a value chain?” Is clearly the question, but I feel like, to someone who doesn’t know what a value chain is, it’s actually a bit of a strange bundle of tools you’ve given me. What? User needs? Why are two boxes greyed out? Are they wrong answers? Etc
+The following screens worked well for me. I chose the grocery deliveries one and it actually made me ask, wait, do _I_ the end user depend on a truck? Do I depend on farms? Do I depend on the food cold chain? 
+Maybe that’s just me but the fact that it’s a single layer value chain made me spiral in a way that might not be helpful for the learning goal…
+I think maybe the cup of tea example might be a bit more of a direct path? Well, that said, do I depend on a power station? Coal? Solar panels?
+It’s interesting though - if the next steps start to address these questions then this could be a pretty powerful learning pathway
+Ok hope that helps… nice work!
+

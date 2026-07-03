@@ -1,0 +1,17 @@
+Made some notes as I was going through the experience, always with the hat of a newcomer. Hope they help!
+
+My first thought, if I have to imagine that I am a new comer, is who is this for? How much context do I need about users (what do we mean by a user, what are their boundaries, how the differentiate) and their needs (at what level of abstraction, do I know about JTBD). Since this appears to be guided walkthrough maybe these levels of abstraction can be anchored with examples (not the coffee shop though).
+
+The affordability and the animations work great. And the explanation about the Value Chain flows very nicely. The start is what was a bit rough, but now things start falling in place
+
+Ok, I see the next step makes the need explicit with an example. Maybe this could have been at the beginning (and here we have the tea shop ;))
+
+I filled in the capabilities, but there was a bit of a hiccup. First, since the example was handed to me, I wasn't knowledgeable about the actual capabilities needed. Yes, I thought for a while and made assumptions but that decreased the confidence. Also, I had guidance when choosing the need, but I don't have when selecting the capabilities. Should they be MECE? do I describe all that fall within a category? Nested? Extended? I only have three bullets. It says "Kettle" how does that apply to my example? And why is that a reference to capabilities? What is my kettle?
+
+When choosing the user for the "messaging with friends" the prompt was "commuter", which to me felt that it belonged to a different example
+
+The placement in the evolution access needs a bit more context. I clicked too fast on the explanation and then I'm left with each of the panels description but wondering about the overall goal
+
+The assesment part makes good self check questions for a workshop environment but feel a bit out of place in the example because I haven't discussed or invested in the messaging with friends app so answering "Maybe — we call it special partly because we built it ourselves, not because it's actually novel." feels a bir weird (plus the placement was in deep comoditisation so I don't know how smart the cues are)
+
+Thanks for the opportunity to lend a hand!

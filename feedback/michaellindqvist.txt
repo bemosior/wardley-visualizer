@@ -1,0 +1,8 @@
+Maybe [the person using this] wonder where capabilities come from?
+you ask them to describe a user need: Hunger
+Capabilities: bread and butter
+Yes, they can refill a syntax like:
+- I want:
+- Because of:
+- Depends on:
+And you can prefab for them
