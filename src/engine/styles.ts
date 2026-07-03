@@ -1,8 +1,17 @@
 const STYLE_ID = "wardley-demo-styles";
 
+/**
+ * shared floor for both `.wd-panel-content`'s CSS min-height and `showMapBackdrop`'s
+ * `targetHeightPx` argument (see `userNeedDependency.ts`) — keeps the map's reserved height in
+ * sync with the panel/mascot-bubble content it needs to avoid overlapping, without either side
+ * reading the other's live DOM size.
+ */
+export const PANEL_CONTENT_MIN_HEIGHT = 360;
+
 const CSS = `
 .wardley-demo-root,
-.wd-panel {
+.wd-panel,
+.wd-mascot {
   --wd-color-ink: #1a1a1a;
   --wd-color-link: #005f99;
   --wd-color-link-hover: #003d6b;
@@ -300,7 +309,7 @@ const CSS = `
 }
 
 .wd-panel-content {
-  min-height: 360px;
+  min-height: ${PANEL_CONTENT_MIN_HEIGHT}px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -527,6 +536,141 @@ const CSS = `
   cursor: pointer;
 }
 
+/*
+ * host-supplied overlay a Mascot mounts into -- must be a child of the same element passed to
+ * WardleyDemo.mount as its container (not a sibling positioned elsewhere in the page), sized to
+ * cover it exactly, so WardleyDemo.getNodePixelPosition's coordinates (measured relative to
+ * that same container's top-left, the same space fireworkAt already renders into) line up
+ * pixel-for-pixel with .wd-mascot's left/top. pointer-events: none lets clicks fall through to
+ * the map/nodes underneath everywhere except the mascot itself, which re-enables them.
+ */
+.wd-mascot-host {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.wd-mascot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  pointer-events: auto;
+  transition: left 0.4s ease, top 0.4s ease;
+}
+
+/* higher specificity than ".wardley-demo-root svg" above, which would otherwise stretch this
+   avatar to the canvas's full width since it's nested inside .wardley-demo-root */
+.wardley-demo-root .wd-mascot-avatar {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.wd-mascot-avatar-body {
+  fill: #fff;
+  stroke: var(--wd-color-ink, #1a1a1a);
+  stroke-width: 1.5;
+}
+
+.wd-mascot-avatar-eye {
+  fill: var(--wd-color-ink, #1a1a1a);
+}
+
+.wd-mascot-avatar-mouth {
+  fill: none;
+  stroke: var(--wd-color-link, #005f99);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.wd-mascot--idle .wd-mascot-avatar-body {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: wd-pulse 1.4s ease-in-out infinite;
+}
+
+.wd-mascot--talking .wd-mascot-avatar-body {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: wd-mascot-talk 0.6s ease-in-out;
+}
+
+.wd-mascot--celebrating .wd-mascot-avatar-body {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation:
+    wd-node-charged 2.4s ease-in-out infinite,
+    wd-mascot-celebrate 0.8s ease-in-out;
+}
+
+@keyframes wd-mascot-talk {
+  0%,
+  100% {
+    transform: scale(1) translateY(0);
+  }
+  30% {
+    transform: scale(1.05) translateY(-2px);
+  }
+  60% {
+    transform: scale(0.97) translateY(1px);
+  }
+}
+
+@keyframes wd-mascot-celebrate {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+  25% {
+    transform: scale(1.12) rotate(-6deg);
+  }
+  75% {
+    transform: scale(1.12) rotate(6deg);
+  }
+}
+
+.wd-mascot-bubble {
+  position: relative;
+  background: #fff;
+  border: 1px solid var(--wd-color-border);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  padding: 0.75rem 1rem;
+  max-width: 280px;
+}
+
+.wd-mascot-bubble::before {
+  content: "";
+  position: absolute;
+  left: -8px;
+  top: 20px;
+  width: 0;
+  height: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-right: 8px solid var(--wd-color-border);
+}
+
+.wd-mascot-bubble::after {
+  content: "";
+  position: absolute;
+  left: -7px;
+  top: 20px;
+  width: 0;
+  height: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-right: 8px solid #fff;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .wd-panel-slot--active circle {
     animation: none;
@@ -552,6 +696,14 @@ const CSS = `
     display: none;
   }
   .wd-map-caption {
+    transition-duration: 0.01s;
+  }
+  .wd-mascot--idle .wd-mascot-avatar-body,
+  .wd-mascot--talking .wd-mascot-avatar-body,
+  .wd-mascot--celebrating .wd-mascot-avatar-body {
+    animation: none;
+  }
+  .wd-mascot {
     transition-duration: 0.01s;
   }
 }

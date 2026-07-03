@@ -361,6 +361,54 @@ describe("WardleyDemo.slideToGenesis", () => {
     const { demo } = buildDemo();
     expect(() => demo.slideToGenesis("missing")).not.toThrow();
   });
+
+  it("calls onComplete exactly once, after the move settles", () => {
+    const { demo } = buildDemo();
+    const onComplete = vi.fn();
+
+    demo.slideToGenesis("need", 0, onComplete);
+
+    expect(onComplete).toHaveBeenCalledTimes(1);
+  });
+
+  it("doesn't call onComplete if the node id isn't registered", () => {
+    const { demo } = buildDemo();
+    const onComplete = vi.fn();
+
+    demo.slideToGenesis("missing", 0, onComplete);
+
+    expect(onComplete).not.toHaveBeenCalled();
+  });
+
+  it("is a safe no-op to omit onComplete", () => {
+    const { demo } = buildDemo();
+    expect(() => demo.slideToGenesis("need", 0)).not.toThrow();
+  });
+});
+
+describe("WardleyDemo.getNodePixelPosition", () => {
+  function buildDemo(): WardleyDemo {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    return WardleyDemo.mount(container, {
+      viewBox: { width: 400, height: 300 },
+      nodes: [{ id: "need", label: "Need", x: 200, y: 150, draggable: false }],
+      connections: [],
+      snapThreshold: 30,
+    });
+  }
+
+  it("returns null for an unregistered node id", () => {
+    const demo = buildDemo();
+    expect(demo.getNodePixelPosition("missing")).toBeNull();
+  });
+
+  it("returns a container-pixel position for a registered node", () => {
+    const demo = buildDemo();
+    const pos = demo.getNodePixelPosition("need");
+    expect(pos).not.toBeNull();
+    expect(pos).toEqual({ x: expect.any(Number), y: expect.any(Number) });
+  });
 });
 
 describe("WardleyDemo.celebrateAll", () => {

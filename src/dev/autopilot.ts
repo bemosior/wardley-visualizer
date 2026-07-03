@@ -21,8 +21,15 @@ export function parseSkipTarget(search: string): SkipTarget | null {
 }
 
 export interface AutopilotOptions {
-  /** the scenario's toolbox container — watched for auto-fillable `.wd-panel-form`s */
+  /** the scenario's toolbox container — watched for auto-fillable `.wd-panel-form`s (Phase 0/1 content) */
   toolbox: HTMLElement;
+  /**
+   * the scenario's mascot host container — watched the same way as `toolbox`, for the
+   * confirm-placement links and question buttons the mascot renders from Phase 2 onward, once the
+   * Toolbox itself has been emptied/collapsed. Optional so callers that never skip past Phase 1
+   * (e.g. `target: "phase1"`) don't need to construct one.
+   */
+  mascotHost?: HTMLElement;
   /** the scenario's next-link container — watched for `.wd-next-link`s to auto-click */
   nextControl: HTMLElement;
   target: SkipTarget;
@@ -55,12 +62,13 @@ function fillAndSubmit(form: HTMLFormElement): void {
  * manual interaction from that moment forward. Dev/testing convenience; see
  * the-more-of-the-peaceful-sky plan for why this exists instead of a resumable step machine.
  */
-export function attachAutopilot({ toolbox, nextControl, target }: AutopilotOptions): Autopilot {
+export function attachAutopilot({ toolbox, mascotHost, nextControl, target }: AutopilotOptions): Autopilot {
   let nextLinkCount = 0;
 
   function disconnect(): void {
     nextObserver.disconnect();
     toolboxObserver.disconnect();
+    mascotObserver?.disconnect();
   }
 
   const nextObserver = new MutationObserver(() => {
@@ -76,28 +84,38 @@ export function attachAutopilot({ toolbox, nextControl, target }: AutopilotOptio
     }
   });
 
-  const toolboxObserver = new MutationObserver(() => {
-    const form = toolbox.querySelector<HTMLFormElement>(".wd-panel-form");
+  /**
+   * shared by the toolbox observer (Phase 0/1 content) and the mascot-host observer (Phase 2+
+   * content, once the Toolbox has been emptied/collapsed and the mascot's speech bubble — which
+   * renders byte-identical `.wd-panel-*`/`.wd-next-link` markup, see `engine/mascot.ts` — takes
+   * over) so both roots get the same auto-fill/auto-click behavior without duplicating it.
+   */
+  function handleContentMutation(root: HTMLElement): void {
+    const form = root.querySelector<HTMLFormElement>(".wd-panel-form");
     if (form) fillAndSubmit(form);
     if (target === "finale" || target === "thinking") {
-      // auto-click "Confirm placement" links that appear inside the toolbox during Phase 2,
+      // auto-click "Confirm placement" links that appear during Phase 2,
       // but not the finale's "What's next →" which should be left for the visitor
-      const link = toolbox.querySelector<HTMLAnchorElement>(".wd-next-link");
+      const link = root.querySelector<HTMLAnchorElement>(".wd-next-link");
       if (link && link.textContent?.trim() === "Confirm placement") link.click();
     }
     if (target === "thinking") {
       // auto-click the Phase 2->3 gate and every question's first option, but leave Phase 3's
       // own "What's next →" for the visitor, same as `finale` leaves Phase 2's
-      const gateLink = toolbox.querySelector<HTMLAnchorElement>(".wd-next-link");
+      const gateLink = root.querySelector<HTMLAnchorElement>(".wd-next-link");
       if (gateLink && gateLink.textContent?.trim() === "Let's think about it →") gateLink.click();
-      const option = toolbox.querySelector<HTMLButtonElement>(".wd-panel-question-option");
+      const option = root.querySelector<HTMLButtonElement>(".wd-panel-question-option");
       if (option) option.click();
     }
-  });
+  }
+
+  const toolboxObserver = new MutationObserver(() => handleContentMutation(toolbox));
+  const mascotObserver = mascotHost ? new MutationObserver(() => handleContentMutation(mascotHost)) : undefined;
 
   nextObserver.observe(nextControl, { childList: true });
   if (target !== "phase1") {
     toolboxObserver.observe(toolbox, { childList: true, subtree: true });
+    if (mascotHost) mascotObserver!.observe(mascotHost, { childList: true, subtree: true });
   }
 
   return {

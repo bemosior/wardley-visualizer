@@ -365,9 +365,9 @@ export class WardleyDemo {
    * visibly settles onto its starting evolution stage instead of just appearing there already
    * placed. Updates the node's stored position and respawns flow particles on lines touching it
    * afterward, so the particle flow keeps tracking the line's new path. A no-op if the node id
-   * isn't registered.
+   * isn't registered (`onComplete` is not called in that case either).
    */
-  slideToGenesis(nodeId: string, durationMs = 700): void {
+  slideToGenesis(nodeId: string, durationMs = 700, onComplete?: () => void): void {
     const node = this.nodesById.get(nodeId);
     const nodeGroup = this.nodeGroups.get(nodeId);
     if (!node || !nodeGroup) return;
@@ -393,6 +393,7 @@ export class WardleyDemo {
       () => {
         node.x = to.x;
         this.setNodeStage(nodeId, "Genesis");
+        onComplete?.();
       },
     );
   }
@@ -563,14 +564,32 @@ export class WardleyDemo {
     });
   }
 
-  /** spawns a one-shot firework burst at the given viewBox coordinates, in container pixel space */
-  private fireworkAt(x: number, y: number): void {
+  /** converts a viewBox coordinate to container-pixel space, shared by `fireworkAt` and `getNodePixelPosition` */
+  private viewBoxToContainerPx(x: number, y: number): Point {
     const svgRect = this.svg.getBoundingClientRect();
     const containerRect = this.container.getBoundingClientRect();
     const scaleX = svgRect.width / this.viewBox.width;
     const scaleY = svgRect.height / this.viewBox.height;
-    const pxX = svgRect.left - containerRect.left + x * scaleX;
-    const pxY = svgRect.top - containerRect.top + y * scaleY;
+    return {
+      x: svgRect.left - containerRect.left + x * scaleX,
+      y: svgRect.top - containerRect.top + y * scaleY,
+    };
+  }
+
+  /**
+   * a node's current position in container-pixel space (the same coordinate space `fireworkAt`
+   * uses) — null if the node id isn't registered. Public so callers (e.g. a mascot/guide overlay)
+   * can anchor UI near a node without duplicating this conversion.
+   */
+  getNodePixelPosition(nodeId: string): Point | null {
+    const node = this.nodesById.get(nodeId);
+    if (!node) return null;
+    return this.viewBoxToContainerPx(node.x, node.y);
+  }
+
+  /** spawns a one-shot firework burst at the given viewBox coordinates, in container pixel space */
+  private fireworkAt(x: number, y: number): void {
+    const { x: pxX, y: pxY } = this.viewBoxToContainerPx(x, y);
     const shells = createFireworkShells(pxX, pxY);
     for (const shell of shells) {
       this.container.appendChild(shell);

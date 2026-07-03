@@ -83,6 +83,25 @@
         padding: 1rem 0.5rem;
       }
 
+      /*
+       * Collapses out of the flex layout instantly, same shape as .wd-explanation--hidden below —
+       * once the mascot takes over (Phase 2 onward) the Toolbox is gone for good, not just emptied.
+       * Also zeroes the card-style border/padding .wd-toolbox sets above, unlike index.html's
+       * plain sidebar version of this rule.
+       */
+      .wd-toolbox--hidden {
+        opacity: 0;
+        pointer-events: none;
+        flex: 0 1 0;
+        min-width: 0;
+        max-width: 0;
+        max-height: 0;
+        margin: 0;
+        padding: 0;
+        border: none;
+        overflow: hidden;
+      }
+
       .wd-explanation {
         flex: 1;
         min-width: 220px;
@@ -167,7 +186,9 @@
         <div class="demo-row">
           <div class="wd-instance">
             <aside id="toolbox-a" class="wd-toolbox"></aside>
-            <div id="demo-a" class="wd-canvas"></div>
+            <div id="demo-a" class="wd-canvas">
+              <div id="mascot-host-a" class="wd-mascot-host"></div>
+            </div>
           </div>
 
           <div class="wd-explanation">
@@ -184,6 +205,7 @@
       var answer = document.getElementById("vc-answer");
       var explanation = document.querySelector(".wd-explanation");
       var toolbox = document.getElementById("toolbox-a");
+      var mascotHost = document.getElementById("mascot-host-a");
       var nextControl = document.getElementById("vc-next");
 
       // Dev-only test shortcut: pick a moment from the dropdown (or load with
@@ -202,18 +224,20 @@
         location.href = url.toString();
       });
       var autopilot = skipTarget
-        ? WardleyDemo.dev.attachAutopilot({ toolbox: toolbox, nextControl: nextControl, target: skipTarget })
+        ? WardleyDemo.dev.attachAutopilot({ toolbox: toolbox, mascotHost: mascotHost, nextControl: nextControl, target: skipTarget })
         : undefined;
 
       WardleyDemo.demos.userNeedDependency({
         canvas: document.getElementById("demo-a"),
         toolbox: toolbox,
+        mascotHost: mascotHost,
         nextControl: nextControl,
         onNeedPlaced: function () {
           answer.classList.add("wd-answer--visible");
         },
         onEvolutionReady: function () {
           explanation.classList.add("wd-explanation--hidden");
+          toolbox.classList.add("wd-toolbox--hidden");
           document.querySelector(".wd-instance").classList.add("wd-instance--expanded");
           document.getElementById("demo-a").classList.add("wd-canvas--expanded");
         },

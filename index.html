@@ -30,6 +30,21 @@
       }
 
       /*
+       * Collapses out of the flex layout instantly, same shape as .wd-explanation--hidden below —
+       * once the mascot takes over (Phase 2 onward) the Toolbox is gone for good, not just emptied.
+       */
+      .wd-toolbox--hidden {
+        opacity: 0;
+        pointer-events: none;
+        flex: 0 1 0;
+        min-width: 0;
+        max-width: 0;
+        max-height: 0;
+        margin: 0;
+        overflow: hidden;
+      }
+
+      /*
        * No horizontal auto-centering: the canvas always sits flush against the toolbox, so its
        * left edge never moves when .wd-canvas--expanded later lifts max-width — only the right
        * edge grows into the space the explanation column frees up. An auto-centered canvas would
@@ -95,7 +110,9 @@
   <body>
     <div id="demo-section" class="wd-instance">
       <aside id="toolbox" class="wd-toolbox"></aside>
-      <div id="demo" class="wd-canvas"></div>
+      <div id="demo" class="wd-canvas">
+        <div id="mascot-host" class="wd-mascot-host"></div>
+      </div>
     </div>
 
     <div class="wd-explanation">
@@ -110,22 +127,25 @@
       const answer = document.getElementById("vc-answer");
       const explanation = document.querySelector(".wd-explanation");
       const toolbox = document.getElementById("toolbox");
+      const mascotHost = document.getElementById("mascot-host");
       const nextControl = document.getElementById("vc-next");
 
       // Dev-only test shortcut: reload with ?skipTo=phase1 | celebrate | phase2 | finale | thinking
       // to jump straight past earlier phases instead of replaying drag + 5 form fields by hand.
       const skipTarget = parseSkipTarget(location.search);
       const autopilot = skipTarget
-        ? attachAutopilot({ toolbox, nextControl, target: skipTarget })
+        ? attachAutopilot({ toolbox, mascotHost, nextControl, target: skipTarget })
         : undefined;
 
       WardleyDemo.demos.userNeedDependency({
         canvas: document.getElementById("demo"),
         toolbox,
+        mascotHost,
         nextControl,
         onNeedPlaced: () => answer.classList.add("wd-answer--visible"),
         onEvolutionReady: () => {
           explanation.classList.add("wd-explanation--hidden");
+          toolbox.classList.add("wd-toolbox--hidden");
           document.getElementById("demo").classList.add("wd-canvas--expanded");
         },
         onMount: autopilot?.onMount,

@@ -26,13 +26,22 @@ async function flushAll(): Promise<void> {
 function buildScenario(target: Parameters<typeof attachAutopilot>[0]["target"], callbacks: Record<string, () => void> = {}) {
   const canvas = document.createElement("div");
   const toolbox = document.createElement("div");
+  const mascotHost = document.createElement("div");
   const nextControl = document.createElement("div");
-  document.body.append(canvas, toolbox, nextControl);
+  document.body.append(canvas, toolbox, mascotHost, nextControl);
 
-  const autopilot = attachAutopilot({ toolbox, nextControl, target });
-  runValueChainScenario({ canvas, toolbox, nextControl, onMount: autopilot.onMount, ...callbacks });
+  const autopilot = attachAutopilot({ toolbox, mascotHost, nextControl, target });
+  runValueChainScenario({
+    canvas,
+    toolbox,
+    mascotHost,
+    nextControl,
+    onMount: autopilot.onMount,
+    onEvolutionStep: autopilot.onEvolutionStep,
+    ...callbacks,
+  });
 
-  return { canvas, toolbox, nextControl };
+  return { canvas, toolbox, mascotHost, nextControl };
 }
 
 describe("attachAutopilot", () => {
@@ -67,5 +76,26 @@ describe("attachAutopilot", () => {
 
     expect(onEvolutionReady).toHaveBeenCalledOnce();
     expect(nextControl.querySelector(".wd-next-link")).toBeNull();
+  });
+
+  it("finale: also auto-confirms every Phase 2 placement (watching mascotHost, not toolbox), stopping at the placement finale before Phase 3 begins", async () => {
+    const { mascotHost, nextControl } = buildScenario("finale");
+    await flushAll();
+
+    expect(nextControl.querySelector(".wd-next-link")).toBeNull();
+    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Wardley Map");
+    const gateLink = mascotHost.querySelector<HTMLAnchorElement>(".wd-next-link");
+    expect(gateLink).not.toBeNull();
+    expect(gateLink!.textContent).toBe("Let's think about it →");
+  });
+
+  it("thinking: also clicks into Phase 3 and auto-picks an option for every question, stopping before the finale's own Next link", async () => {
+    const { canvas, mascotHost } = buildScenario("thinking");
+    await flushAll();
+
+    expect(canvas.querySelectorAll(".wd-annotation").length).toBe(3);
+    const finalLink = mascotHost.querySelector<HTMLAnchorElement>(".wd-next-link");
+    expect(finalLink).not.toBeNull();
+    expect(finalLink!.textContent).toBe("What's next →");
   });
 });
