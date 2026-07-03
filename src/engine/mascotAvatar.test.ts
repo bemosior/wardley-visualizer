@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 import { createMascotAvatar } from "./mascotAvatar";
 
 describe("createMascotAvatar", () => {
-  it("renders a body, two eyes, and a mouth", () => {
+  it("renders an image with the mascot avatar class", () => {
     const avatar = createMascotAvatar();
 
-    expect(avatar.element.querySelector(".wd-mascot-avatar-body")).not.toBeNull();
-    expect(avatar.element.querySelectorAll(".wd-mascot-avatar-eye").length).toBe(2);
-    expect(avatar.element.querySelector(".wd-mascot-avatar-mouth")).not.toBeNull();
+    expect(avatar.element.tagName).toBe("IMG");
+    expect(avatar.element.classList.contains("wd-mascot-avatar")).toBe(true);
+    expect(avatar.element.src).toContain("pixel-mascot");
   });
 
   it("starts in the idle state", () => {

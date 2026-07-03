@@ -568,44 +568,19 @@ const CSS = `
 /* higher specificity than ".wardley-demo-root svg" above, which would otherwise stretch this
    avatar to the canvas's full width since it's nested inside .wardley-demo-root */
 .wardley-demo-root .wd-mascot-avatar {
-  width: 56px;
-  height: 56px;
+  width: 40px;
+  height: 60px;
   flex-shrink: 0;
   pointer-events: none;
-}
-
-.wd-mascot-avatar-body {
-  fill: #fff;
-  stroke: var(--wd-color-ink, #1a1a1a);
-  stroke-width: 1.5;
-}
-
-.wd-mascot-avatar-eye {
-  fill: var(--wd-color-ink, #1a1a1a);
-}
-
-.wd-mascot-avatar-mouth {
-  fill: none;
-  stroke: var(--wd-color-link, #005f99);
-  stroke-width: 2;
-  stroke-linecap: round;
-}
-
-.wd-mascot--idle .wd-mascot-avatar-body {
-  transform-box: fill-box;
+  image-rendering: pixelated;
   transform-origin: center;
-  animation: wd-pulse 1.4s ease-in-out infinite;
 }
 
-.wd-mascot--talking .wd-mascot-avatar-body {
-  transform-box: fill-box;
-  transform-origin: center;
+.wd-mascot-avatar.wd-mascot--talking {
   animation: wd-mascot-talk 0.6s ease-in-out;
 }
 
-.wd-mascot--celebrating .wd-mascot-avatar-body {
-  transform-box: fill-box;
-  transform-origin: center;
+.wd-mascot-avatar.wd-mascot--celebrating {
   animation:
     wd-node-charged 2.4s ease-in-out infinite,
     wd-mascot-celebrate 0.8s ease-in-out;
@@ -698,9 +673,8 @@ const CSS = `
   .wd-map-caption {
     transition-duration: 0.01s;
   }
-  .wd-mascot--idle .wd-mascot-avatar-body,
-  .wd-mascot--talking .wd-mascot-avatar-body,
-  .wd-mascot--celebrating .wd-mascot-avatar-body {
+  .wd-mascot-avatar.wd-mascot--talking,
+  .wd-mascot-avatar.wd-mascot--celebrating {
     animation: none;
   }
   .wd-mascot {
