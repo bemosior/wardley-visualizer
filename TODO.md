@@ -93,13 +93,20 @@ testers hit the same thing (strongest signal first).
       directional `wd-node-chevron` cues added alongside `runEvolutionDragStep`
       (`chevrons`, `unsubtle beckon`, `WIP to help focus during evolution
       dragging` commits).
-- [ ] **Clarify the opening frame before Phase 0/1 starts.** Five separate
+- [x] **Clarify the opening frame before Phase 0/1 starts.** Five separate
       testers (`jamesfairbairn.txt`, `joeltosi.txt`, `joshkruszynski.txt`,
       `tomgeraghty.txt`, `pablogil.txt`) got lost before or during the
       capabilities step — unclear what a "value chain" is, who the demo is
       for, and what greyed-out elements mean. Strongest, most-repeated
-      signal in the whole batch; worth a dedicated pass on the intro
-      copy/framing rather than a one-line fix.
+      signal in the whole batch. Addressed by replacing the rhetorical
+      "What is a Value Chain?" heading (`index.html`/`preview.html`'s
+      `.wd-explanation` block) with copy that's visible immediately (not
+      gated behind the Need-placement reveal): states there's no experience
+      needed, gives an explicit first action ("drag the glowing circle onto
+      the canvas"), and names the toolbox's two inactive `Panel` drag slots
+      directly so their greyscale styling doesn't read as "wrong answers."
+      The definition reveal (`#vc-answer`, shown via `onNeedPlaced`) is
+      unchanged — it's still the payoff once the visitor completes the drag.
 - [ ] **Scaffold the capabilities step.** Testers had no confidence in what
       counts as a capability or at what abstraction level
       (`pablogil.txt`, `joshkruszynski.txt`). `michaellindqvist.txt` proposes
