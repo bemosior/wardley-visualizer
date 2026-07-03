@@ -115,6 +115,21 @@ const CSS = `
   animation: wd-pulse 1.8s ease-in-out infinite;
 }
 
+/**
+ * a node whose evolution-drag turn hasn't arrived yet (see Phase 2's capability loop) — muted so
+ * it doesn't read as interactive next to whichever node is currently beckoning. Muted via stroke/
+ * fill color rather than opacity: the shape's white fill must stay fully opaque, or the connection
+ * line and backdrop band behind it bleed through and the node reads as a hollow ghost outline
+ * instead of a solid (just inactive) node.
+ */
+.wd-node--pending .wd-node-shape {
+  stroke: var(--wd-color-border);
+}
+
+.wd-node--pending .wd-node-label {
+  fill: #999;
+}
+
 @keyframes wd-pulse {
   0%, 100% { filter: drop-shadow(0 0 0 rgba(0, 95, 153, 0)); }
   50% { filter: drop-shadow(0 0 8px rgba(0, 95, 153, 0.55)); }

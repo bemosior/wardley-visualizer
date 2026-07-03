@@ -327,9 +327,23 @@ export class WardleyDemo {
   /**
    * adds the inviting "beckon" pulse (the same cue Phase 0 uses on the undragged Need) to a
    * node, e.g. to prompt the visitor toward Phase 2's evolution-axis drag once the map appears.
+   * Also clears any "pending" dimming `markPending` applied, since the node's turn has arrived.
    */
   beckonNode(nodeId: string): void {
-    this.nodeGroups.get(nodeId)?.classList.add("wd-node--beckon");
+    const nodeGroup = this.nodeGroups.get(nodeId);
+    nodeGroup?.classList.add("wd-node--beckon");
+    nodeGroup?.classList.remove("wd-node--pending");
+  }
+
+  /**
+   * dims the given nodes to signal they aren't interactive yet — used for Phase 2's
+   * capability queue, so a node waiting its turn doesn't read as draggable next to whichever
+   * node is currently beckoning. Cleared automatically by `beckonNode` once a node's turn starts.
+   */
+  markPending(nodeIds: string[]): void {
+    for (const id of nodeIds) {
+      this.nodeGroups.get(id)?.classList.add("wd-node--pending");
+    }
   }
 
   /**

@@ -255,6 +255,22 @@ describe("WardleyDemo.beckonNode", () => {
     expect(container.querySelector('[data-node-id="user"]')!.classList.contains("wd-node--beckon")).toBe(false);
   });
 
+  it("clears any pending dimming from the node, since its turn has arrived", () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const demo = WardleyDemo.mount(container, {
+      viewBox: { width: 400, height: 300 },
+      nodes: [{ id: "need", label: "Need", x: 200, y: 150, draggable: false }],
+      connections: [],
+      snapThreshold: 30,
+    });
+    demo.markPending(["need"]);
+
+    demo.beckonNode("need");
+
+    expect(container.querySelector('[data-node-id="need"]')!.classList.contains("wd-node--pending")).toBe(false);
+  });
+
   it("does nothing if the node id isn't registered", () => {
     const container = document.createElement("div");
     document.body.appendChild(container);
@@ -265,6 +281,39 @@ describe("WardleyDemo.beckonNode", () => {
       snapThreshold: 30,
     });
     expect(() => demo.beckonNode("missing")).not.toThrow();
+  });
+});
+
+describe("WardleyDemo.markPending", () => {
+  it("dims the given nodes, leaving others untouched", () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const demo = WardleyDemo.mount(container, {
+      viewBox: { width: 400, height: 300 },
+      nodes: [
+        { id: "user", label: "User", x: 200, y: 50, draggable: false },
+        { id: "need", label: "Need", x: 200, y: 150, draggable: false },
+      ],
+      connections: [{ from: "user", to: "need" }],
+      snapThreshold: 30,
+    });
+
+    demo.markPending(["need"]);
+
+    expect(container.querySelector('[data-node-id="need"]')!.classList.contains("wd-node--pending")).toBe(true);
+    expect(container.querySelector('[data-node-id="user"]')!.classList.contains("wd-node--pending")).toBe(false);
+  });
+
+  it("does nothing if a node id isn't registered", () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const demo = WardleyDemo.mount(container, {
+      viewBox: { width: 400, height: 300 },
+      nodes: [{ id: "user", label: "User", x: 200, y: 50, draggable: false }],
+      connections: [],
+      snapThreshold: 30,
+    });
+    expect(() => demo.markPending(["missing"])).not.toThrow();
   });
 });
 

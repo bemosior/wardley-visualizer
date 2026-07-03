@@ -179,7 +179,8 @@ export async function runValueChainScenario(options: ValueChainScenarioOptions):
   await showNextLink(options.nextControl);
   const scale = demo.captureScale();
   options.onEvolutionReady?.();
-  demo.stopCharging([chain.user.id, chain.need.id]);
+  demo.stopCharging([chain.user.id, chain.need.id, ...chain.capabilities.map((c) => c.id)]);
+  demo.markPending(chain.capabilities.map((c) => c.id));
   panel.showInstrumentPanel(chain.need.label, "need", "Genesis", MAP_CAPTION_FADE_MS);
   demo.showMapBackdrop(
     scale,
