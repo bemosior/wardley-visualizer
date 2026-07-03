@@ -1,3 +1,5 @@
+SUMMARY: Reproduced a real bug — dragging the User Need node after a few half-hearted clicks got it stuck inside its container. On the first screen, he didn't understand what he was looking at before grasping "value chain" as the question; the two greyed-out boxes read as ambiguous (possibly "wrong answers") rather than intentional UI. Biggest finding: the grocery-delivery example's single-layer value chain triggered an unproductive recursion spiral ("do I depend on a truck? a farm? the cold chain?") — he flags this as scope confusion that may fight the learning goal rather than serve it, and notes the tea example has the same underlying recursion risk (power station, coal, solar). Praise ("nice work," "worked well") is not signal — the bug report and the recursion-scope problem are.
+---
 Is nice!
 I had a bit of a bug that I artificially reproduced at the beginning here. Dragging the User Need node after a few half-hearted clicks, it got stuck inside the box that contains it. 
 Apart from that, thoughts on the first screen -

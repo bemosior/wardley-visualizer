@@ -48,146 +48,13 @@ Four layers, strict one-way dependency (lower layers know nothing about higher o
 - `npm run dev` serves `index.html` for live iteration; `npm run build` then `npm run preview` exercises the built bundle through `preview.html`'s host-page-style embed.
 - Every existing module under `domain/`, `application/`, `engine/`, `demos/` has a co-located `*.test.ts`. Keep that pattern — new modules get tests beside them, not in a separate tree.
 
-## Phase 0 — Value Chain (done)
+## Done so far
 
-- [x] Generic User → User Need → Capability x3, drag Need into place, celebration.
-
-## Phase 0.5 — Refactor prep (done)
-
-- [x] Mutable domain labels (`relabelComponent`, `relabelUser`, `relabelNeed`, `relabelCapability`).
-- [x] Decompose the engine's one-shot mount into composable ops (`addNode`, `addConnection`, `relabelNode`, `runDragStep` — see `WardleyDemo.ts` above).
-- [x] `Panel` abstraction with swappable modes — drag-handle and form modes built; instrument-panel and Q&A modes deliberately deferred to Phase 2/3.
-- [x] `needCatalog.ts` with `{id, label}` shape.
-- [x] Removed the toolbox-toggling duplication between `index.html` and `preview.html` (both now just call `WardleyDemo.demos.userNeedDependency(...)`).
-
-## Phase 1 — Personalize the value chain (done)
-
-One continuous flow, not a replacement of Phase 0 — the drag step still
-happens first, then the Toolbox continues into the 5-step form:
-
-- [x] Drag the generic Need into place (unchanged Phase 0 step, same
-      `panel.showDragHandles`/`runDragStep` wiring as before). A "Next" link
-      (`showNextLink()`, `src/engine/nextLink.ts`) then renders into the
-      host-supplied `nextControl` element — placed beneath the host's own
-      explanation text in `index.html`/`preview.html` (`#vc-next`, a sibling
-      of `#vc-answer` inside `.wd-explanation`), *not* inside the Toolbox —
-      and the scenario waits for the visitor to click it before the Toolbox
-      becomes a 5-step data-entry sequence: pick a need from `NEED_CATALOG` →
-      type a User → type Capability 1 → 2 → 3 → celebrate. Both phases run
-      against the same mounted `WardleyDemo` instance/canvas.
-      `ValueChainScenarioOptions.nextControl` is required — any new host page
-      embedding this scenario must supply that container.
-- [x] `runValueChainScenario` (`src/demos/userNeedDependency.ts`) is now
-      `async`: it `await`s a `Promise` wrapping the drag step's `onComplete`
-      callback, then walks `panel.showField` calls in sequence, relabeling
-      both the domain `ValueChain` (via `relabelNeed`/`relabelUser`/
-      `relabelCapability`) and the rendered nodes (`demo.relabelNode`) as each
-      answer comes in.
-- [x] `WardleyDemo` gained a public `celebrate(nodeId)` method — activates all
-      lines, charges every node, plays flow particles, and fires a firework
-      burst centered on `nodeId`, without requiring a drag/snap. Used for the
-      *second*, bigger celebration once personalization finishes (the drag
-      step's own snap still triggers the existing `celebrateSnap` flourish).
-      `celebrateSnap` was refactored to share the same `activateLines`/
-      `spawnFlowParticles`/`fireworkAt` helpers.
-- [x] A host-supplied `config` (e.g. `preview.html`'s hand-tuned geometry) must
-      still mark the Need `draggable: true` with a `start`, and must use the
-      seed `ValueChain`'s node ids (`user`, `need`, `dependency-1/2/3`) since
-      relabeling is keyed by those ids — documented on
-      `ValueChainScenarioOptions.config`. Fixed `preview.html`'s config, which
-      had drifted (`capability-N` ids, stale drag `start`) from a prior phase.
-- [x] Verified end-to-end in the dev server and in `preview.html`'s built-bundle
-      embed: drag snaps and charges the chain, form steps relabel nodes live,
-      final celebration re-charges everything and fires `onCelebrate`.
-
-## Phase 2 — Evolution (entry gate, map backdrop, drag-confirm, characteristics data, instrument-panel readout, and stage-dependent flow animation all done)
-
-Goal: a Wardley map backdrop appears behind the value chain; User floats above
-it, Need + Capabilities sit on it; visitor drags each of Need/Capability-1/2/3
-left-right along its evolution axis one at a time, sees live characteristics
-+ animation feedback, confirms, repeats, celebrates.
-
-- [x] Phase 1 → Phase 2 transition gate: `runValueChainScenario`
-      (`src/demos/userNeedDependency.ts`) reuses the same `nextControl`
-      container as the Phase 0→1 gate — after the Phase 1 celebration, it
-      shows a second `showNextLink()` link and waits for the visitor to
-      click it before firing a new `onEvolutionReady` callback. Host pages
-      (`index.html`, `preview.html`) use that callback to fade the entire
-      `.wd-explanation` block (question, answer, next link) to invisible via
-      a new `.wd-explanation--hidden` class, since Phase 2 is meant to be
-      played without any explainer text competing for the visitor's
-      attention. The Toolbox itself is *not* collapsed during this gate —
-      `Panel` gained `showEmpty()` (renders a bare `.wd-panel-content`
-      placeholder, same `min-height: 360px` as every other mode) so the
-      Toolbox holds its full height, empty for now, ready for whatever
-      Phase 2 content fills it next.
-- [x] Map backdrop rendering: `render.ts`'s `createMapBackdrop(viewBox)` draws
-      the four evolution-stage bands (Genesis/Custom-Built/Product/Commodity)
-      with dividers and labels, styled in `styles.ts`. `WardleyDemo` renders
-      it into a new `backdropLayer` (bottom of the z-order) via
-      `showMapBackdrop(scale, targetHeightPx?)`, called from
-      `runValueChainScenario` right after `onEvolutionReady`. Getting this
-      right took two follow-up fixes beyond the initial render — both
-      because resizing the canvas at the same moment the backdrop appears is
-      easy to get subtly wrong in ways that move/resize the already-placed
-      nodes (disorienting to a visitor mid-demo):
-      - `captureScale()` snapshots the demo's current on-screen scale
-        *before* the host expands the canvas; `showMapBackdrop` then widens
-        (never shrinks) the viewBox to exactly fill the new width/height at
-        that *same* scale, so every existing node keeps its exact pixel size
-        and position — only new map area becomes visible alongside/beneath
-        them. `targetHeightPx` (the toolbox's measured height) makes the map
-        match the toolbox's height the same way.
-      - The host pages (`index.html`, `preview.html`) had their own
-        layout-shift bugs that caused a jump even with the scale math fixed:
-        auto-centering on `.wd-canvas`/`.demo-row` re-centered the whole
-        block the instant its width changed, and `.wd-explanation--hidden`
-        clamped `max-width: 0` but not height, so its long text wrapped into
-        a tall invisible column that (combined with `align-items: center`)
-        pushed siblings down. Both host pages now anchor the canvas
-        flush-left with a fixed top margin and clamp `max-height: 0` too, so
-        nothing shifts when the explanation collapses.
-- [x] Evolution-axis drag + confirm, wired for the Need node only (Capability-1/2/3
-      repeat the same pattern in a follow-up — see below). New sibling function
-      `attachAxisDrag` in `drag.ts` (a different interaction mode from
-      `attachDrag`'s snap-to-point, not a parameterization of it, as previously
-      planned here): free horizontal drag clamped to `[NODE_RADIUS, viewBoxWidth -
-      NODE_RADIUS]`, no snap-back and no auto-commit on release — the node just
-      stays wherever it's dropped, draggable again until an explicit `confirm()`.
-      `WardleyDemo.runEvolutionDragStep(nodeId, options)` wires this onto an
-      already-registered node and wraps live x into a stage label via
-      `render.ts`'s new `stageLabelAt(x, viewBoxWidth)` (shares
-      `EVOLUTION_STAGES`/band-width math with `createMapBackdrop`/`genesisCenterX`
-      rather than duplicating it). `confirm()` re-charges the node, respawns its
-      flow particles, and fires a firework at its final position as the
-      "placement confirmed" cue. `runValueChainScenario`
-      (`src/demos/userNeedDependency.ts`) wires it right after `demo.beckonNode`:
-      `onPositionChange` calls a new `Panel.updatePlaceholderSubheading(text)` so
-      the Toolbox's "Genesis" subheading updates live as the visitor drags; the
-      first time the node is released (`onReadyToConfirm`), a confirm link
-      appears reading "Confirm placement" — clicking it calls `confirm()` and
-      resolves the scenario's promise. No instrument-panel/characteristics
-      content yet (see below) — just the live stage name.
-      **Fix:** this link was originally rendered via `showNextLink(nextControl,
-      ...)`, same as the Phase 0→1 and Phase 1→2 gates — but `nextControl`
-      lives inside the host's `.wd-explanation` block, which `onEvolutionReady`
-      already hides for the rest of Phase 2, so the link silently rendered
-      into an invisible container. `Panel` gained `confirmPlacement(label?)`,
-      which appends the same `showNextLink` control into the Toolbox's own
-      `.wd-panel-content` instead; `awaitEvolutionConfirm` now calls
-      `panel.confirmPlacement()` and no longer takes a `nextControl` param.
-- [x] Repeated the drag-confirm step for Capability-1/2/3. `userNeedDependency.ts`
-      factors the wait-for-confirm wiring into a shared `awaitEvolutionConfirm`
-      helper (used by the Need too) and, after the Need's `confirm()`, loops over
-      `chain.capabilities`: `panel.showPlaceholder(capability.label, "Genesis")`,
-      `demo.beckonNode`, `demo.slideToGenesis`, then awaits the same drag-confirm
-      interaction. Once all three capabilities are confirmed, the Toolbox clears
-      (`panel.showEmpty()`) and `demo.celebrateAll()` fires once more as the
-      "all four placed" finale.
-
-- [x] **Evolutionary-characteristics data.** `src/domain/evolution.ts` exports `EVOLUTION_STAGES`, `EvolutionStage`, and `characteristicsFor(kind, stage)`, with text split by `ComponentKind` (`need` vs `capability`) per the forecast ("characteristics relevant to capabilities instead of user needs"). Throws for `"user"`, which never travels the evolution axis.
-- [x] **Live-updating "instrument panel" Panel mode.** `panel.ts`'s `Panel` gained `showInstrumentPanel(heading, kind, initialStage, delayMs?)` and `updateInstrumentPanel(stage)`, rendering heading + live stage name + real characteristics text from `domain/evolution.ts` (reusing `showPlaceholder`'s layout/fade-in CSS, new `.wd-panel-instrument-characteristics` class in `styles.ts`). `userNeedDependency.ts` now calls `showInstrumentPanel` (instead of `showPlaceholder`) for the Need and each Capability's evolution step, and `awaitEvolutionConfirm`'s `onPositionChange` calls `updateInstrumentPanel` instead of `updatePlaceholderSubheading`.
-- [x] **Stage-dependent flow animation.** `render.ts`'s `createFlowParticles` now takes an optional `stage: EvolutionStage` and looks up count/duration/regularity from a new `FLOW_STAGE_PARAMS` table (exposed via `flowParamsForStage(stage?)`) — Genesis is one slow (3.4s) stuttering particle, Commodity is four fast (1.3s) smooth ones, Custom-Built/Product interpolate. "Stuttering" is CSS-only: a new `.wd-flow-particle--sputter` class overrides `animation-timing-function` to `steps(14, jump-end)` on the *same* `wd-particle-travel` keyframes the smooth look already used (`styles.ts`), rather than a second keyframe set. `WardleyDemo` gained a `nodeStage: Map<string, EvolutionStage>` and a private `setNodeStage(nodeId, stage)` that no-ops unless the stage actually changed (avoids respawning particles on every pointer-move) and otherwise respawns the flow particles on every line touching that node; `spawnParticlesForLine` looks up the stage of each line's `to` node (the "supplier" end — e.g. a Capability's own stage governs its Need→Capability line, the Need's stage governs the User→Need line) and falls back to `flowParamsForStage(undefined)` — the same fixed 1-particle/2.0s look `render.ts` already used — for any node not yet placed on the evolution axis, so Phase 0/1's look is unchanged. `slideToGenesis` and `runEvolutionDragStep`'s `confirm()` both call `setNodeStage` (Genesis on sliding in, the drag's final `stageLabelAt(x, ...)` on confirm) instead of unconditionally respawning. Deliberately *not* live during the drag itself — `attachAxisDrag` doesn't commit the dragged node's `x` in `nodesById` until `confirm()` (see `drag.ts`), so respawning particles mid-drag would build their offset-path from the stale pre-drag position; stage-dependent flow only takes effect once a placement is confirmed. `stageLabelAt`'s return type is now `EvolutionStage` (was `string`), which let `userNeedDependency.ts` drop an `as EvolutionStage` cast on its `onPositionChange` handler.
+- [x] Phase 0 — Value Chain: generic User → User Need → Capability x3, drag Need into place, celebration.
+- [x] Phase 0.5 — Refactor prep: mutable domain labels, decomposed `WardleyDemo` engine ops, swappable-mode `Panel`, `needCatalog.ts`, removed host-page toolbox duplication.
+- [x] Phase 1 — Personalize the value chain: drag-then-form flow (need dropdown → User/Capability text fields), live relabeling of domain + rendered nodes, `celebrate(nodeId)` finale.
+- [x] Phase 2 — Evolution: map backdrop, per-node evolution-axis drag + confirm (Need then Capability-1/2/3), live characteristics instrument-panel readout, stage-dependent flow-particle animation.
+- [x] Finale — big celebration + `Panel.showRecap` with CTA link to LearnWardleyMapping.com.
 
 ## Phase 3 — Thinking with the map (not started; needs new abstractions)
 
@@ -202,14 +69,59 @@ New pieces needed, not yet present:
 
 This phase is entirely downstream of Phase 2's map backdrop existing (annotations are positioned relative to it), so don't start scoping it precisely until Phase 2 lands.
 
-## Finale
+## Feedback-driven TODOs (from `feedback/` playtests, 2026-07-03)
 
-- [x] Big celebration.
-- [x] Clicking the very last "What's next →" link (`panel.confirmPlacement("What's next →")`
-      in `runValueChainScenario`) swaps the Toolbox to a new `Panel.showRecap(items, cta)`
-      mode: a "Nice work!" heading, a bulleted recap of the three phases (value chain →
-      Wardley map → strategic thinking), and an external CTA link (opens in a new tab) to
-      LearnWardleyMapping.com. `index.html`'s old `onComplete` handler (which scrolled to a
-      separate `#thinking` section making the same "now go think strategically" point) was
-      removed along with that section, since the recap now lives in the Toolbox itself and
-      scrolling away would just carry the visitor past it.
+Patterns pulled from summarized playtester notes in `feedback/*.txt` — see those
+files for full context per reviewer. Ordered roughly by how many independent
+testers hit the same thing (strongest signal first).
+
+- [ ] **Fix: need-topic content leaks across examples.** Selecting one topic
+      (e.g. "fresh grocery delivery") surfaces suggestions/placeholders from a
+      different topic (tea example: "commuter", "kettle", "kettle"). Hit
+      independently by two testers (`pablogil.txt`, `velocirachael.txt`) — a
+      real bug, not a one-off, likely in whatever wires `NEED_CATALOG`
+      selection to dependent dropdown/placeholder content.
+- [ ] **Add a visible "this is draggable" affordance.** Multiple testers
+      (`jamesfairbairn.txt`, `joeltosi.txt`) didn't realize a node/capability
+      could be dragged until they accidentally clicked it first — no visual
+      cue (cursor, glow, handle) currently signals draggability before the
+      first interaction.
+- [ ] **Clarify the opening frame before Phase 0/1 starts.** Five separate
+      testers (`jamesfairbairn.txt`, `joeltosi.txt`, `joshkruszynski.txt`,
+      `tomgeraghty.txt`, `pablogil.txt`) got lost before or during the
+      capabilities step — unclear what a "value chain" is, who the demo is
+      for, and what greyed-out elements mean. Strongest, most-repeated
+      signal in the whole batch; worth a dedicated pass on the intro
+      copy/framing rather than a one-line fix.
+- [ ] **Scaffold the capabilities step.** Testers had no confidence in what
+      counts as a capability or at what abstraction level
+      (`pablogil.txt`, `joshkruszynski.txt`). `michaellindqvist.txt` proposes
+      a concrete fill-in-the-blank scaffold ("I want / Because of / Depends
+      on") that could be pre-filled as a worked example before the visitor
+      free-types their own.
+- [ ] **Reconsider single-layer value chain scope.** `jamesfairbairn.txt`:
+      the grocery-delivery example's one-layer chain prompted an
+      unproductive "do I depend on a truck? a farm? the cold chain?"
+      recursion spiral that may work against the learning goal rather than
+      for it. Worth deciding whether to bound the chain more explicitly or
+      address the recursion question head-on in a later phase.
+- [ ] **Audit assessment/self-check copy against arbitrary user input.**
+      `pablogil.txt`: an invented example ("messaging with friends") landed
+      in "deep commoditization" and produced a self-check answer that read
+      as semantically wrong for that input — suggests the Phase 2/3
+      assessment cues assume specific example content rather than being
+      robust to whatever the visitor typed in Phase 1.
+- [ ] **Accessibility pass on evolution-stage color coding.** `velocirachael.txt`:
+      color bars used for evolution stages were not visible to her (high
+      eye pressure/migraine, possibly compounded by monitor settings) —
+      color-only encoding is a known contrast failure mode regardless of
+      her specific condition; add higher-contrast or bordered/labeled
+      alternatives.
+- [ ] **Mobile drag/select gesture polish.** `rianporter.txt`: needed to
+      zoom, and distinguishing "select" from "drag" took some learning on
+      mobile — worth a dedicated mobile pass once desktop flow is settled.
+- [ ] **Unresolved product tension — guided prompts vs. discovery.**
+      `rianporter.txt` explicitly argues against more hand-holding
+      ("people are smart"), while `tomgeraghty.txt`, `joshkruszynski.txt`,
+      and `joeltosi.txt` all ask for more explicit prompts. Not a bug — a
+      design call to make deliberately, not average away.

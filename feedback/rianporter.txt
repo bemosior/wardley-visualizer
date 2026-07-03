@@ -1,3 +1,5 @@
+SUMMARY: Tested on mobile, not desktop — worth noting when weighing his specific complaints. Concrete friction: needed to zoom, and distinguishing "select" from "drag" gestures took some learning (a real mobile UX gap, not a preference). His actual opinion worth taking seriously: he doesn't want heavy guided-tour scaffolding — believes motivated users will explore on their own ("people are smart"). This cuts against some other reviewers' requests for more explicit prompts, so it's a genuine tension to resolve, not just more validation. The Hook mobile-game comparison is a reference point for drag-interaction feel, not a bug report.
+---
 I keep forgetting to do this when I’m at the desktop, i wanted to do a screen recording for you but would you rather I just knock it out quick on mobile ?
 Needed to zoom a bit and the selects vs drags a little learning. But I like it!
 You ever play the mobile game  hook before? There were some similarities https://www.rainbowtrain.eu/hook

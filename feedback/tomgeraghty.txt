@@ -1,1 +1,3 @@
+SUMMARY: Almost no signal here beyond one data point: he didn't know what to do at the start and wants more explicit, easy-to-follow prompts. Consistent with Joel Tosi's and Josh Kruszynski's onboarding-confusion reports, but too thin on its own to act on — useful mainly as a third confirmation of the same first-run confusion pattern.
+---
 I like it! Took me a while to work out what I was meant to do though - some explicit and easy to follow prompts would help :)
