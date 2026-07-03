@@ -112,7 +112,9 @@ const CSS = `
 }
 
 .wd-node--beckon .wd-node-shape {
-  animation: wd-pulse 1.8s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: wd-pulse 1.4s ease-in-out infinite;
 }
 
 /**
@@ -131,8 +133,14 @@ const CSS = `
 }
 
 @keyframes wd-pulse {
-  0%, 100% { filter: drop-shadow(0 0 0 rgba(0, 95, 153, 0)); }
-  50% { filter: drop-shadow(0 0 8px rgba(0, 95, 153, 0.55)); }
+  0%, 100% {
+    filter: drop-shadow(0 0 0 rgba(0, 95, 153, 0));
+    transform: scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 0 16px rgba(0, 95, 153, 0.9));
+    transform: scale(1.06);
+  }
 }
 
 .wd-node--charged .wd-node-shape {
