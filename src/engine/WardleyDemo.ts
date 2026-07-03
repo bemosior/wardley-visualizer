@@ -3,6 +3,7 @@ import type { EvolutionStage } from "../domain/evolution";
 import {
   createAnnotation,
   createConnectionLine,
+  createEvolutionChevron,
   createFireworkShells,
   createFlowParticles,
   createLayer,
@@ -417,16 +418,28 @@ export class WardleyDemo {
 
     nodeGroup.classList.add("wd-node--draggable");
 
+    const minX = NODE_RADIUS;
+    const maxX = this.viewBox.width - NODE_RADIUS;
+    const leftChevron = createEvolutionChevron("left");
+    const rightChevron = createEvolutionChevron("right");
+    nodeGroup.append(leftChevron, rightChevron);
+    const updateChevrons = (x: number): void => {
+      leftChevron.classList.toggle("wd-node-chevron--hidden", x <= minX);
+      rightChevron.classList.toggle("wd-node-chevron--hidden", x >= maxX);
+    };
+    updateChevrons(node.x);
+
     const handle = attachAxisDrag({
       svg: this.svg,
       nodeGroup,
       node,
       connectedLines,
-      minX: NODE_RADIUS,
-      maxX: this.viewBox.width - NODE_RADIUS,
+      minX,
+      maxX,
       onPositionChange: (x) => {
         options.onPositionChange?.(stageLabelAt(x, this.viewBox.width));
         this.updateFlowParticlePaths(nodeId, { x, y: node.y });
+        updateChevrons(x);
       },
       onFirstRelease: options.onReadyToConfirm,
     });
@@ -436,6 +449,8 @@ export class WardleyDemo {
         handle.confirm((x) => {
           nodeGroup.classList.remove("wd-node--draggable");
           nodeGroup.classList.remove("wd-node--beckon");
+          leftChevron.remove();
+          rightChevron.remove();
           this.setNodeStage(nodeId, stageLabelAt(x, this.viewBox.width));
           this.respawnFlowParticlesTouching(nodeId);
           this.fireworkAt(x, node.y);

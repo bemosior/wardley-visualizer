@@ -40,6 +40,36 @@ export function createNodeGroup(node: DemoNode): SVGGElement {
   return g;
 }
 
+const CHEVRON_GAP = 14;
+const CHEVRON_HALF_WIDTH = 5;
+const CHEVRON_HALF_HEIGHT = 9;
+
+/**
+ * a small "drag me this way" arrow flanking an evolution-draggable node, nudging toward `direction`
+ * to cue that the node can be dragged along the evolution axis. Positioned relative to the node's
+ * own transform (so it rides along automatically as the node moves) — the caller is responsible for
+ * appending it into the node's group and toggling `wd-node-chevron--hidden` once the node reaches
+ * that side's edge of the axis.
+ */
+export function createEvolutionChevron(direction: "left" | "right", radius: number = NODE_RADIUS): SVGGElement {
+  const g = document.createElementNS(SVG_NS, "g") as SVGGElement;
+  g.classList.add("wd-node-chevron", `wd-node-chevron--${direction}`);
+  const offsetX = direction === "right" ? radius + CHEVRON_GAP : -(radius + CHEVRON_GAP);
+  g.setAttribute("transform", `translate(${offsetX}, 0)`);
+
+  const tipX = direction === "right" ? CHEVRON_HALF_WIDTH : -CHEVRON_HALF_WIDTH;
+  const backX = -tipX;
+  const mark = document.createElementNS(SVG_NS, "path");
+  mark.classList.add("wd-node-chevron-mark");
+  mark.setAttribute(
+    "d",
+    `M ${backX},${-CHEVRON_HALF_HEIGHT} L ${tipX},0 L ${backX},${CHEVRON_HALF_HEIGHT}`,
+  );
+  g.appendChild(mark);
+
+  return g;
+}
+
 const LABEL_PADDING = 12;
 const LABEL_MIN_FONT_SIZE = 9;
 

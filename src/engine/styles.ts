@@ -117,6 +117,41 @@ const CSS = `
   animation: wd-pulse 1.4s ease-in-out infinite;
 }
 
+.wd-node-chevron {
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.wd-node-chevron--hidden {
+  opacity: 0;
+}
+
+.wd-node-chevron-mark {
+  fill: none;
+  stroke: var(--wd-color-link, #005f99);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.wd-node-chevron--right .wd-node-chevron-mark {
+  animation: wd-chevron-nudge-right 1.4s ease-in-out infinite;
+}
+
+.wd-node-chevron--left .wd-node-chevron-mark {
+  animation: wd-chevron-nudge-left 1.4s ease-in-out infinite;
+}
+
+@keyframes wd-chevron-nudge-right {
+  0%, 100% { transform: translateX(0); opacity: 0.5; }
+  50% { transform: translateX(5px); opacity: 1; }
+}
+
+@keyframes wd-chevron-nudge-left {
+  0%, 100% { transform: translateX(0); opacity: 0.5; }
+  50% { transform: translateX(-5px); opacity: 1; }
+}
+
 /**
  * a node whose evolution-drag turn hasn't arrived yet (see Phase 2's capability loop) — muted so
  * it doesn't read as interactive next to whichever node is currently beckoning. Muted via stroke/
