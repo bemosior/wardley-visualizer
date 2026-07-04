@@ -548,7 +548,10 @@ const CSS = `
  * cover it exactly, so WardleyDemo.getNodePixelPosition's coordinates (measured relative to
  * that same container's top-left, the same space fireworkAt already renders into) line up
  * pixel-for-pixel with .wd-mascot's left/top. pointer-events: none lets clicks fall through to
- * the map/nodes underneath everywhere except the mascot itself, which re-enables them.
+ * the map/nodes underneath everywhere. .wd-mascot itself stays pointer-events: none too (its flex
+ * box spans avatar-to-bubble, including the empty gap between them, which would otherwise sit on
+ * top of and block dragging any node that box happens to cover) -- only .wd-mascot-bubble
+ * re-enables pointer events, since it's the one piece that's actually interactive.
  */
 .wd-mascot-host {
   position: absolute;
@@ -567,7 +570,7 @@ const CSS = `
   display: flex;
   align-items: flex-start;
   gap: 0.5rem;
-  pointer-events: auto;
+  pointer-events: none;
   transition: left 0.4s ease, top 0.4s ease;
 }
 
@@ -626,6 +629,7 @@ const CSS = `
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
   padding: 0.75rem 1rem;
   max-width: 280px;
+  pointer-events: auto;
 }
 
 .wd-mascot-bubble::before {
