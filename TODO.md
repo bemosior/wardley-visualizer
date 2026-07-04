@@ -123,8 +123,13 @@ testers hit the same thing (strongest signal first).
       needed, gives an explicit first action ("drag the glowing circle onto
       the canvas"), and names the toolbox's two inactive `Panel` drag slots
       directly so their greyscale styling doesn't read as "wrong answers."
-      The definition reveal (`#vc-answer`, shown via `onNeedPlaced`) is
-      unchanged — it's still the payoff once the visitor completes the drag.
+      The definition reveal (`#vc-answer`, shown via `onNeedPlaced`) was
+      unchanged at the time — still the payoff once the visitor completes the
+      drag. **Update:** the host page's `.wd-explanation` column (`#vc-answer`
+      + `#vc-next`) has since been removed entirely; that payoff copy and both
+      "Next" gates now render inside the mascot's own speech bubble
+      (`Mascot.confirmPlacement`, `phase1.ts`'s `MASCOT_NEED_PLACED`), so
+      `ValueChainScenarioOptions` no longer takes a `nextControl`.
 - [ ] **Scaffold the capabilities step.** Testers had no confidence in what
       counts as a capability or at what abstraction level
       (`pablogil.txt`, `joshkruszynski.txt`). `michaellindqvist.txt` proposes

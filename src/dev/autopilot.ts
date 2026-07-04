@@ -22,14 +22,12 @@ export function parseSkipTarget(search: string): SkipTarget | null {
 
 export interface AutopilotOptions {
   /**
-   * the scenario's mascot host container — watched for auto-fillable `.wd-panel-form`s (Phase
-   * 0/1 content) as well as the confirm-placement links and question buttons the mascot renders
-   * from Phase 2 onward. The mascot renders all of it, from the very start of the scenario, so
-   * every caller needs this regardless of `target`.
+   * the scenario's mascot host container — watched for every auto-fillable/auto-clickable
+   * control the mascot renders, from Phase 0's drag affordance through the Phase 3 Q&A: forms,
+   * every "Next"/"Confirm placement"/gate link, and question buttons. The mascot renders all of
+   * it into this one root for the whole scenario, so a single observer covers every `target`.
    */
   mascotHost: HTMLElement;
-  /** the scenario's next-link container — watched for `.wd-next-link`s to auto-click */
-  nextControl: HTMLElement;
   target: SkipTarget;
 }
 
@@ -60,57 +58,54 @@ function fillAndSubmit(form: HTMLFormElement): void {
  * manual interaction from that moment forward. Dev/testing convenience; see
  * the-more-of-the-peaceful-sky plan for why this exists instead of a resumable step machine.
  */
-export function attachAutopilot({ mascotHost, nextControl, target }: AutopilotOptions): Autopilot {
-  let nextLinkCount = 0;
+export function attachAutopilot({ mascotHost, target }: AutopilotOptions): Autopilot {
+  // counts only the plain "Next" links -- the Phase 0->1 and Phase 1->2 gates are the sole two
+  // that share identical link text, so they can't be told apart by content the way every other
+  // gate below is (by its own distinct label).
+  let plainNextCount = 0;
 
   function disconnect(): void {
-    nextObserver.disconnect();
-    mascotObserver.disconnect();
+    observer.disconnect();
   }
 
-  const nextObserver = new MutationObserver(() => {
-    const link = nextControl.querySelector<HTMLAnchorElement>(".wd-next-link");
-    if (!link) return;
-    nextLinkCount++;
-    if (nextLinkCount === 1) {
-      link.click();
-      if (target === "phase1") disconnect();
-    } else if (nextLinkCount === 2) {
-      if (target === "phase2" || target === "finale" || target === "thinking") link.click();
-      if (target !== "finale" && target !== "thinking") disconnect();
-    }
-  });
-
   /**
-   * drives the single mascot-host observer below — the mascot renders every phase's content
-   * (drag slots, form, instrument panel, confirm links, questions) into the same root, so one
-   * handler covers all of it.
+   * one handler covering the whole scenario — the mascot renders every phase's content (drag
+   * slots, form, instrument panel, confirm/gate links, questions) into the same root.
    */
-  function handleContentMutation(root: HTMLElement): void {
-    const form = root.querySelector<HTMLFormElement>(".wd-panel-form");
+  function handleContentMutation(): void {
+    const form = mascotHost.querySelector<HTMLFormElement>(".wd-panel-form");
     if (form) fillAndSubmit(form);
-    if (target === "finale" || target === "thinking") {
+
+    const link = mascotHost.querySelector<HTMLAnchorElement>(".wd-next-link");
+    const linkText = link?.textContent?.trim();
+
+    if (linkText === "Next") {
+      plainNextCount++;
+      if (plainNextCount === 1) {
+        link!.click();
+        if (target === "phase1") disconnect();
+      } else if (plainNextCount === 2) {
+        if (target === "phase2" || target === "finale" || target === "thinking") link!.click();
+        if (target !== "finale" && target !== "thinking") disconnect();
+      }
+    } else if (linkText === "Confirm placement" && (target === "finale" || target === "thinking")) {
       // auto-click "Confirm placement" links that appear during Phase 2,
       // but not the finale's "What's next →" which should be left for the visitor
-      const link = root.querySelector<HTMLAnchorElement>(".wd-next-link");
-      if (link && link.textContent?.trim() === "Confirm placement") link.click();
+      link!.click();
+    } else if (linkText === "Let's think about it →" && target === "thinking") {
+      // auto-click the Phase 2->3 gate, but leave Phase 3's own "What's next →" for the visitor,
+      // same as `finale` leaves Phase 2's
+      link!.click();
     }
+
     if (target === "thinking") {
-      // auto-click the Phase 2->3 gate and every question's first option, but leave Phase 3's
-      // own "What's next →" for the visitor, same as `finale` leaves Phase 2's
-      const gateLink = root.querySelector<HTMLAnchorElement>(".wd-next-link");
-      if (gateLink && gateLink.textContent?.trim() === "Let's think about it →") gateLink.click();
-      const option = root.querySelector<HTMLButtonElement>(".wd-panel-question-option");
+      const option = mascotHost.querySelector<HTMLButtonElement>(".wd-panel-question-option");
       if (option) option.click();
     }
   }
 
-  const mascotObserver = new MutationObserver(() => handleContentMutation(mascotHost));
-
-  nextObserver.observe(nextControl, { childList: true });
-  if (target !== "phase1") {
-    mascotObserver.observe(mascotHost, { childList: true, subtree: true });
-  }
+  const observer = new MutationObserver(handleContentMutation);
+  observer.observe(mascotHost, { childList: true, subtree: true });
 
   return {
     onMount: (demo) => demo.skipDrag(),

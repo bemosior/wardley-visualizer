@@ -20,19 +20,12 @@ export interface ValueChainScenarioOptions {
    * already render into.
    */
   mascotHost: HTMLElement;
-  /**
-   * host-supplied container for the "Next" link — reused for two gates in
-   * sequence: first to switch from Phase 0 into the Phase 1 form, then again
-   * after the Phase 1 celebration to switch into Phase 2. Typically placed
-   * beneath the host's own explanation text.
-   */
-  nextControl: HTMLElement;
-  /** fires as soon as the Need snaps into place (Phase 0 done); the scenario then shows a "Next" link in `nextControl` and waits for the visitor to click it before the mascot walks into the Phase 1 form */
+  /** fires as soon as the Need snaps into place (Phase 0 done); the scenario then shows a "Next" link inside the mascot's bubble and waits for the visitor to click it before the mascot walks into the Phase 1 form */
   onNeedPlaced?: () => void;
   onCelebrate?: () => void;
   /** fires right after the canvas mounts, before the drag step resolves — lets a caller grab the `WardleyDemo` instance early enough to call `skipDrag()` (see `src/dev/autopilot.ts`) */
   onMount?: (demo: WardleyDemo) => void;
-  /** fires once the visitor clicks the second "Next" link (shown in `nextControl` after the celebration) — the signal that Phase 2 starts */
+  /** fires once the visitor clicks the second "Next" link (shown inside the mascot's bubble after the celebration) — the signal that Phase 2 starts */
   onEvolutionReady?: () => void;
   /** fires once the visitor clicks "What's next →" at the very end of Phase 2, after all nodes are placed on the evolution axis and the finale celebration runs */
   onComplete?: () => void;

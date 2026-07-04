@@ -191,10 +191,10 @@ export class WardleyDemo {
    * grows the viewBox to fill the container's current width, at the scale the value chain's
    * nodes were authored at (`scale` default of 1 — 1 viewBox unit ≈ 1px, e.g. `NODE_RADIUS`'s 48
    * renders as a 48px-radius circle). Call this once, right after mount, so the canvas is already
-   * the same size for the whole scenario instead of visibly growing later when a host page's
-   * explanation column collapses (that used to be `showMapBackdrop`'s job, driven by
-   * `captureScale`/container-resize timing — now the container never resizes, so this just does
-   * the growth eagerly using the same math). `targetHeightPx` behaves like `showMapBackdrop`'s.
+   * the same size for the whole scenario instead of visibly growing later at the Phase 2
+   * transition (that used to be `showMapBackdrop`'s job, driven by `captureScale`/container-resize
+   * timing — now the container never resizes, so this just does the growth eagerly using the
+   * same math). `targetHeightPx` behaves like `showMapBackdrop`'s.
    */
   growToFillContainer(targetHeightPx?: number, scale = 1): void {
     this.growViewBox(scale, targetHeightPx);
