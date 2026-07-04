@@ -9,6 +9,10 @@ import { NEED_CATALOG } from "../domain/needCatalog";
 import { BIAS_CHECK_QUESTION, BUILD_BUY_OUTSOURCE_QUESTION, pickRandomQuestion, type Question } from "../domain/questionBank";
 import type { DemoConfig } from "../engine/types";
 
+/** horizontal clearance (container px) between the Need's destination marker and the mascot
+ * avatar when it anchors beside (not under) that marker, before the demo starts */
+const MASCOT_BESIDE_GAP = 24;
+
 const seedValueChain = createValueChain({
   user: { id: "user", label: "User" },
   need: { id: "need", label: "Need" },
@@ -103,8 +107,11 @@ export interface ValueChainScenarioOptions {
  * mounts. The Need node itself renders already on the canvas, out of place at its `start`
  * position (`layoutValueChain`'s default, same row as its final spot but off to one side) and
  * pulsing (`wd-node--beckon`) to invite a direct drag — no separate toolbox slot to pick up
- * from. The mascot anchors to that pre-drag position (`WardleyDemo.getViewBoxPixelPosition`)
- * and greets the visitor (`MASCOT_INTRO`, via `Mascot.showPlaceholder`), then waits for the
+ * from. The mascot anchors beside the Need's *destination* marker instead — the dashed target
+ * circle at its final `layoutValueChain` position (`WardleyDemo.getNodePixelPosition`), offset to
+ * the right by `MASCOT_BESIDE_GAP` — so it points at where the Need is headed rather than sitting
+ * on top of the node the visitor is about to pick up. It greets the visitor (`MASCOT_INTRO`, via
+ * `Mascot.showPlaceholder`), then waits for the
  * Need to be dragged into place (Phase 0). Once it snaps, the mascot re-anchors to the Need's settled
  * position and shows a short "Nice!" placeholder (`MASCOT_NEED_PLACED`) while the visitor
  * clicks the "Next" link rendered into `nextControl`. The mascot then walks the visitor
@@ -149,8 +156,17 @@ export async function runValueChainScenario(options: ValueChainScenarioOptions):
   let demo!: WardleyDemo;
   await new Promise<void>((resolve) => {
     demo = WardleyDemo.mount(options.canvas, { ...demoConfig, onComplete: resolve });
-    const needStart = demoConfig.nodes.find((n) => n.id === chain.need.id)?.start;
-    if (needStart) mascot.moveTo(chain.need.id, demo.getViewBoxPixelPosition(needStart.x, needStart.y));
+    const needDestination = demo.getNodePixelPosition(chain.need.id);
+    // anchors beside the Need's *destination* marker (the dashed target circle), not its
+    // out-of-place `start` position -- keeps the mascot clear of the node the visitor is about
+    // to pick up and drag, and points at where it's headed instead.
+    if (needDestination) {
+      mascot.moveTo(chain.need.id, {
+        x: needDestination.x + needDestination.radius + MASCOT_BESIDE_GAP,
+        y: needDestination.y,
+        radius: 0,
+      });
+    }
     options.onMount?.(demo);
   });
 
