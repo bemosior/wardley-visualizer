@@ -652,6 +652,23 @@ const CSS = `
   border-right: 8px solid #fff;
 }
 
+/* mascot.ts's clampBubbleHorizontally adds this once the bubble has flipped to the avatar's left side (no
+   room on the right) — moves the speech-bubble tail to the opposite edge so it still points at
+   the avatar instead of out into empty canvas */
+.wd-mascot-bubble--flip::before {
+  left: auto;
+  right: -8px;
+  border-right: none;
+  border-left: 8px solid var(--wd-color-border);
+}
+
+.wd-mascot-bubble--flip::after {
+  left: auto;
+  right: -7px;
+  border-right: none;
+  border-left: 8px solid #fff;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .wd-panel-slot--active circle {
     animation: none;
