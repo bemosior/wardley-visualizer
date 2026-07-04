@@ -26,30 +26,28 @@ async function flushAll(): Promise<void> {
 function buildScenario(target: Parameters<typeof attachAutopilot>[0]["target"], callbacks: Record<string, () => void> = {}) {
   const canvas = document.createElement("div");
   const mascotHost = document.createElement("div");
-  const nextControl = document.createElement("div");
-  document.body.append(canvas, mascotHost, nextControl);
+  document.body.append(canvas, mascotHost);
 
-  const autopilot = attachAutopilot({ mascotHost, nextControl, target });
+  const autopilot = attachAutopilot({ mascotHost, target });
   runValueChainScenario({
     canvas,
     mascotHost,
-    nextControl,
     onMount: autopilot.onMount,
     onEvolutionStep: autopilot.onEvolutionStep,
     ...callbacks,
   });
 
-  return { canvas, mascotHost, nextControl };
+  return { canvas, mascotHost };
 }
 
 describe("attachAutopilot", () => {
   it("phase1: skips the drag and stops at the first form field, without auto-submitting it", async () => {
     const onNeedPlaced = vi.fn();
-    const { canvas, mascotHost, nextControl } = buildScenario("phase1", { onNeedPlaced });
+    const { canvas, mascotHost } = buildScenario("phase1", { onNeedPlaced });
     await flushAll();
 
     expect(onNeedPlaced).toHaveBeenCalledOnce();
-    expect(nextControl.querySelector(".wd-next-link")).toBeNull();
+    expect(mascotHost.querySelector(".wd-next-link")).toBeNull();
     expect(mascotHost.querySelector(".wd-panel-form-prompt")!.textContent).toBe("What does the user need?");
     expect(canvas.querySelector('[data-node-id="need"] .wd-node-label')!.textContent).toBe("Need");
   });
@@ -57,30 +55,29 @@ describe("attachAutopilot", () => {
   it("celebrate: auto-fills all 5 fields and stops right after celebrating, before the second Next link is clicked", async () => {
     const onCelebrate = vi.fn();
     const onEvolutionReady = vi.fn();
-    const { canvas, mascotHost, nextControl } = buildScenario("celebrate", { onCelebrate, onEvolutionReady });
+    const { canvas, mascotHost } = buildScenario("celebrate", { onCelebrate, onEvolutionReady });
     await flushAll();
 
     expect(onCelebrate).toHaveBeenCalledOnce();
     expect(onEvolutionReady).not.toHaveBeenCalled();
     expect(mascotHost.querySelector("form")).toBeNull();
-    expect(nextControl.querySelector(".wd-next-link")).not.toBeNull();
+    expect(mascotHost.querySelector(".wd-next-link")).not.toBeNull();
     expect(canvas.querySelector('[data-node-id="need"] .wd-node-label')!.textContent).not.toBe("Need");
   });
 
   it("phase2: also clicks past the second gate, firing onEvolutionReady", async () => {
     const onEvolutionReady = vi.fn();
-    const { nextControl } = buildScenario("phase2", { onEvolutionReady });
+    const { mascotHost } = buildScenario("phase2", { onEvolutionReady });
     await flushAll();
 
     expect(onEvolutionReady).toHaveBeenCalledOnce();
-    expect(nextControl.querySelector(".wd-next-link")).toBeNull();
+    expect(mascotHost.querySelector(".wd-next-link")).toBeNull();
   });
 
   it("finale: also auto-confirms every Phase 2 placement, stopping at the placement finale before Phase 3 begins", async () => {
-    const { mascotHost, nextControl } = buildScenario("finale");
+    const { mascotHost } = buildScenario("finale");
     await flushAll();
 
-    expect(nextControl.querySelector(".wd-next-link")).toBeNull();
     expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Wardley Map");
     const gateLink = mascotHost.querySelector<HTMLAnchorElement>(".wd-next-link");
     expect(gateLink).not.toBeNull();

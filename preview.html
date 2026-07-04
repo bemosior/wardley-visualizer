@@ -43,16 +43,7 @@
         margin: 0 0 1.5rem;
         font-family: var(--font-ui);
       }
-      /*
-       * position: relative so .wd-explanation (absolutely positioned below) can float over
-       * .wd-instance instead of sharing flex space with it -- that sharing used to make the
-       * canvas measurably narrower whenever the explanation column was visible, so it changed
-       * size the instant Phase 2 hid it (see showMapBackdrop's JS-side viewBox width
-       * calculation). The canvas is now a consistent size for the whole scenario, matching what
-       * it used to only become once the explanation collapsed.
-       */
       .demo-row {
-        position: relative;
         display: flex;
         align-items: center;
         gap: 2rem;
@@ -70,40 +61,6 @@
 
       .wd-instance .wd-canvas {
         flex: 1;
-      }
-
-      .wd-explanation {
-        position: absolute;
-        top: 0;
-        right: 0.5rem;
-        width: 240px;
-        text-align: left;
-        font-size: 1.05rem;
-        line-height: 1.6;
-        color: var(--color-ink);
-        margin: 0;
-        transition: opacity 0.5s ease;
-      }
-
-      .wd-explanation--hidden {
-        opacity: 0;
-        pointer-events: none;
-      }
-      .wd-answer {
-        opacity: 0;
-        transform: translateX(8px);
-        transition: opacity 0.5s ease, transform 0.5s ease;
-      }
-
-      .wd-answer--visible {
-        opacity: 1;
-        transform: translateX(0);
-      }
-
-      #vc-next {
-        margin-top: 0.75rem;
-        min-height: 1.2rem;
-        line-height: 1.2rem;
       }
 
       /* dev-only chrome, not part of the simulated host embed */
@@ -148,21 +105,13 @@
               <div id="mascot-host-a" class="wd-mascot-host"></div>
             </div>
           </div>
-
-          <div class="wd-explanation">
-            <span id="vc-answer" class="wd-answer">A <em>Value Chain</em> shows how <em>Users</em> get their <em>User Needs</em> met, as a result of the <em>Capabilities</em> they depend on.</span>
-            <div id="vc-next"></div>
-          </div>
         </div>
       </div>
     </section>
 
     <script src="./dist/wardley-demo.js"></script>
     <script>
-      var answer = document.getElementById("vc-answer");
-      var explanation = document.querySelector(".wd-explanation");
       var mascotHost = document.getElementById("mascot-host-a");
-      var nextControl = document.getElementById("vc-next");
 
       // Dev-only test shortcut: pick a moment from the dropdown (or load with
       // ?skipTo=phase1|celebrate|phase2) to jump straight past earlier phases
@@ -180,19 +129,12 @@
         location.href = url.toString();
       });
       var autopilot = skipTarget
-        ? WardleyDemo.dev.attachAutopilot({ mascotHost: mascotHost, nextControl: nextControl, target: skipTarget })
+        ? WardleyDemo.dev.attachAutopilot({ mascotHost: mascotHost, target: skipTarget })
         : undefined;
 
       WardleyDemo.demos.userNeedDependency({
         canvas: document.getElementById("demo-a"),
         mascotHost: mascotHost,
-        nextControl: nextControl,
-        onNeedPlaced: function () {
-          answer.classList.add("wd-answer--visible");
-        },
-        onEvolutionReady: function () {
-          explanation.classList.add("wd-explanation--hidden");
-        },
         onMount: autopilot && autopilot.onMount,
         onEvolutionStep: autopilot && autopilot.onEvolutionStep,
         config: {

@@ -2,15 +2,13 @@ import { MAP_CAPTION_FADE_MS } from "../../engine/WardleyDemo";
 import type { WardleyDemo } from "../../engine/WardleyDemo";
 import type { Mascot } from "../../engine/mascot";
 import { PANEL_CONTENT_MIN_HEIGHT } from "../../engine/styles";
-import { showNextLink } from "../../engine/nextLink";
 import type { ScenarioContext, ValueChainScenarioOptions } from "./index";
 
 /**
  * wires `WardleyDemo.runEvolutionDragStep` for one node and resolves once the visitor confirms
  * its placement — shared by the Need's evolution step and the Capability-1/2/3 loop that repeats
  * the same interaction after it. The "Confirm placement" link renders inside the mascot's speech
- * bubble (`mascot.confirmPlacement`), not the host's `nextControl`, since the host's explanation
- * column is hidden by this point in the flow.
+ * bubble (`mascot.confirmPlacement`), same as every other gate in this scenario.
  */
 function awaitEvolutionConfirm(
   demo: WardleyDemo,
@@ -39,7 +37,8 @@ function awaitEvolutionConfirm(
 
 /**
  * Phase 2: turn the value chain into a Wardley Map. Waits for the visitor to click the second
- * "Next" link (the Phase 1 -> Phase 2 gate), fires `onEvolutionReady`, then shows the map
+ * "Next" link (the Phase 1 -> Phase 2 gate, rendered inside the mascot's own bubble via
+ * `Mascot.confirmPlacement`), fires `onEvolutionReady`, then shows the map
  * backdrop and the Need's label, its starting evolution stage ("Genesis"), and the matching
  * characteristics text from `domain/evolution.ts` — updating live (`Mascot.updateInstrumentPanel`)
  * and tracking the node's on-screen position (`Mascot.moveTo`) as the visitor drags the Need along
@@ -55,7 +54,7 @@ function awaitEvolutionConfirm(
 export async function runPhase2(ctx: ScenarioContext): Promise<void> {
   const { demo, mascot, chain, options } = ctx;
 
-  await showNextLink(options.nextControl);
+  await mascot.confirmPlacement("Next");
   const scale = demo.captureScale();
   options.onEvolutionReady?.();
 

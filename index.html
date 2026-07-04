@@ -31,47 +31,6 @@
         margin: 4rem 0;
       }
 
-      /*
-       * position: absolute so this floats over .wd-instance instead of sharing flex space with
-       * it -- that sharing used to make the canvas measurably narrower whenever the explanation
-       * was visible, so it changed size the instant Phase 2 hid it (see showMapBackdrop's
-       * JS-side viewBox width calculation). The canvas is now a consistent size for the whole
-       * scenario, matching what it used to only become once the explanation collapsed.
-       */
-      .wd-explanation {
-        position: absolute;
-        top: 4rem;
-        right: 0;
-        width: 240px;
-        text-align: left;
-        font-size: 1.05rem;
-        line-height: 1.6;
-        color: var(--color-ink);
-        margin: 0;
-        transition: opacity 0.5s ease;
-      }
-
-      .wd-explanation--hidden {
-        opacity: 0;
-        pointer-events: none;
-      }
-
-      .wd-answer {
-        opacity: 0;
-        transform: translateX(8px);
-        transition: opacity 0.5s ease, transform 0.5s ease;
-      }
-
-      .wd-answer--visible {
-        opacity: 1;
-        transform: translateX(0);
-      }
-
-      #vc-next {
-        margin-top: 0.75rem;
-        min-height: 1.2rem;
-        line-height: 1.2rem;
-      }
     </style>
   </head>
   <body>
@@ -81,34 +40,19 @@
       </div>
     </div>
 
-    <div class="wd-explanation">
-      <span id="vc-answer" class="wd-answer">A <em>Value Chain</em> shows how <em>Users</em> get their <em>User Needs</em> met, as a result of the <em>Capabilities</em> they depend on.</span>
-      <div id="vc-next"></div>
-    </div>
-
     <script type="module">
       import WardleyDemo from "/src/index.ts";
       import { attachAutopilot, parseSkipTarget } from "/src/dev/autopilot.ts";
-      const answer = document.getElementById("vc-answer");
-      const explanation = document.querySelector(".wd-explanation");
       const mascotHost = document.getElementById("mascot-host");
-      const nextControl = document.getElementById("vc-next");
 
       // Dev-only test shortcut: reload with ?skipTo=phase1 | celebrate | phase2 | finale | thinking
       // to jump straight past earlier phases instead of replaying drag + 5 form fields by hand.
       const skipTarget = parseSkipTarget(location.search);
-      const autopilot = skipTarget
-        ? attachAutopilot({ mascotHost, nextControl, target: skipTarget })
-        : undefined;
+      const autopilot = skipTarget ? attachAutopilot({ mascotHost, target: skipTarget }) : undefined;
 
       WardleyDemo.demos.userNeedDependency({
         canvas: document.getElementById("demo"),
         mascotHost,
-        nextControl,
-        onNeedPlaced: () => answer.classList.add("wd-answer--visible"),
-        onEvolutionReady: () => {
-          explanation.classList.add("wd-explanation--hidden");
-        },
         onMount: autopilot?.onMount,
         onEvolutionStep: autopilot?.onEvolutionStep,
       });
