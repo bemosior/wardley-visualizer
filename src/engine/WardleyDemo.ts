@@ -153,11 +153,14 @@ export class WardleyDemo {
 
   /**
    * snapshots the demo's current on-screen scale (rendered pixels per viewBox unit). Call this
-   * immediately before triggering whatever host-side layout change (e.g. collapsing the
-   * explanation column) will give this demo's container more width, then pass the result to
-   * `showMapBackdrop` once that resize has happened — that's what lets the map widen the viewBox
-   * without changing how big or where any already-placed node renders. Returns 0 in environments
-   * with no real layout (e.g. tests), which `showMapBackdrop` treats as "don't resize."
+   * immediately before triggering whatever host-side layout change will give this demo's
+   * container more width, then pass the result to `showMapBackdrop` once that resize has
+   * happened — that's what lets the map widen the viewBox without changing how big or where any
+   * already-placed node renders. Returns 0 in environments with no real layout (e.g. tests),
+   * which `growViewBox` (and so `showMapBackdrop`) treats as "don't resize." Host pages no longer
+   * resize the container mid-scenario (the canvas is a consistent size throughout, grown once via
+   * `growToFillContainer` right after mount — see its doc comment), but this stays available for
+   * `showMapBackdrop`'s own resize math and for any future host-side layout change.
    */
   captureScale(): number {
     const rect = this.container.getBoundingClientRect();
@@ -165,29 +168,50 @@ export class WardleyDemo {
   }
 
   /**
+   * grows the viewBox (never shrinks it) so it fills the container's *current* width at `scale`
+   * (rendered px per viewBox unit), and its height to reach `targetHeightPx` at that same scale
+   * if given — every already-placed node keeps its exact pixel size and position; only new,
+   * empty viewBox area appears alongside/beneath them. A non-positive `scale`, or a container with
+   * no real layout yet (e.g. tests), is a no-op. Shared by `growToFillContainer` (called once,
+   * right after mount) and `showMapBackdrop` (called again at the Phase 2 transition, where it's
+   * normally a no-op now that the container doesn't resize in between — see both doc comments).
+   */
+  private growViewBox(scale: number, targetHeightPx?: number): void {
+    const rect = this.container.getBoundingClientRect();
+    if (rect.width <= 0 || scale <= 0) return;
+    const mapWidth = Math.max(this.viewBox.width, rect.width / scale);
+    const mapHeight = targetHeightPx
+      ? Math.max(this.viewBox.height, targetHeightPx / scale)
+      : this.viewBox.height;
+    this.viewBox = { width: mapWidth, height: mapHeight };
+    this.svg.setAttribute("viewBox", `0 0 ${this.viewBox.width} ${this.viewBox.height}`);
+  }
+
+  /**
+   * grows the viewBox to fill the container's current width, at the scale the value chain's
+   * nodes were authored at (`scale` default of 1 — 1 viewBox unit ≈ 1px, e.g. `NODE_RADIUS`'s 48
+   * renders as a 48px-radius circle). Call this once, right after mount, so the canvas is already
+   * the same size for the whole scenario instead of visibly growing later when a host page's
+   * explanation column collapses (that used to be `showMapBackdrop`'s job, driven by
+   * `captureScale`/container-resize timing — now the container never resizes, so this just does
+   * the growth eagerly using the same math). `targetHeightPx` behaves like `showMapBackdrop`'s.
+   */
+  growToFillContainer(targetHeightPx?: number, scale = 1): void {
+    this.growViewBox(scale, targetHeightPx);
+  }
+
+  /**
    * renders the evolution-axis map backdrop into the backdrop layer, behind everything else; safe
    * to call once, any time after mount. `scale` must be the value `captureScale()` returned just
-   * before the container was resized — width is widened to exactly fill the container's new width
-   * at that same scale, and (if `targetHeightPx` is given, e.g. a sibling toolbox's measured
-   * height) height is extended downward to reach it at that same scale too — never shrunk below
-   * the existing viewBox, so every existing node keeps its current pixel size and position; only
-   * new map area becomes visible alongside/beneath them. A non-positive `scale` (the default in
-   * environments with no real layout) is a no-op and the backdrop renders at the existing viewBox
-   * size. If `captionText` is given, it's shown as a transient overlay (see `showMapCaption`)
-   * centered on whatever new area the resize just revealed (or the whole viewBox, if there was no
-   * resize) — never over the already-placed value chain.
+   * before the container was resized — see `growViewBox` for the resize itself, which this reuses
+   * (a no-op if `growToFillContainer` already grew the viewBox to fill the container, as host
+   * pages now do). If `captionText` is given, it's shown as a transient overlay (see
+   * `showMapCaption`) centered on whatever new area the resize just revealed (or the whole
+   * viewBox, if there was no resize) — never over the already-placed value chain.
    */
   showMapBackdrop(scale: number, targetHeightPx?: number, captionText?: string): void {
     const previousWidth = this.viewBox.width;
-    const rect = this.container.getBoundingClientRect();
-    if (rect.width > 0 && scale > 0) {
-      const mapWidth = Math.max(this.viewBox.width, rect.width / scale);
-      const mapHeight = targetHeightPx
-        ? Math.max(this.viewBox.height, targetHeightPx / scale)
-        : this.viewBox.height;
-      this.viewBox = { width: mapWidth, height: mapHeight };
-      this.svg.setAttribute("viewBox", `0 0 ${this.viewBox.width} ${this.viewBox.height}`);
-    }
+    this.growViewBox(scale, targetHeightPx);
     this.backdropLayer.appendChild(createMapBackdrop(this.viewBox));
 
     if (captionText) {

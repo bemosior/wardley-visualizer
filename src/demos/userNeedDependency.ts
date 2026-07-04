@@ -156,6 +156,10 @@ export async function runValueChainScenario(options: ValueChainScenarioOptions):
   let demo!: WardleyDemo;
   await new Promise<void>((resolve) => {
     demo = WardleyDemo.mount(options.canvas, { ...demoConfig, onComplete: resolve });
+    // grows the viewBox to fill the container right away, so the canvas is already the same size
+    // it'll be in Phase 2 (see `growToFillContainer`'s doc comment) instead of visibly widening
+    // later when the host's explanation column collapses.
+    demo.growToFillContainer(PANEL_CONTENT_MIN_HEIGHT);
     const needDestination = demo.getNodePixelPosition(chain.need.id);
     // anchors beside the Need's *destination* marker (the dashed target circle), not its
     // out-of-place `start` position -- keeps the mascot clear of the node the visitor is about

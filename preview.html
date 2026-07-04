@@ -43,7 +43,16 @@
         margin: 0 0 1.5rem;
         font-family: var(--font-ui);
       }
+      /*
+       * position: relative so .wd-explanation (absolutely positioned below) can float over
+       * .wd-instance instead of sharing flex space with it -- that sharing used to make the
+       * canvas measurably narrower whenever the explanation column was visible, so it changed
+       * size the instant Phase 2 hid it (see showMapBackdrop's JS-side viewBox width
+       * calculation). The canvas is now a consistent size for the whole scenario, matching what
+       * it used to only become once the explanation collapsed.
+       */
       .demo-row {
+        position: relative;
         display: flex;
         align-items: center;
         gap: 2rem;
@@ -64,9 +73,10 @@
       }
 
       .wd-explanation {
-        flex: 1;
-        min-width: 220px;
-        max-width: 260px;
+        position: absolute;
+        top: 0;
+        right: 0.5rem;
+        width: 240px;
         text-align: left;
         font-size: 1.05rem;
         line-height: 1.6;
@@ -75,21 +85,9 @@
         transition: opacity 0.5s ease;
       }
 
-      /*
-       * Collapses out of the flex layout instantly (no transition on the sizing properties) so
-       * the .wd-instance/.wd-canvas siblings can claim the freed space and have their final size
-       * measurable synchronously — see showMapBackdrop()'s JS-side viewBox width calculation,
-       * which needs the layout to have already settled by the time it runs.
-       */
       .wd-explanation--hidden {
         opacity: 0;
         pointer-events: none;
-        flex: 0 1 0;
-        min-width: 0;
-        max-width: 0;
-        max-height: 0;
-        margin: 0;
-        overflow: hidden;
       }
       .wd-answer {
         opacity: 0;
