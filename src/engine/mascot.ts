@@ -137,15 +137,18 @@ export class Mascot {
   }
 
   /**
-   * keeps the speech bubble fully inside the mascot host's bounds (the canvas) instead of
-   * spilling past its edge when the anchor node sits near the genesis or commodity end of the
-   * evolution axis. Only ever shifts the bubble itself — flipping it to the avatar's left side
-   * when the right doesn't have room, clamping as a last resort if neither side does — so the
-   * avatar (and the node it's anchored under) never moves. Uses `radius` (not just the avatar's
-   * own width) for the gap from the node's center, so the bubble clears the node's *full circle*
-   * horizontally — this is what keeps it from covering the node on the rare occasion
-   * `reposition` above has to plant it at the node's own vertical level. No-ops when the host has
-   * no real layout yet (e.g. unit tests), same as `moveTo` already assumes elsewhere.
+   * shifts the speech bubble beside the avatar, preferring to keep it inside the mascot host's
+   * bounds (the canvas) but never at the cost of sliding it back over the avatar itself. Only
+   * ever shifts the bubble itself — flipping it to the avatar's left side when the right doesn't
+   * have room — so the avatar (and the node it's anchored under) never moves. Uses `radius` (not
+   * just the avatar's own width) for the gap from the node's center, so the bubble clears the
+   * node's *full circle* horizontally — this is what keeps it from covering the node on the rare
+   * occasion `reposition` above has to plant it at the node's own vertical level. When the bubble
+   * is wider than the room available on *either* side (e.g. anchored dead-center under a narrow
+   * grid), it still respects the clearance line and instead spills past the canvas's far edge —
+   * same containment-is-secondary trade-off `reposition` makes vertically (see its doc comment).
+   * No-ops when the host has no real layout yet (e.g. unit tests), same as `moveTo` already
+   * assumes elsewhere.
    */
   private clampBubbleHorizontally(radius: number): void {
     const hostRect = this.host.getBoundingClientRect();
@@ -165,7 +168,12 @@ export class Mascot {
     const fitsLeft = leftOfNode >= 0;
     const flip = !fitsRight && fitsLeft;
 
-    const targetLeft = Math.min(Math.max(flip ? leftOfNode : rightOfNode, 0), hostRect.width - bubbleWidth);
+    // `rightOfNode`/`leftOfNode` already bake in `clearance`, so they're the hard floor -- the
+    // bubble's near edge must never cross back past them into the avatar, even if that means its
+    // far edge spills past the canvas edge. Canvas containment is secondary, same trade-off
+    // `reposition` makes vertically (see its doc comment) -- clamping to `hostRect.width` here
+    // (as this used to) can pull a too-wide bubble back over the avatar it's supposed to clear.
+    const targetLeft = flip ? leftOfNode : rightOfNode;
 
     this.bubbleEl.style.left = `${targetLeft - naturalLeft}px`;
     this.bubbleEl.classList.toggle("wd-mascot-bubble--flip", flip);
