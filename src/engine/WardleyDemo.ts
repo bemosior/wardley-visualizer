@@ -545,11 +545,12 @@ export class WardleyDemo {
       if (conn.from !== nodeId && conn.to !== nodeId) return;
       const from = conn.from === nodeId ? pos : this.nodesById.get(conn.from)!;
       const to = conn.to === nodeId ? pos : this.nodesById.get(conn.to)!;
-      // rolls a fresh random curve/miss on every drag-frame tick (no persisted per-particle
-      // state) — a curved stage's particle will visibly jitter between curves while dragging,
-      // which reads as fitting "unreliable supply" texture rather than as a bug
-      const { curveWildness, missChance } = flowParamsForStage(this.nodeStage.get(conn.to));
-      const path = buildFlowParticlePath(from, to, { curveWildness, missChance });
+      // rolls a fresh random orbit shape on every drag-frame tick (no persisted per-particle
+      // state) — a curved stage's particle will visibly jitter between wobbles while dragging,
+      // which reads as fitting "unreliable supply" texture rather than as a bug. Whether the
+      // particle completes its ride is rolled once at spawn (rollMissStopPercent), not here.
+      const { orbitAmplitude, orbitCount } = flowParamsForStage(this.nodeStage.get(conn.to));
+      const path = buildFlowParticlePath(from, to, { orbitAmplitude, orbitCount });
       this.particleLayer
         .querySelectorAll<SVGCircleElement>(`[data-from="${conn.from}"][data-to="${conn.to}"]`)
         .forEach((el) => {

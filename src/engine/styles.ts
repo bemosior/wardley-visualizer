@@ -259,7 +259,9 @@ const CSS = `
   0% { offset-distance: 100%; opacity: 0; }
   10% { opacity: 1; }
   85% { opacity: 1; }
-  100% { offset-distance: 0%; opacity: 0; }
+  /* a "missed" particle (render.ts's rollMissStopPercent) sets --wd-stop-distance inline so it fades
+     out short of the destination instead of completing the ride */
+  100% { offset-distance: var(--wd-stop-distance, 0%); opacity: 0; }
 }
 
 .wd-firework-shell {

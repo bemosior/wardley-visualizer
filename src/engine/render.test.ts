@@ -7,6 +7,7 @@ import {
   createMapCaption,
   flowParamsForStage,
   genesisCenterX,
+  rollMissStopPercent,
   stageLabelAt,
   type AnnotationRect,
 } from "./render";
@@ -195,47 +196,70 @@ describe("buildFlowParticlePath", () => {
   const from = { x: 0, y: 0 };
   const to = { x: 100, y: 0 };
 
-  it("returns the straight line path unchanged when curveWildness is 0", () => {
-    const path = buildFlowParticlePath(from, to, { curveWildness: 0, missChance: 1 });
+  it("returns the straight line path unchanged when orbitAmplitude is 0", () => {
+    const path = buildFlowParticlePath(from, to, { orbitAmplitude: 0, orbitCount: 4 });
+    expect(path).toBe(`path("M 0,0 L 100,0")`);
+  });
+
+  it("returns the straight line path unchanged when orbitCount is 0", () => {
+    const path = buildFlowParticlePath(from, to, { orbitAmplitude: 0.4, orbitCount: 0 });
     expect(path).toBe(`path("M 0,0 L 100,0")`);
   });
 
   it("returns the straight line path for a degenerate zero-length line", () => {
-    const path = buildFlowParticlePath(from, from, { curveWildness: 0.5, missChance: 0 });
+    const path = buildFlowParticlePath(from, from, { orbitAmplitude: 0.5, orbitCount: 4 });
     expect(path).toBe(`path("M 0,0 L 0,0")`);
   });
 
-  it("returns a curved path landing exactly on the target when missChance is 0", () => {
-    const path = buildFlowParticlePath(from, to, { curveWildness: 0.4, missChance: 0 });
-    expect(path).toContain(" Q ");
-    expect(path.endsWith(`100,0")`)).toBe(true);
+  it("starts exactly at the source and ends exactly at the supplier, weaving through orbitCount bows in between", () => {
+    const path = buildFlowParticlePath(from, to, { orbitAmplitude: 0.4, orbitCount: 3 });
+    expect(path.startsWith(`path("M 0,0 `)).toBe(true);
+    expect(path.endsWith(`100.00,0.00")`)).toBe(true);
+    expect(path.match(/ Q /g)).toHaveLength(3);
   });
 
-  it("never lands exactly on the target when missChance is 1", () => {
+  it("rolls a different wobble each call, so two paths for the same connection differ", () => {
+    const first = buildFlowParticlePath(from, to, { orbitAmplitude: 0.4, orbitCount: 4 });
+    const second = buildFlowParticlePath(from, to, { orbitAmplitude: 0.4, orbitCount: 4 });
+    expect(first).not.toBe(second);
+  });
+});
+
+describe("rollMissStopPercent", () => {
+  it("always completes the trip (returns null) when missChance is 0", () => {
     for (let i = 0; i < 20; i++) {
-      const path = buildFlowParticlePath(from, to, { curveWildness: 0.4, missChance: 1 });
-      expect(path.endsWith(`100,0")`)).toBe(false);
+      expect(rollMissStopPercent(0)).toBeNull();
+    }
+  });
+
+  it("always fades out short of arriving (returns a positive percentage) when missChance is 1", () => {
+    for (let i = 0; i < 20; i++) {
+      const stopPercent = rollMissStopPercent(1);
+      expect(stopPercent).not.toBeNull();
+      expect(stopPercent!).toBeGreaterThan(0);
+      expect(stopPercent!).toBeLessThan(100);
     }
   });
 });
 
 describe("flowParamsForStage", () => {
   it("gives Product and Commodity a straight, certain path (unchanged from a plain line)", () => {
-    expect(flowParamsForStage("Product")).toMatchObject({ curveWildness: 0, missChance: 0 });
-    expect(flowParamsForStage("Commodity")).toMatchObject({ curveWildness: 0, missChance: 0 });
+    expect(flowParamsForStage("Product")).toMatchObject({ orbitAmplitude: 0, orbitCount: 0, missChance: 0 });
+    expect(flowParamsForStage("Commodity")).toMatchObject({ orbitAmplitude: 0, orbitCount: 0, missChance: 0 });
   });
 
-  it("gives Genesis the wildest, most miss-prone curve", () => {
+  it("gives Genesis the widest, most miss-prone orbit", () => {
     const genesis = flowParamsForStage("Genesis");
     const customBuilt = flowParamsForStage("Custom-Built");
-    expect(genesis.curveWildness).toBeGreaterThan(customBuilt.curveWildness);
+    expect(genesis.orbitAmplitude).toBeGreaterThan(customBuilt.orbitAmplitude);
+    expect(genesis.orbitCount).toBeGreaterThan(customBuilt.orbitCount);
     expect(genesis.missChance).toBeGreaterThan(customBuilt.missChance);
-    expect(customBuilt.curveWildness).toBeGreaterThan(0);
+    expect(customBuilt.orbitAmplitude).toBeGreaterThan(0);
     expect(customBuilt.missChance).toBeGreaterThan(0);
   });
 
   it("falls back to a straight, certain path when no stage is given", () => {
-    expect(flowParamsForStage(undefined)).toMatchObject({ curveWildness: 0, missChance: 0 });
+    expect(flowParamsForStage(undefined)).toMatchObject({ orbitAmplitude: 0, orbitCount: 0, missChance: 0 });
   });
 });
 
@@ -252,6 +276,7 @@ describe("createFlowParticles", () => {
       particles.forEach((p) => {
         expect(p.style.offsetPath).toBe(`path("M 0,0 L 100,0")`);
         expect(p.style.offsetPath).not.toContain(" Q ");
+        expect(p.style.getPropertyValue("--wd-stop-distance")).toBe("");
       });
     }
   });
@@ -266,17 +291,26 @@ describe("createFlowParticles", () => {
     expect(product[0].style.animationDuration).toBe("1.9s");
   });
 
-  it("curves every Genesis/Custom-Built particle's path", () => {
+  it("orbits every Genesis/Custom-Built particle's path", () => {
     for (const stage of ["Genesis", "Custom-Built"] as const) {
       const particles = createFlowParticles(conn, nodesById, stage);
       particles.forEach((p) => expect(p.style.offsetPath).toContain(" Q "));
     }
   });
 
-  it("rolls an independent curve per particle, so Custom-Built's two particles differ", () => {
+  it("rolls an independent orbit per particle, so Custom-Built's two particles differ", () => {
     const particles = createFlowParticles(conn, nodesById, "Custom-Built");
     expect(particles).toHaveLength(2);
     expect(particles[0].style.offsetPath).not.toBe(particles[1].style.offsetPath);
+  });
+
+  it("gives most Genesis particles a --wd-stop-distance so they fade out before arriving", () => {
+    let missed = 0;
+    for (let i = 0; i < 30; i++) {
+      const [particle] = createFlowParticles(conn, nodesById, "Genesis");
+      if (particle.style.getPropertyValue("--wd-stop-distance") !== "") missed++;
+    }
+    expect(missed).toBeGreaterThan(15);
   });
 
   it("no longer applies a sputter class to any stage", () => {

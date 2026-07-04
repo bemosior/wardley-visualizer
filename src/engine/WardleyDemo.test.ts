@@ -353,10 +353,10 @@ describe("WardleyDemo.slideToGenesis", () => {
     const particles = container.querySelectorAll<SVGCircleElement>(".wd-flow-particle");
     expect(particles.length).toBeGreaterThan(0);
     particles.forEach((particle) => {
-      // Genesis curves the path (and sometimes overshoots the target), so this only pins the
-      // line's start (unmoved "user" endpoint) and that it now targets the new position somehow —
-      // not a literal "L 50,150" straight segment, which curved/miss paths won't always contain.
-      expect(particle.style.offsetPath.startsWith('path("M 200,50 ')).toBe(true);
+      // Genesis orbits the whole edge and often fades out before completing the ride (rolled
+      // separately via --wd-stop-distance), but the path itself always ends exactly on the moved
+      // "need" node — that part of the shape is never randomized.
+      expect(particle.style.offsetPath.endsWith('50.00,150.00")')).toBe(true);
       expect(particle.style.offsetPath).toContain(" Q ");
     });
   });

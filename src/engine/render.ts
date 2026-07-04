@@ -373,32 +373,35 @@ interface FlowStageParams {
   count: number;
   /** seconds for one particle to travel the full line */
   durationS: number;
-  /** fraction of the from->to line length used as the max perpendicular control-point offset; 0 = perfectly straight */
-  curveWildness: number;
-  /** probability [0,1] that an individual particle's curve overshoots the target rather than landing on it */
+  /** fraction of the from->to line length used as the max perpendicular wobble offset; 0 = perfectly straight */
+  orbitAmplitude: number;
+  /** number of alternating bows ("epicycle" loops) the path weaves through along its length; 0 = perfectly straight */
+  orbitCount: number;
+  /** probability [0,1] that an individual particle fades out before completing the trip, instead of arriving */
   missChance: number;
 }
 
 /**
- * particle count/speed/curviness per evolution stage — the concrete form of the "genesis is a
+ * particle count/speed/orbit-wobble per evolution stage — the concrete form of the "genesis is a
  * wayward, mostly-missing attempt at delivery; commodity flows smoothly" requirement: a component
- * early on the axis is supplied by one slow particle on a wildly curving, usually-overshooting
- * path; a commodity is supplied by a dense, fast, dead-straight stream.
+ * early on the axis is supplied by one slow particle looping around the edge on its way across, that
+ * mostly fades out short of arriving; a commodity is supplied by a dense, fast, dead-straight stream.
  */
 const FLOW_STAGE_PARAMS: Record<EvolutionStage, FlowStageParams> = {
-  Genesis: { count: 1, durationS: 3.4, curveWildness: 0.45, missChance: 0.6 },
-  "Custom-Built": { count: 2, durationS: 2.6, curveWildness: 0.22, missChance: 0.2 },
-  Product: { count: 3, durationS: 1.9, curveWildness: 0, missChance: 0 },
-  Commodity: { count: 4, durationS: 1.3, curveWildness: 0, missChance: 0 },
+  Genesis: { count: 1, durationS: 3.4, orbitAmplitude: 0.35, orbitCount: 4, missChance: 0.75 },
+  "Custom-Built": { count: 2, durationS: 2.6, orbitAmplitude: 0.16, orbitCount: 2, missChance: 0.3 },
+  Product: { count: 3, durationS: 1.9, orbitAmplitude: 0, orbitCount: 0, missChance: 0 },
+  Commodity: { count: 4, durationS: 1.3, orbitAmplitude: 0, orbitCount: 0, missChance: 0 },
 };
 
 /** the look of a line whose `to` node hasn't been placed on the evolution axis yet (Phase 0/1, before Phase 2's map exists) — unchanged from the fixed count/duration this module used before stage-dependent flow existed */
-const DEFAULT_FLOW_PARAMS: FlowStageParams = { count: 1, durationS: 2.0, curveWildness: 0, missChance: 0 };
+const DEFAULT_FLOW_PARAMS: FlowStageParams = { count: 1, durationS: 2.0, orbitAmplitude: 0, orbitCount: 0, missChance: 0 };
 
-/** how far past the target a "miss" particle swings, as a fraction of line length */
-const FLOW_MISS_OVERSHOOT_FRACTION = 0.12;
-/** a particle's curve magnitude is randomized within [this, 1.0] * stage's curveWildness * line length, so not every particle swings the maximum amount */
-const FLOW_CURVE_MIN_FACTOR = 0.5;
+/** a bow's wobble magnitude is randomized within [this, 1.0] * orbitAmplitude * line length, so the loops aren't perfectly uniform */
+const FLOW_ORBIT_WOBBLE_MIN_FACTOR = 0.6;
+/** how far short of the destination (in percent of the path's full arc length) a "missed" particle gives up and fades — it's covered (100 - this)% of the trip, never quite arriving */
+const FLOW_MISS_STOP_MIN_PERCENT = 12;
+const FLOW_MISS_STOP_MAX_PERCENT = 50;
 
 /** exposed so callers (e.g. `WardleyDemo`) can derive an even inter-particle stagger from the same count/duration `createFlowParticles` used. Omit `stage` for a node not yet placed on the evolution axis. */
 export function flowParamsForStage(stage?: EvolutionStage): FlowStageParams {
@@ -406,20 +409,24 @@ export function flowParamsForStage(stage?: EvolutionStage): FlowStageParams {
 }
 
 /**
- * builds the CSS `offset-path` string for one flow particle riding from -> to. `curveWildness <= 0`
- * (Product/Commodity, and the degenerate from===to case) returns the original straight `M...L...`
- * path unchanged. Otherwise returns a random quadratic Bezier bowed perpendicular to the line, whose
- * endpoint either lands exactly on `to` or overshoots past it (a "miss") per `missChance`. Each call
- * rolls its own randomness — callers needing N independent particles on one connection must call
- * this N times, not share one result.
+ * builds the CSS `offset-path` string for one flow particle riding from -> to: a chain of
+ * `orbitCount` alternating quadratic bows perpendicular to the straight line, so the particle orbits
+ * the edge (think a many-body, "universe-centered" epicycle wobble, not a single smooth sun-centered
+ * bow) for the entire trip, starting the moment it leaves the originating node. `orbitAmplitude <= 0`
+ * or `orbitCount <= 0` (Product/Commodity, and the degenerate from===to case) returns the original
+ * straight `M...L...` path unchanged. Always ends exactly on `to` — whether a particle actually
+ * *completes* the ride to `from` is handled separately, by `rollMissStopPercent`, since
+ * `@keyframes wd-particle-travel` traverses this path in reverse (from `to` towards `from`). Each
+ * call rolls its own randomness — callers needing N independent particles on one connection must
+ * call this N times, not share one result.
  */
 export function buildFlowParticlePath(
   from: { x: number; y: number },
   to: { x: number; y: number },
-  { curveWildness, missChance }: Pick<FlowStageParams, "curveWildness" | "missChance">,
+  { orbitAmplitude, orbitCount }: Pick<FlowStageParams, "orbitAmplitude" | "orbitCount">,
 ): string {
   const straight = `path("M ${from.x},${from.y} L ${to.x},${to.y}")`;
-  if (curveWildness <= 0) return straight;
+  if (orbitAmplitude <= 0 || orbitCount <= 0) return straight;
 
   const dx = to.x - from.x;
   const dy = to.y - from.y;
@@ -428,17 +435,37 @@ export function buildFlowParticlePath(
 
   const perpX = -dy / len;
   const perpY = dx / len;
-  const sign = Math.random() < 0.5 ? -1 : 1;
-  const magnitude = len * curveWildness * (FLOW_CURVE_MIN_FACTOR + Math.random() * (1 - FLOW_CURVE_MIN_FACTOR));
+  const amplitude = len * orbitAmplitude;
+  const overallSign = Math.random() < 0.5 ? -1 : 1;
 
-  const controlX = (from.x + to.x) / 2 + perpX * sign * magnitude;
-  const controlY = (from.y + to.y) / 2 + perpY * sign * magnitude;
+  let d = `M ${from.x},${from.y}`;
+  for (let i = 0; i < orbitCount; i++) {
+    const endT = (i + 1) / orbitCount;
+    const midT = (i + 0.5) / orbitCount;
+    const endX = from.x + dx * endT;
+    const endY = from.y + dy * endT;
+    const midX = from.x + dx * midT;
+    const midY = from.y + dy * midT;
+    const sign = overallSign * (i % 2 === 0 ? 1 : -1);
+    const wobble = amplitude * (FLOW_ORBIT_WOBBLE_MIN_FACTOR + Math.random() * (1 - FLOW_ORBIT_WOBBLE_MIN_FACTOR));
+    const ctrlX = midX + perpX * sign * wobble;
+    const ctrlY = midY + perpY * sign * wobble;
+    d += ` Q ${ctrlX.toFixed(2)},${ctrlY.toFixed(2)} ${endX.toFixed(2)},${endY.toFixed(2)}`;
+  }
 
-  const isMiss = Math.random() < missChance;
-  const endX = isMiss ? to.x + perpX * sign * len * FLOW_MISS_OVERSHOOT_FRACTION : to.x;
-  const endY = isMiss ? to.y + perpY * sign * len * FLOW_MISS_OVERSHOOT_FRACTION : to.y;
+  return `path("${d}")`;
+}
 
-  return `path("M ${from.x},${from.y} Q ${controlX},${controlY} ${endX},${endY}")`;
+/**
+ * rolls whether a particle fails to complete its ride along `buildFlowParticlePath`'s orbit and
+ * instead fades out short of arriving. Returns `null` for a particle that completes the full trip
+ * (the common case, and the only case for Product/Commodity), or the `offset-distance` percentage
+ * (always > 0) a missed particle should stop and fade at instead of reaching 0% — i.e. it visibly
+ * gives up mid-orbit rather than connecting.
+ */
+export function rollMissStopPercent(missChance: number): number | null {
+  if (Math.random() >= missChance) return null;
+  return FLOW_MISS_STOP_MIN_PERCENT + Math.random() * (FLOW_MISS_STOP_MAX_PERCENT - FLOW_MISS_STOP_MIN_PERCENT);
 }
 
 /**
@@ -455,7 +482,7 @@ export function createFlowParticles(
   const from = nodesById.get(conn.from)!;
   const to = nodesById.get(conn.to)!;
   const radius = conn.from === "user" && conn.to === "need" ? FLOW_PARTICLE_RADIUS * 1.5 : FLOW_PARTICLE_RADIUS;
-  const { count, durationS, curveWildness, missChance } = flowParamsForStage(stage);
+  const { count, durationS, orbitAmplitude, orbitCount, missChance } = flowParamsForStage(stage);
 
   const particles: SVGCircleElement[] = [];
   for (let i = 0; i < count; i++) {
@@ -464,8 +491,10 @@ export function createFlowParticles(
     circle.dataset.from = conn.from;
     circle.dataset.to = conn.to;
     circle.setAttribute("r", String(radius));
-    circle.style.offsetPath = buildFlowParticlePath(from, to, { curveWildness, missChance });
+    circle.style.offsetPath = buildFlowParticlePath(from, to, { orbitAmplitude, orbitCount });
     circle.style.animationDuration = `${durationS}s`;
+    const missStopPercent = rollMissStopPercent(missChance);
+    if (missStopPercent !== null) circle.style.setProperty("--wd-stop-distance", `${missStopPercent}%`);
     particles.push(circle);
   }
   return particles;
