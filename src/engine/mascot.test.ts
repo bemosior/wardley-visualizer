@@ -101,7 +101,7 @@ describe("Mascot.moveTo", () => {
     expect(bubble.classList.contains("wd-mascot-bubble--flip")).toBe(true);
   });
 
-  it("clamps the bubble inside the host as a last resort when neither side fully fits", () => {
+  it("lets the bubble overflow the host rather than sliding it back over the avatar when neither side fully fits", () => {
     const host = makeHost();
     vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 100 } as DOMRect);
     const mascot = new Mascot(host);
@@ -113,9 +113,12 @@ describe("Mascot.moveTo", () => {
     const root = (mascot as any).root as HTMLElement;
     const avatarLeft = parseFloat(root.style.left);
     const bubbleOffset = parseFloat(bubble.style.left);
-    // the bubble's right edge should land exactly on the host's right edge, even though it can't
-    // fit inside the host at all (150px bubble, 100px host) — best effort, not a perfect fit
-    expect(avatarLeft + 40 + 8 + bubbleOffset + 150).toBe(100);
+    // the bubble's near edge stays exactly at its clearance line from the avatar (unmoved from
+    // the unclamped right-side placement) even though its far edge now overflows the 100px-wide
+    // host by 128px (150px bubble, only 78px of clearance-respecting room) — spilling past the
+    // canvas edge is preferable to sliding the bubble back over the avatar it's meant to clear
+    expect(bubbleOffset).toBe(0);
+    expect(avatarLeft + 40 + 8 + bubbleOffset + 150).toBe(228);
     expect(bubble.classList.contains("wd-mascot-bubble--flip")).toBe(false);
   });
 

@@ -9,6 +9,10 @@ import { NEED_CATALOG } from "../domain/needCatalog";
 import { BIAS_CHECK_QUESTION, BUILD_BUY_OUTSOURCE_QUESTION, pickRandomQuestion, type Question } from "../domain/questionBank";
 import type { DemoConfig } from "../engine/types";
 
+/** horizontal clearance (container px) between the Need's destination marker and the mascot
+ * avatar when it anchors beside (not under) that marker, before the demo starts */
+const MASCOT_BESIDE_GAP = 24;
+
 const seedValueChain = createValueChain({
   user: { id: "user", label: "User" },
   need: { id: "need", label: "Need" },
@@ -103,12 +107,11 @@ export interface ValueChainScenarioOptions {
  * mounts. The Need node itself renders already on the canvas, out of place at its `start`
  * position (`layoutValueChain`'s default, same row as its final spot but off to one side) and
  * pulsing (`wd-node--beckon`) to invite a direct drag — no separate toolbox slot to pick up
- * from. The mascot anchors below the whole value-chain grid, centered under the Need's
- * *destination* marker (the dashed target circle at its final `layoutValueChain` position,
- * `WardleyDemo.getNodePixelPosition`) — pointing up at where the Need is headed without sitting
- * on top of the node the visitor is about to pick up, or squeezing into the gap between two
- * Capability nodes the way anchoring directly beside the marker would. It greets the visitor
- * (`MASCOT_INTRO`, via `Mascot.showPlaceholder`), then waits for the
+ * from. The mascot anchors beside the Need's *destination* marker instead — the dashed target
+ * circle at its final `layoutValueChain` position (`WardleyDemo.getNodePixelPosition`), offset to
+ * the right by `MASCOT_BESIDE_GAP` — so it points at where the Need is headed rather than sitting
+ * on top of the node the visitor is about to pick up. It greets the visitor (`MASCOT_INTRO`, via
+ * `Mascot.showPlaceholder`), then waits for the
  * Need to be dragged into place (Phase 0). Once it snaps, the mascot re-anchors to the Need's settled
  * position and shows a short "Nice!" placeholder (`MASCOT_NEED_PLACED`) while the visitor
  * clicks the "Next" link rendered into `nextControl`. The mascot then walks the visitor
@@ -154,16 +157,15 @@ export async function runValueChainScenario(options: ValueChainScenarioOptions):
   await new Promise<void>((resolve) => {
     demo = WardleyDemo.mount(options.canvas, { ...demoConfig, onComplete: resolve });
     const needDestination = demo.getNodePixelPosition(chain.need.id);
-    // anchors below the whole grid (Need's *destination* marker, not its out-of-place `start`
-    // position, plus every Capability row beneath it) instead of squeezing in beside any single
-    // node -- the value chain's rows/columns are packed too tightly for the bubble to sit next to
-    // one node without overlapping its neighbor, but there's open canvas below the last row.
-    const gridBottom = [chain.need.id, ...chain.capabilities.map((c) => c.id)]
-      .map((id) => demo.getNodePixelPosition(id))
-      .filter((pos): pos is NonNullable<typeof pos> => pos !== null)
-      .reduce((max, pos) => Math.max(max, pos.y + pos.radius), 0);
+    // anchors beside the Need's *destination* marker (the dashed target circle), not its
+    // out-of-place `start` position -- keeps the mascot clear of the node the visitor is about
+    // to pick up and drag, and points at where it's headed instead.
     if (needDestination) {
-      mascot.moveTo(chain.need.id, { x: needDestination.x, y: gridBottom, radius: 0 });
+      mascot.moveTo(chain.need.id, {
+        x: needDestination.x + needDestination.radius + MASCOT_BESIDE_GAP,
+        y: needDestination.y,
+        radius: 0,
+      });
     }
     options.onMount?.(demo);
   });
