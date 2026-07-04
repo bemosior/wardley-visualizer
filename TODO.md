@@ -22,10 +22,10 @@ Four layers, strict one-way dependency (lower layers know nothing about higher o
     - `relabelNode(id, label)` — update a node's text in place, refit font size.
     - `runDragStep(node, options)` — wire one drag-to-target interaction; on snap, calls `celebrateSnap` (lines activate, flow particles, firework burst, `options.onComplete`).
     - **Important gotcha:** the constructor auto-runs `runDragStep` for whichever node in `config.nodes` has `draggable: true` (at most one). If a phase has *no* drag step (Phase 1 doesn't), make sure no node in the initial `DemoConfig` is `draggable: true` — otherwise `mount` will wire a drag step you didn't ask for.
-  - `panel.ts` — `Panel`, the toolbox abstraction. One `Panel` instance owns a container element and swaps between modes. **The toolbox must stay a constant height across every mode/phase** — hosts like `preview.html` size the toolbox card to its content, and a content jump (e.g. 3 drag slots vs. one form field) reads as a layout glitch. Every mode wraps its rendered content in a `wd-panel-content` div (`styles.ts`: `min-height: 360px`); a future instrument-panel (Phase 2) or Q&A (Phase 3) mode must reuse that same class rather than appending raw content, and if its content would exceed 360px, raise the shared constant rather than letting one mode silently grow past the others.
-    - `showDragHandles(slots: PanelDragSlot[])` → `PanelDragHandle` (used by Phase 0).
+  - `panel.ts` — `Panel`, the mode-swapping content renderer. One `Panel` instance owns a container element and swaps between modes; the mascot (`mascot.ts`) composes the only `Panel` instance now in use, pointed at its speech bubble, and is the sole renderer of every mode below (there is no sidebar Toolbox anymore — the mascot guides the whole scenario, from Phase 0's drag affordance through the closing recap). Every mode wraps its rendered content in a `wd-panel-content` div; the base rule reserves `min-height: 360px` (`styles.ts`: `PANEL_CONTENT_MIN_HEIGHT`, also passed to `showMapBackdrop` to size the map's reserved height), but `.wd-mascot-bubble .wd-panel-content` overrides that to `min-height: 0` so the bubble hugs its content instead.
+    - `showDragHandles(slots: PanelDragSlot[], intro?)` → `PanelDragHandle` (used by Phase 0; `intro` renders a heading/subheading above the slot row).
     - `showField(field: PanelField)` → `Promise<string>`, resolves with the trimmed answer once the visitor submits (`type: "select"` or `type: "text"`). Wired into Phase 1's 5-step form sequence (`userNeedDependency.ts`).
-  - `nextLink.ts` — `showNextLink(container: HTMLElement)` → `Promise<void>`, a standalone (non-Toolbox) helper that appends a small "Next" link into whatever container it's given and resolves once clicked. Used to gate a step transition behind a deliberate visitor action instead of a guessed timer. Deliberately not a `Panel` method — it renders into host-owned page regions outside the Toolbox (e.g. beneath a host's own explanation text), so it can't assume `.wd-panel`'s CSS variable scope; its `.wd-next-link` style (`styles.ts`) carries explicit fallback colors for that reason.
+  - `nextLink.ts` — `showNextLink(container: HTMLElement)` → `Promise<void>`, a standalone (non-`Panel`) helper that appends a small "Next" link into whatever container it's given and resolves once clicked. Used to gate a step transition behind a deliberate visitor action instead of a guessed timer. Deliberately not a `Panel` method — it renders into host-owned page regions (e.g. beneath a host's own explanation text), so it can't assume `.wd-panel`'s CSS variable scope; its `.wd-next-link` style (`styles.ts`) carries explicit fallback colors for that reason.
     - Not yet built: an "instrument panel" mode (live evolutionary-characteristics readout, Phase 2) and a "Q&A" mode (Phase 3). See those phases below for what they need.
   - `styles.ts` — `injectStylesOnce`, all CSS-in-JS class names (`wd-node`, `wd-panel-*`, etc.).
 
@@ -55,6 +55,10 @@ Four layers, strict one-way dependency (lower layers know nothing about higher o
 - [x] Phase 1 — Personalize the value chain: drag-then-form flow (need dropdown → User/Capability text fields), live relabeling of domain + rendered nodes, `celebrate(nodeId)` finale.
 - [x] Phase 2 — Evolution: map backdrop, per-node evolution-axis drag + confirm (Need then Capability-1/2/3), live characteristics instrument-panel readout, stage-dependent flow-particle animation.
 - [x] Finale — big celebration + `Panel.showRecap` with CTA link to LearnWardleyMapping.com.
+- [x] Mascot as sole guide — the mascot now renders Phase 0's drag affordance and Phase 1's
+      form (walking Need → User → Capability-1/2/3 between questions) instead of a sidebar
+      Toolbox, which has been removed entirely. See the unresolved hand-holding tension noted
+      below, since this leans toward more guidance, not less.
 
 ## Phase 3 — Thinking with the map (not started; needs new abstractions)
 
@@ -138,7 +142,10 @@ testers hit the same thing (strongest signal first).
       `rianporter.txt` explicitly argues against more hand-holding
       ("people are smart"), while `tomgeraghty.txt`, `joshkruszynski.txt`,
       and `joeltosi.txt` all ask for more explicit prompts. Not a bug — a
-      design call to make deliberately, not average away.
+      design call to make deliberately, not average away. Note: extending the
+      mascot to Phase 0/1 (see "Done so far") leans toward the more-guidance
+      side of this tension, not something playtesters asked for by name — not
+      resolved here, just flagged since it's now more load-bearing than before.
 - [ ] **Flow animation change by evolutionary stage.**
       Commodity and product flow animations are perfect. Genesis currently
       "sputters" by having a more jagged, slow animation. Instead of that,

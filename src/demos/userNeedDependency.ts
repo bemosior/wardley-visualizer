@@ -1,5 +1,5 @@
 import { WardleyDemo, MAP_CAPTION_FADE_MS } from "../engine/WardleyDemo";
-import { Panel, type PanelDragSlot } from "../engine/panel";
+import type { PanelDragSlot } from "../engine/panel";
 import { Mascot } from "../engine/mascot";
 import { PANEL_CONTENT_MIN_HEIGHT } from "../engine/styles";
 import { showNextLink } from "../engine/nextLink";
@@ -24,8 +24,8 @@ const seedValueChain = createValueChain({
  * wires `WardleyDemo.runEvolutionDragStep` for one node and resolves once the visitor confirms
  * its placement — shared by the Need's evolution step and the Capability-1/2/3 loop that repeats
  * the same interaction after it. The "Confirm placement" link renders inside the mascot's speech
- * bubble (`mascot.confirmPlacement`), not the host's `nextControl`, since the Toolbox (and the
- * host's explanation column) are both hidden by this point in the flow.
+ * bubble (`mascot.confirmPlacement`), not the host's `nextControl`, since the host's explanation
+ * column is hidden by this point in the flow.
  */
 function awaitEvolutionConfirm(
   demo: WardleyDemo,
@@ -52,31 +52,32 @@ function awaitEvolutionConfirm(
   });
 }
 
-const PANEL_SLOTS: PanelDragSlot[] = [
-  { id: "user", iconText: "User", label: "Who It's For", active: false },
-  { id: "need", iconText: "User Need", label: "What They Get", active: true },
-  { id: "capability", iconText: "Capability", label: "How They Get It", active: false },
-];
+const NEED_DRAG_SLOT: PanelDragSlot[] = [{ id: "need", iconText: "User Need", label: "What They Get", active: true }];
+
+/** the mascot's Phase 0/1 bubble copy — shown before the first drag, then at each "waiting for Next" pause */
+const MASCOT_INTRO = { heading: "Hi, I'm here to help!", subheading: "Drag the glowing circle onto the canvas to begin." };
+const MASCOT_NEED_PLACED = { heading: "Nice!", subheading: "Click Next when you're ready to continue." };
+const MASCOT_CHAIN_COMPLETE = { heading: "All done!", subheading: "Click Next to turn this into a Wardley Map." };
 
 export interface ValueChainScenarioOptions {
   canvas: HTMLElement;
-  toolbox: HTMLElement;
   /**
-   * host-supplied overlay the mascot mounts its avatar + speech bubble into, once Phase 2 begins.
-   * Must be a child of `canvas` itself (not the Toolbox, and not a plain sibling element) — see
-   * the `.wd-mascot-host` doc comment in `engine/styles.ts` for why: the mascot's positioning
-   * math is measured relative to `canvas`'s own top-left corner, the same coordinate space
-   * `WardleyDemo`'s firework bursts already render into.
+   * host-supplied overlay the mascot mounts its avatar + speech bubble into, from the very
+   * start of the scenario (Phase 0's drag affordance onward). Must be a child of `canvas`
+   * itself (not a plain sibling element) — see the `.wd-mascot-host` doc comment in
+   * `engine/styles.ts` for why: the mascot's positioning math is measured relative to
+   * `canvas`'s own top-left corner, the same coordinate space `WardleyDemo`'s firework bursts
+   * already render into.
    */
   mascotHost: HTMLElement;
   /**
    * host-supplied container for the "Next" link — reused for two gates in
    * sequence: first to switch from Phase 0 into the Phase 1 form, then again
    * after the Phase 1 celebration to switch into Phase 2. Typically placed
-   * beneath the host's own explanation text, not inside the Toolbox.
+   * beneath the host's own explanation text.
    */
   nextControl: HTMLElement;
-  /** fires as soon as the Need snaps into place (Phase 0 done); the scenario then shows a "Next" link in `nextControl` and waits for the visitor to click it before switching the Toolbox into the Phase 1 form */
+  /** fires as soon as the Need snaps into place (Phase 0 done); the scenario then shows a "Next" link in `nextControl` and waits for the visitor to click it before the mascot walks into the Phase 1 form */
   onNeedPlaced?: () => void;
   onCelebrate?: () => void;
   /** fires right after the canvas mounts, before the drag step resolves — lets a caller grab the `WardleyDemo` instance early enough to call `skipDrag()` (see `src/dev/autopilot.ts`) */
@@ -100,21 +101,21 @@ export interface ValueChainScenarioOptions {
 }
 
 /**
- * One continuous flow: drag the generic Need into place (Phase 0), wait for
- * the visitor to click the "Next" link rendered into `nextControl`, then the
- * Toolbox walks them through a 5-step form (need -> user -> 3 capabilities)
- * that relabels each placeholder node as its answer comes in (Phase 1),
- * celebrating once more at the end now that the chain is fully personalized.
- * The Toolbox is then emptied to a full-height placeholder (`Panel.showEmpty`)
- * rather than collapsed — it stays in place, ready for the second "Next" link
- * that gates the move into Phase 2 (`onEvolutionReady`). Once that fires, the
- * host collapses the Toolbox for good and a `Mascot` (`engine/mascot.ts`) —
- * a node-anchored speech bubble, composed of a second `Panel` instance plus a
- * small avatar — takes over as the guide for the rest of the flow. It shows
- * the Need's label, its starting evolution stage ("Genesis"), and the
- * matching characteristics text from `domain/evolution.ts` — updating live
- * (`Mascot.updateInstrumentPanel`) and tracking the node's on-screen position
- * (`Mascot.moveTo`) as the visitor drags the Need along the evolution axis
+ * One continuous flow, guided by a single `Mascot` (`engine/mascot.ts`) — a node-anchored
+ * speech bubble plus small avatar, composed of one `Panel` instance — from the moment it
+ * mounts. The mascot renders its drag-slot bubble (`Mascot.showDragHandles`) anchored to the
+ * Need's pre-drag position, greets the visitor (`MASCOT_INTRO`), and waits for the Need to be
+ * dragged into place (Phase 0). Once it snaps, the mascot re-anchors to the Need's settled
+ * position and shows a short "Nice!" placeholder (`MASCOT_NEED_PLACED`) while the visitor
+ * clicks the "Next" link rendered into `nextControl`. The mascot then walks the visitor
+ * through a 5-step form (`Mascot.showField`: need -> user -> 3 capabilities), re-anchoring to
+ * whichever node each question is about before asking it, relabeling each placeholder node as
+ * its answer comes in (Phase 1). Once personalized, the mascot shows an "All done!" placeholder
+ * (`MASCOT_CHAIN_COMPLETE`) and the chain celebrates, waiting on the second "Next" link that
+ * gates the move into Phase 2 (`onEvolutionReady`). From here on the mascot shows the Need's
+ * label, its starting evolution stage ("Genesis"), and the matching characteristics text from
+ * `domain/evolution.ts` — updating live (`Mascot.updateInstrumentPanel`) and tracking the
+ * node's on-screen position (`Mascot.moveTo`) as the visitor drags the Need along the evolution axis
  * (`demo.runEvolutionDragStep`). A "Confirm placement" link
  * (`Mascot.confirmPlacement`, rendered inside the bubble) appears the first
  * time the Need is dropped, and resolves this function once clicked. The
@@ -140,8 +141,10 @@ export interface ValueChainScenarioOptions {
 export async function runValueChainScenario(options: ValueChainScenarioOptions): Promise<WardleyDemo> {
   let chain = seedValueChain;
   const demoConfig = options.config ?? layoutValueChain(chain, options.layout);
-  const panel = new Panel(options.toolbox);
-  const dragHandle = panel.showDragHandles(PANEL_SLOTS);
+
+  const mascot = new Mascot(options.mascotHost);
+  mascot.mount();
+  const dragHandle = mascot.showDragHandles(NEED_DRAG_SLOT, MASCOT_INTRO);
 
   let demo!: WardleyDemo;
   await new Promise<void>((resolve) => {
@@ -159,10 +162,17 @@ export async function runValueChainScenario(options: ValueChainScenarioOptions):
     options.onMount?.(demo);
   });
 
+  mascot.attachDemo(demo);
+  const needStart = demo.getNodePixelPosition(chain.need.id);
+  if (needStart) mascot.moveTo(chain.need.id, needStart);
+
   options.onNeedPlaced?.();
+  mascot.showPlaceholder(MASCOT_NEED_PLACED.heading, MASCOT_NEED_PLACED.subheading);
   await showNextLink(options.nextControl);
 
-  const needId = await panel.showField({
+  const needPos = demo.getNodePixelPosition(chain.need.id);
+  if (needPos) mascot.moveTo(chain.need.id, needPos);
+  const needId = await mascot.showField({
     type: "select",
     prompt: "What does the user need?",
     options: NEED_CATALOG.map((need) => ({ value: need.id, label: need.label })),
@@ -171,7 +181,9 @@ export async function runValueChainScenario(options: ValueChainScenarioOptions):
   chain = relabelNeed(chain, needOption.label);
   demo.relabelNode(chain.need.id, chain.need.label);
 
-  const userLabel = await panel.showField({
+  const userPos = demo.getNodePixelPosition(chain.user.id);
+  if (userPos) mascot.moveTo(chain.user.id, userPos);
+  const userLabel = await mascot.showField({
     type: "text",
     prompt: "Who needs " + needOption.label + "?",
     placeholder: needOption.userPlaceholder,
@@ -182,7 +194,9 @@ export async function runValueChainScenario(options: ValueChainScenarioOptions):
   const capabilityCount = seedValueChain.capabilities.length;
   for (let i = 0; i < capabilityCount; i++) {
     const capability = seedValueChain.capabilities[i];
-    const capabilityLabel = await panel.showField({
+    const capabilityPos = demo.getNodePixelPosition(capability.id);
+    if (capabilityPos) mascot.moveTo(capability.id, capabilityPos);
+    const capabilityLabel = await mascot.showField({
       type: "text",
       prompt: `What's something they depend on to get this need met? \r\n(${i + 1} of ${capabilityCount})`,
       placeholder: needOption.capabilityPlaceholders[i],
@@ -191,18 +205,13 @@ export async function runValueChainScenario(options: ValueChainScenarioOptions):
     demo.relabelNode(capability.id, capabilityLabel);
   }
 
-  panel.showEmpty();
+  mascot.showPlaceholder(MASCOT_CHAIN_COMPLETE.heading, MASCOT_CHAIN_COMPLETE.subheading);
   demo.celebrateAll();
   options.onCelebrate?.();
 
   await showNextLink(options.nextControl);
   const scale = demo.captureScale();
   options.onEvolutionReady?.();
-
-  // the host has just collapsed the Toolbox and expanded the canvas (onEvolutionReady above) —
-  // the mascot mounts now that layout has settled, replacing the Toolbox for the rest of the flow
-  const mascot = new Mascot(options.mascotHost, demo);
-  mascot.mount();
 
   demo.stopCharging([chain.user.id, chain.need.id, ...chain.capabilities.map((c) => c.id)]);
   demo.markPending(chain.capabilities.map((c) => c.id));

@@ -21,15 +21,13 @@ export function parseSkipTarget(search: string): SkipTarget | null {
 }
 
 export interface AutopilotOptions {
-  /** the scenario's toolbox container — watched for auto-fillable `.wd-panel-form`s (Phase 0/1 content) */
-  toolbox: HTMLElement;
   /**
-   * the scenario's mascot host container — watched the same way as `toolbox`, for the
-   * confirm-placement links and question buttons the mascot renders from Phase 2 onward, once the
-   * Toolbox itself has been emptied/collapsed. Optional so callers that never skip past Phase 1
-   * (e.g. `target: "phase1"`) don't need to construct one.
+   * the scenario's mascot host container — watched for auto-fillable `.wd-panel-form`s (Phase
+   * 0/1 content) as well as the confirm-placement links and question buttons the mascot renders
+   * from Phase 2 onward. The mascot renders all of it, from the very start of the scenario, so
+   * every caller needs this regardless of `target`.
    */
-  mascotHost?: HTMLElement;
+  mascotHost: HTMLElement;
   /** the scenario's next-link container — watched for `.wd-next-link`s to auto-click */
   nextControl: HTMLElement;
   target: SkipTarget;
@@ -62,13 +60,12 @@ function fillAndSubmit(form: HTMLFormElement): void {
  * manual interaction from that moment forward. Dev/testing convenience; see
  * the-more-of-the-peaceful-sky plan for why this exists instead of a resumable step machine.
  */
-export function attachAutopilot({ toolbox, mascotHost, nextControl, target }: AutopilotOptions): Autopilot {
+export function attachAutopilot({ mascotHost, nextControl, target }: AutopilotOptions): Autopilot {
   let nextLinkCount = 0;
 
   function disconnect(): void {
     nextObserver.disconnect();
-    toolboxObserver.disconnect();
-    mascotObserver?.disconnect();
+    mascotObserver.disconnect();
   }
 
   const nextObserver = new MutationObserver(() => {
@@ -85,10 +82,9 @@ export function attachAutopilot({ toolbox, mascotHost, nextControl, target }: Au
   });
 
   /**
-   * shared by the toolbox observer (Phase 0/1 content) and the mascot-host observer (Phase 2+
-   * content, once the Toolbox has been emptied/collapsed and the mascot's speech bubble — which
-   * renders byte-identical `.wd-panel-*`/`.wd-next-link` markup, see `engine/mascot.ts` — takes
-   * over) so both roots get the same auto-fill/auto-click behavior without duplicating it.
+   * drives the single mascot-host observer below — the mascot renders every phase's content
+   * (drag slots, form, instrument panel, confirm links, questions) into the same root, so one
+   * handler covers all of it.
    */
   function handleContentMutation(root: HTMLElement): void {
     const form = root.querySelector<HTMLFormElement>(".wd-panel-form");
@@ -109,13 +105,11 @@ export function attachAutopilot({ toolbox, mascotHost, nextControl, target }: Au
     }
   }
 
-  const toolboxObserver = new MutationObserver(() => handleContentMutation(toolbox));
-  const mascotObserver = mascotHost ? new MutationObserver(() => handleContentMutation(mascotHost)) : undefined;
+  const mascotObserver = new MutationObserver(() => handleContentMutation(mascotHost));
 
   nextObserver.observe(nextControl, { childList: true });
   if (target !== "phase1") {
-    toolboxObserver.observe(toolbox, { childList: true, subtree: true });
-    if (mascotHost) mascotObserver!.observe(mascotHost, { childList: true, subtree: true });
+    mascotObserver.observe(mascotHost, { childList: true, subtree: true });
   }
 
   return {

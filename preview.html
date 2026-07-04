@@ -57,49 +57,10 @@
         gap: 0.75rem;
         flex: 1;
         min-width: 280px;
-        max-width: 380px;
-      }
-
-      .wd-instance--expanded {
-        max-width: none;
       }
 
       .wd-instance .wd-canvas {
         flex: 1;
-        max-width: 260px;
-      }
-
-      .wd-instance .wd-canvas--expanded {
-        max-width: none;
-      }
-
-      /* compact toolbox, mirrors index.html's dev sandbox but card-style (not a full-height sidebar) */
-      .wd-toolbox {
-        width: 110px;
-        flex-shrink: 0;
-        background: var(--color-bg-soft);
-        border: 1px solid var(--color-border);
-        border-radius: 8px;
-        padding: 1rem 0.5rem;
-      }
-
-      /*
-       * Collapses out of the flex layout instantly, same shape as .wd-explanation--hidden below —
-       * once the mascot takes over (Phase 2 onward) the Toolbox is gone for good, not just emptied.
-       * Also zeroes the card-style border/padding .wd-toolbox sets above, unlike index.html's
-       * plain sidebar version of this rule.
-       */
-      .wd-toolbox--hidden {
-        opacity: 0;
-        pointer-events: none;
-        flex: 0 1 0;
-        min-width: 0;
-        max-width: 0;
-        max-height: 0;
-        margin: 0;
-        padding: 0;
-        border: none;
-        overflow: hidden;
       }
 
       .wd-explanation {
@@ -185,7 +146,6 @@
       <div class="hero-inner">
         <div class="demo-row">
           <div class="wd-instance">
-            <aside id="toolbox-a" class="wd-toolbox"></aside>
             <div id="demo-a" class="wd-canvas">
               <div id="mascot-host-a" class="wd-mascot-host"></div>
             </div>
@@ -204,7 +164,6 @@
     <script>
       var answer = document.getElementById("vc-answer");
       var explanation = document.querySelector(".wd-explanation");
-      var toolbox = document.getElementById("toolbox-a");
       var mascotHost = document.getElementById("mascot-host-a");
       var nextControl = document.getElementById("vc-next");
 
@@ -224,12 +183,11 @@
         location.href = url.toString();
       });
       var autopilot = skipTarget
-        ? WardleyDemo.dev.attachAutopilot({ toolbox: toolbox, mascotHost: mascotHost, nextControl: nextControl, target: skipTarget })
+        ? WardleyDemo.dev.attachAutopilot({ mascotHost: mascotHost, nextControl: nextControl, target: skipTarget })
         : undefined;
 
       WardleyDemo.demos.userNeedDependency({
         canvas: document.getElementById("demo-a"),
-        toolbox: toolbox,
         mascotHost: mascotHost,
         nextControl: nextControl,
         onNeedPlaced: function () {
@@ -237,9 +195,6 @@
         },
         onEvolutionReady: function () {
           explanation.classList.add("wd-explanation--hidden");
-          toolbox.classList.add("wd-toolbox--hidden");
-          document.querySelector(".wd-instance").classList.add("wd-instance--expanded");
-          document.getElementById("demo-a").classList.add("wd-canvas--expanded");
         },
         onMount: autopilot && autopilot.onMount,
         onEvolutionStep: autopilot && autopilot.onEvolutionStep,

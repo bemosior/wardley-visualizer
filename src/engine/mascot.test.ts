@@ -23,7 +23,7 @@ function buildDemo(): WardleyDemo {
 describe("Mascot.mount / unmount", () => {
   it("appends the mascot root into the host on mount", () => {
     const host = makeHost();
-    const mascot = new Mascot(host, buildDemo());
+    const mascot = new Mascot(host);
 
     mascot.mount();
 
@@ -34,7 +34,7 @@ describe("Mascot.mount / unmount", () => {
 
   it("removes the mascot root on unmount", () => {
     const host = makeHost();
-    const mascot = new Mascot(host, buildDemo());
+    const mascot = new Mascot(host);
     mascot.mount();
 
     mascot.unmount();
@@ -45,7 +45,7 @@ describe("Mascot.mount / unmount", () => {
 
 describe("Mascot.moveTo", () => {
   it("plants the root below-and-centered on the given node, clear of its radius", () => {
-    const mascot = new Mascot(makeHost(), buildDemo());
+    const mascot = new Mascot(makeHost());
 
     mascot.moveTo("need", { x: 10, y: 20, radius: 50 });
 
@@ -58,7 +58,8 @@ describe("Mascot.moveTo", () => {
     const demo = buildDemo();
     const spy = vi.spyOn(demo, "getNodePixelPosition").mockReturnValue({ x: 5, y: 6, radius: 0 });
     const host = makeHost();
-    const mascot = new Mascot(host, demo);
+    const mascot = new Mascot(host);
+    mascot.attachDemo(demo);
     mascot.mount();
     mascot.moveTo("need", { x: 1, y: 1, radius: 0 });
     spy.mockClear();
@@ -75,7 +76,7 @@ describe("Mascot.moveTo", () => {
   it("leaves the bubble at its default (right-of-avatar) position when there's room", () => {
     const host = makeHost();
     vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 300 } as DOMRect);
-    const mascot = new Mascot(host, buildDemo());
+    const mascot = new Mascot(host);
     const bubble = (mascot as any).bubbleEl as HTMLElement;
     vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 100 } as DOMRect);
 
@@ -88,7 +89,7 @@ describe("Mascot.moveTo", () => {
   it("flips the bubble to the avatar's left when there's no room on the right", () => {
     const host = makeHost();
     vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 300 } as DOMRect);
-    const mascot = new Mascot(host, buildDemo());
+    const mascot = new Mascot(host);
     const bubble = (mascot as any).bubbleEl as HTMLElement;
     vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 200 } as DOMRect);
 
@@ -103,7 +104,7 @@ describe("Mascot.moveTo", () => {
   it("clamps the bubble inside the host as a last resort when neither side fully fits", () => {
     const host = makeHost();
     vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 100 } as DOMRect);
-    const mascot = new Mascot(host, buildDemo());
+    const mascot = new Mascot(host);
     const bubble = (mascot as any).bubbleEl as HTMLElement;
     vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 150 } as DOMRect);
 
@@ -121,7 +122,7 @@ describe("Mascot.moveTo", () => {
   it("flips the avatar above the node when it doesn't fit below, based on its own fixed size", () => {
     const host = makeHost();
     vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 500, height: 300 } as DOMRect);
-    const mascot = new Mascot(host, buildDemo());
+    const mascot = new Mascot(host);
     const root = (mascot as any).root as HTMLElement;
 
     mascot.moveTo("need", { x: 250, y: 270, radius: 20 });
@@ -134,7 +135,7 @@ describe("Mascot.moveTo", () => {
   it("keeps the avatar and bubble together, below the node, when the bubble comfortably fits there", () => {
     const host = makeHost();
     vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 500, height: 300 } as DOMRect);
-    const mascot = new Mascot(host, buildDemo());
+    const mascot = new Mascot(host);
     const root = (mascot as any).root as HTMLElement;
     const bubble = (mascot as any).bubbleEl as HTMLElement;
     vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 80, height: 68 } as DOMRect);
@@ -148,7 +149,7 @@ describe("Mascot.moveTo", () => {
   it("moves the avatar and bubble above the node together when the bubble is too tall to fit below", () => {
     const host = makeHost();
     vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 500, height: 300 } as DOMRect);
-    const mascot = new Mascot(host, buildDemo());
+    const mascot = new Mascot(host);
     const root = (mascot as any).root as HTMLElement;
     const bubble = (mascot as any).bubbleEl as HTMLElement;
     vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 80, height: 250 } as DOMRect);
@@ -168,7 +169,7 @@ describe("Mascot.moveTo", () => {
   it("never lets the bubble cross back toward the node, even if that leaves it overflowing the canvas", () => {
     const host = makeHost();
     vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 500, height: 150 } as DOMRect);
-    const mascot = new Mascot(host, buildDemo());
+    const mascot = new Mascot(host);
     const root = (mascot as any).root as HTMLElement;
     const bubble = (mascot as any).bubbleEl as HTMLElement;
     vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 80, height: 200 } as DOMRect);
@@ -186,7 +187,7 @@ describe("Mascot.moveTo", () => {
   it("moves the avatar along with the bubble when a later content change forces a side flip", () => {
     const host = makeHost();
     vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 500, height: 300 } as DOMRect);
-    const mascot = new Mascot(host, buildDemo());
+    const mascot = new Mascot(host);
     const root = (mascot as any).root as HTMLElement;
     const bubble = (mascot as any).bubbleEl as HTMLElement;
     const bubbleRect = vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 80, height: 40 } as DOMRect);
@@ -208,7 +209,8 @@ describe("Mascot.moveTo", () => {
     const demo = buildDemo();
     const spy = vi.spyOn(demo, "getNodePixelPosition");
     const host = makeHost();
-    const mascot = new Mascot(host, demo);
+    const mascot = new Mascot(host);
+    mascot.attachDemo(demo);
     mascot.mount();
     mascot.moveTo("need", { x: 1, y: 1 });
     mascot.unmount();
@@ -221,9 +223,43 @@ describe("Mascot.moveTo", () => {
 });
 
 describe("Mascot delegation to the composed Panel", () => {
+  it("showDragHandles renders the intro heading/subheading and the active slot", () => {
+    const host = makeHost();
+    const mascot = new Mascot(host);
+    mascot.mount();
+
+    const handle = mascot.showDragHandles([{ id: "need", iconText: "User Need", label: "What They Get", active: true }], {
+      heading: "Hi, I'm here to help!",
+      subheading: "Drag the glowing circle onto the canvas to begin.",
+    });
+
+    expect(host.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Hi, I'm here to help!");
+    expect(host.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe(
+      "Drag the glowing circle onto the canvas to begin.",
+    );
+    const active = host.querySelector(".wd-panel-slot--active");
+    expect(active).not.toBeNull();
+    expect(handle.activeElement).toBe(active);
+  });
+
+  it("showField renders the prompt and resolves with the submitted value", async () => {
+    const host = makeHost();
+    const mascot = new Mascot(host);
+    mascot.mount();
+
+    const result = mascot.showField({ type: "text", prompt: "Who needs this?", placeholder: "e.g. commuters" });
+
+    expect(host.querySelector(".wd-panel-form-prompt")!.textContent).toBe("Who needs this?");
+    const input = host.querySelector<HTMLInputElement>(".wd-panel-form-input")!;
+    input.value = "Busy parents";
+    host.querySelector("form")!.dispatchEvent(new Event("submit", { cancelable: true }));
+
+    expect(await result).toBe("Busy parents");
+  });
+
   it("showInstrumentPanel renders the heading/stage inside the bubble", () => {
     const host = makeHost();
-    const mascot = new Mascot(host, buildDemo());
+    const mascot = new Mascot(host);
     mascot.mount();
 
     mascot.showInstrumentPanel("User Need", "need", "Genesis");
@@ -234,7 +270,7 @@ describe("Mascot delegation to the composed Panel", () => {
 
   it("updateInstrumentPanel updates the live stage text", () => {
     const host = makeHost();
-    const mascot = new Mascot(host, buildDemo());
+    const mascot = new Mascot(host);
     mascot.mount();
     mascot.showInstrumentPanel("User Need", "need", "Genesis");
 
@@ -245,7 +281,7 @@ describe("Mascot delegation to the composed Panel", () => {
 
   it("confirmPlacement resolves once its link is clicked", async () => {
     const host = makeHost();
-    const mascot = new Mascot(host, buildDemo());
+    const mascot = new Mascot(host);
     mascot.mount();
     mascot.showPlaceholder("Wardley Map", "All placed!");
 
@@ -257,7 +293,7 @@ describe("Mascot delegation to the composed Panel", () => {
 
   it("showQuestion renders options and resolves with the clicked one", async () => {
     const host = makeHost();
-    const mascot = new Mascot(host, buildDemo());
+    const mascot = new Mascot(host);
     mascot.mount();
     const question: Question = {
       id: "q1",
@@ -277,7 +313,7 @@ describe("Mascot delegation to the composed Panel", () => {
 
   it("showRecap renders the CTA link", () => {
     const host = makeHost();
-    const mascot = new Mascot(host, buildDemo());
+    const mascot = new Mascot(host);
     mascot.mount();
 
     mascot.showRecap(["Step one"], { label: "Take your next step →", href: "https://learnwardleymapping.com" });
@@ -289,7 +325,7 @@ describe("Mascot delegation to the composed Panel", () => {
 
   it("showEmpty clears prior content down to an empty placeholder", () => {
     const host = makeHost();
-    const mascot = new Mascot(host, buildDemo());
+    const mascot = new Mascot(host);
     mascot.mount();
     mascot.showPlaceholder("Wardley Map", "All placed!");
 
@@ -303,7 +339,7 @@ describe("Mascot delegation to the composed Panel", () => {
 describe("Mascot talking/celebrating state", () => {
   it("plays the talking state immediately when new bubble content renders", () => {
     const host = makeHost();
-    const mascot = new Mascot(host, buildDemo());
+    const mascot = new Mascot(host);
     mascot.mount();
 
     mascot.showPlaceholder("Wardley Map", "All placed!");
@@ -314,7 +350,7 @@ describe("Mascot talking/celebrating state", () => {
   it("settles back to idle after the talking animation finishes", () => {
     vi.useFakeTimers();
     const host = makeHost();
-    const mascot = new Mascot(host, buildDemo());
+    const mascot = new Mascot(host);
     mascot.mount();
     mascot.showPlaceholder("Wardley Map", "All placed!");
 
@@ -327,7 +363,7 @@ describe("Mascot talking/celebrating state", () => {
   it("does not stomp a caller-triggered celebrating state once the talking animation finishes", () => {
     vi.useFakeTimers();
     const host = makeHost();
-    const mascot = new Mascot(host, buildDemo());
+    const mascot = new Mascot(host);
     mascot.mount();
     mascot.showPlaceholder("Wardley Map", "All placed!");
     mascot.setState("celebrating");

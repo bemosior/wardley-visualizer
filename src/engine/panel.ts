@@ -37,11 +37,13 @@ export type PanelField =
   | { type: "text"; prompt: string; placeholder?: string };
 
 /**
- * the side panel ("toolbox"): a single region that swaps between interaction
- * modes as the tutorial progresses. Today: drag-handle (pick up a node), form
- * (answer one prompt at a time), instrument-panel (live evolution-stage
- * characteristics readout, Phase 2), and question (multiple-choice doctrine
- * prompt with an optional reroll, Phase 3).
+ * a single region that swaps between interaction modes as the tutorial
+ * progresses — the mascot (`engine/mascot.ts`) composes one `Panel` instance
+ * pointed at its speech bubble and is the sole renderer of every mode below.
+ * Today: drag-handle (pick up a node), form (answer one prompt at a time),
+ * instrument-panel (live evolution-stage characteristics readout, Phase 2),
+ * and question (multiple-choice doctrine prompt with an optional reroll,
+ * Phase 3).
  */
 export class Panel {
   private container: HTMLElement;
@@ -54,14 +56,32 @@ export class Panel {
     this.container.classList.add("wd-panel");
   }
 
-  /** renders one slot per descriptor; returns the active slot as a drag pickup point */
-  showDragHandles(slots: PanelDragSlot[]): PanelDragHandle {
+  /**
+   * renders one slot per descriptor; returns the active slot as a drag pickup point.
+   * `intro`, if given, renders a heading + subheading above the slot row (reusing the same
+   * classes `showPlaceholder`/`showInstrumentPanel` use for theirs).
+   */
+  showDragHandles(slots: PanelDragSlot[], intro?: { heading: string; subheading: string }): PanelDragHandle {
     this.clear();
     let active: HTMLElement | null = null;
 
     const content = document.createElement("div");
     content.classList.add("wd-panel-content");
     const iconLabels: SVGTextElement[] = [];
+
+    if (intro) {
+      content.classList.add("wd-panel-content--top");
+
+      const headingEl = document.createElement("div");
+      headingEl.classList.add("wd-panel-placeholder-heading");
+      headingEl.textContent = intro.heading;
+
+      const subheadingEl = document.createElement("div");
+      subheadingEl.classList.add("wd-panel-placeholder-subheading");
+      subheadingEl.textContent = intro.subheading;
+
+      content.append(headingEl, subheadingEl);
+    }
 
     for (const slot of slots) {
       const wrapper = document.createElement("div");
@@ -168,7 +188,7 @@ export class Panel {
     });
   }
 
-  /** clears the panel down to an empty `.wd-panel-content` placeholder, keeping the toolbox at its full height between modes */
+  /** clears the panel down to an empty `.wd-panel-content` placeholder */
   showEmpty(): void {
     this.clear();
     const content = document.createElement("div");
@@ -244,8 +264,8 @@ export class Panel {
 
   /**
    * appends a confirm link (the same `showNextLink` control) into the currently-rendered
-   * `.wd-panel-content`, so it shows up inside the Toolbox instead of a host-page element;
-   * resolves once clicked, then removes itself.
+   * `.wd-panel-content`, so it shows up inside the panel's own container instead of a
+   * host-page element; resolves once clicked, then removes itself.
    */
   confirmPlacement(label = "Confirm placement"): Promise<void> {
     const content = this.container.querySelector<HTMLElement>(".wd-panel-content") ?? this.container;

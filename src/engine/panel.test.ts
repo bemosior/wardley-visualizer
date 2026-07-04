@@ -59,6 +59,26 @@ describe("Panel.showDragHandles", () => {
 
     expect(handle.activeElement.title).toBe("Drag this onto the canvas");
   });
+
+  it("renders an intro heading/subheading above the slot row when given", () => {
+    const container = makeContainer();
+    const panel = new Panel(container);
+    panel.showDragHandles(slots, { heading: "Hi there!", subheading: "Drag the glowing circle to begin." });
+
+    expect(container.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Hi there!");
+    expect(container.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe(
+      "Drag the glowing circle to begin.",
+    );
+    expect(container.querySelectorAll(".wd-panel-slot").length).toBe(3);
+  });
+
+  it("renders no heading/subheading when intro is omitted", () => {
+    const container = makeContainer();
+    const panel = new Panel(container);
+    panel.showDragHandles(slots);
+
+    expect(container.querySelector(".wd-panel-placeholder-heading")).toBeNull();
+  });
 });
 
 describe("Panel.showField", () => {

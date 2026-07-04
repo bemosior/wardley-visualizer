@@ -11,39 +11,38 @@ function drag(handle: Element, to: { x: number; y: number }): void {
 }
 
 /** happy-dom doesn't implement HTMLFormElement.requestSubmit; dispatch the event it relies on directly */
-function submitForm(toolbox: HTMLElement): void {
-  toolbox.querySelector("form")!.dispatchEvent(new Event("submit", { cancelable: true }));
+function submitForm(mascotHost: HTMLElement): void {
+  mascotHost.querySelector("form")!.dispatchEvent(new Event("submit", { cancelable: true }));
 }
 
-function submitText(toolbox: HTMLElement, value: string): void {
-  const input = toolbox.querySelector<HTMLInputElement>(".wd-panel-form-input")!;
+function submitText(mascotHost: HTMLElement, value: string): void {
+  const input = mascotHost.querySelector<HTMLInputElement>(".wd-panel-form-input")!;
   input.value = value;
-  submitForm(toolbox);
+  submitForm(mascotHost);
 }
 
-function submitSelect(toolbox: HTMLElement, value: string): void {
-  const select = toolbox.querySelector<HTMLSelectElement>(".wd-panel-form-input")!;
+function submitSelect(mascotHost: HTMLElement, value: string): void {
+  const select = mascotHost.querySelector<HTMLSelectElement>(".wd-panel-form-input")!;
   select.value = value;
-  submitForm(toolbox);
+  submitForm(mascotHost);
 }
 
 function clickNext(nextControl: HTMLElement): void {
   nextControl.querySelector<HTMLAnchorElement>(".wd-next-link")!.click();
 }
 
-/** the evolution step's "Confirm placement" link renders inside the mascot's speech bubble, not toolbox/nextControl */
+/** the evolution step's "Confirm placement" link renders inside the mascot's speech bubble, not nextControl */
 function clickConfirm(mascotHost: HTMLElement): void {
   mascotHost.querySelector<HTMLAnchorElement>(".wd-next-link")!.click();
 }
 
 function buildScenario(onCelebrate: () => void) {
   const canvas = document.createElement("div");
-  const toolbox = document.createElement("div");
   const mascotHost = document.createElement("div");
   const nextControl = document.createElement("div");
-  document.body.append(canvas, toolbox, mascotHost, nextControl);
-  runValueChainScenario({ canvas, toolbox, mascotHost, nextControl, onCelebrate });
-  return { canvas, toolbox, mascotHost, nextControl };
+  document.body.append(canvas, mascotHost, nextControl);
+  runValueChainScenario({ canvas, mascotHost, nextControl, onCelebrate });
+  return { canvas, mascotHost, nextControl };
 }
 
 async function flush(): Promise<void> {
@@ -52,8 +51,8 @@ async function flush(): Promise<void> {
 }
 
 /** drags the Need into place (default layout's target is centerX=200, needY=76 for the default 400x300 viewBox), then clicks past the "Next" gate into the form */
-async function completeDragStep(toolbox: HTMLElement, nextControl: HTMLElement): Promise<void> {
-  const activeSlot = toolbox.querySelector(".wd-panel-slot--active")!;
+async function completeDragStep(mascotHost: HTMLElement, nextControl: HTMLElement): Promise<void> {
+  const activeSlot = mascotHost.querySelector(".wd-panel-slot--active")!;
   drag(activeSlot, { x: 200, y: 76 });
   await flush();
   clickNext(nextControl);
@@ -61,134 +60,133 @@ async function completeDragStep(toolbox: HTMLElement, nextControl: HTMLElement):
 }
 
 describe("runValueChainScenario", () => {
-  it("starts with the panel's drag handle active, before any form step", () => {
-    const { toolbox } = buildScenario(vi.fn());
-    expect(toolbox.querySelector(".wd-panel-slot--active")).not.toBeNull();
-    expect(toolbox.querySelector("form")).toBeNull();
+  it("starts with the mascot's drag handle active, before any form step", () => {
+    const { mascotHost } = buildScenario(vi.fn());
+    expect(mascotHost.querySelector(".wd-panel-slot--active")).not.toBeNull();
+    expect(mascotHost.querySelector("form")).toBeNull();
   });
 
   it("fires onNeedPlaced as soon as the Need snaps, and waits for a Next click before showing the form", async () => {
     const onNeedPlaced = vi.fn();
     const canvas = document.createElement("div");
-    const toolbox = document.createElement("div");
     const mascotHost = document.createElement("div");
     const nextControl = document.createElement("div");
-    document.body.append(canvas, toolbox, mascotHost, nextControl);
-    runValueChainScenario({ canvas, toolbox, mascotHost, nextControl, onNeedPlaced });
+    document.body.append(canvas, mascotHost, nextControl);
+    runValueChainScenario({ canvas, mascotHost, nextControl, onNeedPlaced });
 
-    const activeSlot = toolbox.querySelector(".wd-panel-slot--active")!;
+    const activeSlot = mascotHost.querySelector(".wd-panel-slot--active")!;
     drag(activeSlot, { x: 200, y: 76 });
     await flush();
 
     expect(onNeedPlaced).toHaveBeenCalledOnce();
-    expect(toolbox.querySelector("form")).toBeNull();
+    expect(mascotHost.querySelector("form")).toBeNull();
     expect(nextControl.querySelector(".wd-next-link")).not.toBeNull();
 
     clickNext(nextControl);
     await flush();
-    expect(toolbox.querySelector("form")).not.toBeNull();
+    expect(mascotHost.querySelector("form")).not.toBeNull();
   });
 
   it("does not advance to the form sequence if the Need is dropped away from its target", async () => {
-    const { toolbox } = buildScenario(vi.fn());
-    const activeSlot = toolbox.querySelector(".wd-panel-slot--active")!;
+    const { mascotHost } = buildScenario(vi.fn());
+    const activeSlot = mascotHost.querySelector(".wd-panel-slot--active")!;
     drag(activeSlot, { x: 0, y: 0 });
     await flush();
 
-    expect(toolbox.querySelector(".wd-panel-slot--active")).not.toBeNull();
-    expect(toolbox.querySelector("form")).toBeNull();
+    expect(mascotHost.querySelector(".wd-panel-slot--active")).not.toBeNull();
+    expect(mascotHost.querySelector("form")).toBeNull();
   });
 
   it("walks need -> user -> 3 capabilities after the drag step, relabeling each node as it's answered", async () => {
-    const { canvas, toolbox, nextControl } = buildScenario(vi.fn());
-    await completeDragStep(toolbox, nextControl);
+    const { canvas, mascotHost, nextControl } = buildScenario(vi.fn());
+    await completeDragStep(mascotHost, nextControl);
 
     const need = NEED_CATALOG[0];
-    submitSelect(toolbox, need.id);
+    submitSelect(mascotHost, need.id);
     await flush();
     expect(canvas.querySelector('[data-node-id="need"] .wd-node-label')!.textContent).toBe(need.label);
 
-    submitText(toolbox, "A commuter");
+    submitText(mascotHost, "A commuter");
     await flush();
     expect(canvas.querySelector('[data-node-id="user"] .wd-node-label')!.textContent).toBe("A commuter");
 
-    submitText(toolbox, "A kettle");
+    submitText(mascotHost, "A kettle");
     await flush();
     expect(canvas.querySelector('[data-node-id="dependency-1"] .wd-node-label')!.textContent).toBe("A kettle");
 
-    submitText(toolbox, "Water");
+    submitText(mascotHost, "Water");
     await flush();
     expect(canvas.querySelector('[data-node-id="dependency-2"] .wd-node-label')!.textContent).toBe("Water");
 
-    submitText(toolbox, "Electricity");
+    submitText(mascotHost, "Electricity");
     await flush();
     expect(canvas.querySelector('[data-node-id="dependency-3"] .wd-node-label')!.textContent).toBe("Electricity");
   });
 
   it("shows placeholders matching the selected need, not a different need's example", async () => {
-    const { toolbox, nextControl } = buildScenario(vi.fn());
-    await completeDragStep(toolbox, nextControl);
+    const { mascotHost, nextControl } = buildScenario(vi.fn());
+    await completeDragStep(mascotHost, nextControl);
 
     const grocery = NEED_CATALOG.find((need) => need.id === "fresh-grocery-delivery")!;
-    submitSelect(toolbox, grocery.id);
+    submitSelect(mascotHost, grocery.id);
     await flush();
 
-    expect(toolbox.querySelector<HTMLInputElement>(".wd-panel-form-input")!.placeholder).toBe(
+    expect(mascotHost.querySelector<HTMLInputElement>(".wd-panel-form-input")!.placeholder).toBe(
       grocery.userPlaceholder,
     );
-    submitText(toolbox, "A home cook");
+    submitText(mascotHost, "A home cook");
     await flush();
 
     for (const placeholder of grocery.capabilityPlaceholders) {
-      expect(toolbox.querySelector<HTMLInputElement>(".wd-panel-form-input")!.placeholder).toBe(placeholder);
-      submitText(toolbox, "answer");
+      expect(mascotHost.querySelector<HTMLInputElement>(".wd-panel-form-input")!.placeholder).toBe(placeholder);
+      submitText(mascotHost, "answer");
       await flush();
     }
   });
 
-  it("empties the panel to a full-height placeholder and fires onCelebrate once the last capability is answered", async () => {
+  it("shows an 'All done!' placeholder and fires onCelebrate once the last capability is answered", async () => {
     const onCelebrate = vi.fn();
-    const { toolbox, nextControl } = buildScenario(onCelebrate);
-    await completeDragStep(toolbox, nextControl);
+    const { mascotHost, nextControl } = buildScenario(onCelebrate);
+    await completeDragStep(mascotHost, nextControl);
     expect(onCelebrate).not.toHaveBeenCalled();
 
-    submitSelect(toolbox, NEED_CATALOG[0].id);
+    submitSelect(mascotHost, NEED_CATALOG[0].id);
     await flush();
-    submitText(toolbox, "A commuter");
+    submitText(mascotHost, "A commuter");
     await flush();
-    submitText(toolbox, "A kettle");
+    submitText(mascotHost, "A kettle");
     await flush();
-    submitText(toolbox, "Water");
+    submitText(mascotHost, "Water");
     await flush();
     expect(onCelebrate).not.toHaveBeenCalled();
 
-    submitText(toolbox, "Electricity");
+    submitText(mascotHost, "Electricity");
     await flush();
 
-    expect(toolbox.querySelector(".wd-panel-content")).not.toBeNull();
-    expect(toolbox.querySelector("form")).toBeNull();
+    expect(mascotHost.querySelector(".wd-panel-content")).not.toBeNull();
+    expect(mascotHost.querySelector("form")).toBeNull();
+    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("All done!");
     expect(onCelebrate).toHaveBeenCalledOnce();
   });
 
   it("shows a second Next link after celebrating, reveals the map backdrop only once it's clicked, and fires onEvolutionReady", async () => {
     const onEvolutionReady = vi.fn();
     const canvas = document.createElement("div");
-    const toolbox = document.createElement("div");
     const mascotHost = document.createElement("div");
     const nextControl = document.createElement("div");
-    document.body.append(canvas, toolbox, mascotHost, nextControl);
-    runValueChainScenario({ canvas, toolbox, mascotHost, nextControl, onEvolutionReady });
-    await completeDragStep(toolbox, nextControl);
+    document.body.append(canvas, mascotHost, nextControl);
+    runValueChainScenario({ canvas, mascotHost, nextControl, onEvolutionReady });
+    await completeDragStep(mascotHost, nextControl);
 
-    submitSelect(toolbox, NEED_CATALOG[0].id);
+    submitSelect(mascotHost, NEED_CATALOG[0].id);
     await flush();
-    submitText(toolbox, "A commuter");
+    submitText(mascotHost, "A commuter");
     await flush();
-    submitText(toolbox, "A kettle");
+    submitText(mascotHost, "A kettle");
     await flush();
-    submitText(toolbox, "Water");
+    submitText(mascotHost, "Water");
     await flush();
-    submitText(toolbox, "Electricity");
+    submitText(mascotHost, "Electricity");
     await flush();
 
     expect(nextControl.querySelector(".wd-next-link")).not.toBeNull();
@@ -216,49 +214,48 @@ describe("runValueChainScenario", () => {
     vi.useRealTimers();
   });
 
-  it("mounts the mascot into mascotHost only once Phase 2 begins, swapping in a Need-label/Genesis bubble", async () => {
+  it("mounts the mascot immediately, before any drag/form step, then swaps in a Need-label/Genesis bubble once Phase 2 begins", async () => {
     const canvas = document.createElement("div");
-    const toolbox = document.createElement("div");
     const mascotHost = document.createElement("div");
     const nextControl = document.createElement("div");
-    document.body.append(canvas, toolbox, mascotHost, nextControl);
-    runValueChainScenario({ canvas, toolbox, mascotHost, nextControl });
-    await completeDragStep(toolbox, nextControl);
+    document.body.append(canvas, mascotHost, nextControl);
+    runValueChainScenario({ canvas, mascotHost, nextControl });
+
+    expect(mascotHost.querySelector(".wd-mascot")).not.toBeNull();
+
+    await completeDragStep(mascotHost, nextControl);
 
     const need = NEED_CATALOG[0];
-    submitSelect(toolbox, need.id);
+    submitSelect(mascotHost, need.id);
     await flush();
-    submitText(toolbox, "A commuter");
+    submitText(mascotHost, "A commuter");
     await flush();
-    submitText(toolbox, "A kettle");
+    submitText(mascotHost, "A kettle");
     await flush();
-    submitText(toolbox, "Water");
+    submitText(mascotHost, "Water");
     await flush();
-    submitText(toolbox, "Electricity");
+    submitText(mascotHost, "Electricity");
     await flush();
-
-    expect(mascotHost.querySelector(".wd-mascot")).toBeNull();
 
     clickNext(nextControl);
     await flush();
 
-    expect(mascotHost.querySelector(".wd-mascot")).not.toBeNull();
     expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe(need.label);
     expect(mascotHost.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe("Is it Genesis?");
   });
 
   /** walks the Phase 1 form and clicks past the Phase 1->2 gate, landing right where the Need starts beckoning on the map (default layout's Genesis x is 50, at the Need's unchanged y of 76) */
-  async function reachEvolutionStep(toolbox: HTMLElement, nextControl: HTMLElement): Promise<void> {
-    await completeDragStep(toolbox, nextControl);
-    submitSelect(toolbox, NEED_CATALOG[0].id);
+  async function reachEvolutionStep(mascotHost: HTMLElement, nextControl: HTMLElement): Promise<void> {
+    await completeDragStep(mascotHost, nextControl);
+    submitSelect(mascotHost, NEED_CATALOG[0].id);
     await flush();
-    submitText(toolbox, "A commuter");
+    submitText(mascotHost, "A commuter");
     await flush();
-    submitText(toolbox, "A kettle");
+    submitText(mascotHost, "A kettle");
     await flush();
-    submitText(toolbox, "Water");
+    submitText(mascotHost, "Water");
     await flush();
-    submitText(toolbox, "Electricity");
+    submitText(mascotHost, "Electricity");
     await flush();
     clickNext(nextControl);
     await flush();
@@ -268,12 +265,11 @@ describe("runValueChainScenario", () => {
   it("doesn't show a confirm link until the Need is dragged at least once", async () => {
     vi.useFakeTimers();
     const canvas = document.createElement("div");
-    const toolbox = document.createElement("div");
     const mascotHost = document.createElement("div");
     const nextControl = document.createElement("div");
-    document.body.append(canvas, toolbox, mascotHost, nextControl);
-    runValueChainScenario({ canvas, toolbox, mascotHost, nextControl });
-    await reachEvolutionStep(toolbox, nextControl);
+    document.body.append(canvas, mascotHost, nextControl);
+    runValueChainScenario({ canvas, mascotHost, nextControl });
+    await reachEvolutionStep(mascotHost, nextControl);
 
     expect(mascotHost.querySelector(".wd-next-link")).toBeNull();
 
@@ -289,15 +285,14 @@ describe("runValueChainScenario", () => {
   it("updates the mascot bubble's subheading live as the Need is dragged, and moves on to Capability-1 once the confirm link is clicked", async () => {
     vi.useFakeTimers();
     const canvas = document.createElement("div");
-    const toolbox = document.createElement("div");
     const mascotHost = document.createElement("div");
     const nextControl = document.createElement("div");
-    document.body.append(canvas, toolbox, mascotHost, nextControl);
+    document.body.append(canvas, mascotHost, nextControl);
     let resolved = false;
-    runValueChainScenario({ canvas, toolbox, mascotHost, nextControl }).then(() => {
+    runValueChainScenario({ canvas, mascotHost, nextControl }).then(() => {
       resolved = true;
     });
-    await reachEvolutionStep(toolbox, nextControl);
+    await reachEvolutionStep(mascotHost, nextControl);
 
     expect(mascotHost.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe("Is it Genesis?");
 
@@ -335,15 +330,14 @@ describe("runValueChainScenario", () => {
   it("slides each capability into the Genesis column and walks Capability-1/2/3 through the same drag-confirm pattern, celebrating once all four are placed", async () => {
     vi.useFakeTimers();
     const canvas = document.createElement("div");
-    const toolbox = document.createElement("div");
     const mascotHost = document.createElement("div");
     const nextControl = document.createElement("div");
-    document.body.append(canvas, toolbox, mascotHost, nextControl);
+    document.body.append(canvas, mascotHost, nextControl);
     let resolved = false;
-    runValueChainScenario({ canvas, toolbox, mascotHost, nextControl }).then(() => {
+    runValueChainScenario({ canvas, mascotHost, nextControl }).then(() => {
       resolved = true;
     });
-    await reachEvolutionStep(toolbox, nextControl);
+    await reachEvolutionStep(mascotHost, nextControl);
     await confirmEvolutionStep(canvas, mascotHost, "need", 150, 76);
 
     expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("A kettle");
@@ -374,13 +368,8 @@ describe("runValueChainScenario", () => {
   });
 
   /** walks placement through the Phase 2->3 gate, landing on Capability 1's bias-check question */
-  async function reachThinkingStep(
-    canvas: HTMLElement,
-    toolbox: HTMLElement,
-    mascotHost: HTMLElement,
-    nextControl: HTMLElement,
-  ): Promise<void> {
-    await reachEvolutionStep(toolbox, nextControl);
+  async function reachThinkingStep(canvas: HTMLElement, mascotHost: HTMLElement, nextControl: HTMLElement): Promise<void> {
+    await reachEvolutionStep(mascotHost, nextControl);
     await confirmEvolutionStep(canvas, mascotHost, "need", 150, 76);
     await confirmEvolutionStep(canvas, mascotHost, "dependency-1", 150, 157);
     await confirmEvolutionStep(canvas, mascotHost, "dependency-2", 150, 157);
@@ -396,12 +385,11 @@ describe("runValueChainScenario", () => {
   it("asks the bias-check question for Capability 1, the build/buy/outsource question for Capability 2, and a pool question for Capability 3", async () => {
     vi.useFakeTimers();
     const canvas = document.createElement("div");
-    const toolbox = document.createElement("div");
     const mascotHost = document.createElement("div");
     const nextControl = document.createElement("div");
-    document.body.append(canvas, toolbox, mascotHost, nextControl);
-    runValueChainScenario({ canvas, toolbox, mascotHost, nextControl });
-    await reachThinkingStep(canvas, toolbox, mascotHost, nextControl);
+    document.body.append(canvas, mascotHost, nextControl);
+    runValueChainScenario({ canvas, mascotHost, nextControl });
+    await reachThinkingStep(canvas, mascotHost, nextControl);
 
     expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("A kettle");
     expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(BIAS_CHECK_QUESTION.prompt);
@@ -422,12 +410,11 @@ describe("runValueChainScenario", () => {
   it("rerolls to a different question for Capability 3 without advancing, then commits on an option click", async () => {
     vi.useFakeTimers();
     const canvas = document.createElement("div");
-    const toolbox = document.createElement("div");
     const mascotHost = document.createElement("div");
     const nextControl = document.createElement("div");
-    document.body.append(canvas, toolbox, mascotHost, nextControl);
-    runValueChainScenario({ canvas, toolbox, mascotHost, nextControl });
-    await reachThinkingStep(canvas, toolbox, mascotHost, nextControl);
+    document.body.append(canvas, mascotHost, nextControl);
+    runValueChainScenario({ canvas, mascotHost, nextControl });
+    await reachThinkingStep(canvas, mascotHost, nextControl);
 
     clickOption(mascotHost);
     await flush();
@@ -454,15 +441,14 @@ describe("runValueChainScenario", () => {
   it("anchors a callout to each capability's node as its question is answered, then celebrates and resolves on the final Next click", async () => {
     vi.useFakeTimers();
     const canvas = document.createElement("div");
-    const toolbox = document.createElement("div");
     const mascotHost = document.createElement("div");
     const nextControl = document.createElement("div");
-    document.body.append(canvas, toolbox, mascotHost, nextControl);
+    document.body.append(canvas, mascotHost, nextControl);
     let resolved = false;
-    runValueChainScenario({ canvas, toolbox, mascotHost, nextControl }).then(() => {
+    runValueChainScenario({ canvas, mascotHost, nextControl }).then(() => {
       resolved = true;
     });
-    await reachThinkingStep(canvas, toolbox, mascotHost, nextControl);
+    await reachThinkingStep(canvas, mascotHost, nextControl);
 
     clickOption(mascotHost);
     await flush();
@@ -486,17 +472,17 @@ describe("runValueChainScenario", () => {
   });
 
   it("does not advance on a whitespace-only capability answer", async () => {
-    const { toolbox, nextControl } = buildScenario(vi.fn());
-    await completeDragStep(toolbox, nextControl);
-    submitSelect(toolbox, NEED_CATALOG[0].id);
+    const { mascotHost, nextControl } = buildScenario(vi.fn());
+    await completeDragStep(mascotHost, nextControl);
+    submitSelect(mascotHost, NEED_CATALOG[0].id);
     await flush();
-    submitText(toolbox, "A commuter");
-    await flush();
-
-    submitText(toolbox, "   ");
+    submitText(mascotHost, "A commuter");
     await flush();
 
-    expect(toolbox.querySelector(".wd-panel-form-prompt")!.textContent).toBe(
+    submitText(mascotHost, "   ");
+    await flush();
+
+    expect(mascotHost.querySelector(".wd-panel-form-prompt")!.textContent).toBe(
       "What's something they depend on to get this need met? \r\n(1 of 3)",
     );
   });

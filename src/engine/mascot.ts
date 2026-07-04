@@ -1,4 +1,4 @@
-import { Panel, type EvolutionKind } from "./panel";
+import { Panel, type EvolutionKind, type PanelDragSlot, type PanelDragHandle, type PanelField } from "./panel";
 import { createMascotAvatar, type MascotState } from "./mascotAvatar";
 import type { WardleyDemo } from "./WardleyDemo";
 import type { EvolutionStage } from "../domain/evolution";
@@ -25,18 +25,23 @@ const NODE_CLEARANCE = 12;
 const BUBBLE_GAP = 8;
 
 /**
- * the mascot's speech-bubble guide — replaces the sidebar Toolbox for Phase 2 (Evolution) onward.
- * Composes a `Panel` pointed at a floating, node-anchored bubble instead of a fixed sidebar, so
- * every render method below is a thin delegation to that `Panel`, reusing its already-tested
- * rendering logic (instrument-panel/question/recap markup, `.wd-panel-form`/`.wd-next-link`/
+ * the mascot's speech-bubble guide — the sole guide for the whole scenario, from the moment
+ * it mounts (Phase 0's drag affordance) through the closing recap. Composes a `Panel` pointed
+ * at a floating, node-anchored bubble instead of a fixed sidebar, so every render method below
+ * is a thin delegation to that `Panel`, reusing its already-tested rendering logic (drag-handle/
+ * form/instrument-panel/question/recap markup, `.wd-panel-form`/`.wd-next-link`/
  * `.wd-panel-question-option` classes) verbatim rather than reimplementing it — this also keeps
  * `src/dev/autopilot.ts`'s existing class-name selectors working unchanged against the bubble.
- * `Panel` itself, and the sidebar Toolbox it renders into for Phase 0/1, are untouched by this
- * class.
+ *
+ * `demo` is attached via `attachDemo` rather than passed to the constructor: Phase 0's drag step
+ * needs the mascot's rendered drag-slot element to exist *before* `WardleyDemo.mount()` is called
+ * (its constructor wires the drag step synchronously off `options.dragHandle`), so the mascot has
+ * to mount and render before a `WardleyDemo` instance exists. `attachDemo` must be called before
+ * any `moveTo`, since `trackAnchor` (the resize handler) depends on it.
  */
 export class Mascot {
   private host: HTMLElement;
-  private demo: WardleyDemo;
+  private demo: WardleyDemo | null = null;
   private root: HTMLElement;
   private bubbleEl: HTMLElement;
   private panel: Panel;
@@ -46,9 +51,8 @@ export class Mascot {
   private lastPos: { x: number; y: number; radius?: number } | null = null;
   private resizeHandler = (): void => this.trackAnchor();
 
-  constructor(host: HTMLElement, demo: WardleyDemo) {
+  constructor(host: HTMLElement) {
     this.host = host;
-    this.demo = demo;
 
     this.root = document.createElement("div");
     this.root.classList.add("wd-mascot");
@@ -58,6 +62,11 @@ export class Mascot {
 
     this.root.append(this.avatar.element, this.bubbleEl);
     this.panel = new Panel(this.bubbleEl);
+  }
+
+  /** wires up the `WardleyDemo` instance this mascot tracks — see the class doc comment for why this is separate from the constructor */
+  attachDemo(demo: WardleyDemo): void {
+    this.demo = demo;
   }
 
   /** appends the mascot into `host` and starts tracking window resizes for `moveTo`'s last node */
@@ -196,7 +205,7 @@ export class Mascot {
   }
 
   private trackAnchor(): void {
-    if (!this.currentAnchorNodeId) return;
+    if (!this.demo || !this.currentAnchorNodeId) return;
     const pos = this.demo.getNodePixelPosition(this.currentAnchorNodeId);
     if (pos) this.moveTo(this.currentAnchorNodeId, pos);
   }
@@ -218,6 +227,20 @@ export class Mascot {
     } else {
       start();
     }
+  }
+
+  showDragHandles(slots: PanelDragSlot[], intro?: { heading: string; subheading: string }): PanelDragHandle {
+    this.talk();
+    const handle = this.panel.showDragHandles(slots, intro);
+    this.reposition();
+    return handle;
+  }
+
+  showField(field: PanelField): Promise<string> {
+    this.talk();
+    const result = this.panel.showField(field);
+    this.reposition();
+    return result;
   }
 
   showInstrumentPanel(heading: string, kind: EvolutionKind, initialStage: EvolutionStage, delayMs = 0): void {
