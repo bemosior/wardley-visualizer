@@ -55,7 +55,7 @@ function awaitEvolutionConfirm(
 const NEED_DRAG_SLOT: PanelDragSlot[] = [{ id: "need", iconText: "User Need", label: "What They Get", active: true }];
 
 /** the mascot's Phase 0/1 bubble copy — shown before the first drag, then at each "waiting for Next" pause */
-const MASCOT_INTRO = { heading: "Hi, I'm here to help!", subheading: "Drag the glowing circle onto the canvas to begin." };
+const MASCOT_INTRO = { heading: "Finish the Value Chain.", subheading: "Drag the User Need to begin." };
 const MASCOT_NEED_PLACED = { heading: "Nice!", subheading: "Click Next when you're ready to continue." };
 const MASCOT_CHAIN_COMPLETE = { heading: "All done!", subheading: "Click Next to turn this into a Wardley Map." };
 
