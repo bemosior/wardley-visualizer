@@ -1,6 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { createAnnotation, createMapBackdrop, createMapCaption, genesisCenterX, stageLabelAt, type AnnotationRect } from "./render";
-import type { DemoNode } from "./types";
+import {
+  buildFlowParticlePath,
+  createAnnotation,
+  createFlowParticles,
+  createMapBackdrop,
+  createMapCaption,
+  flowParamsForStage,
+  genesisCenterX,
+  stageLabelAt,
+  type AnnotationRect,
+} from "./render";
+import type { DemoConnection, DemoNode } from "./types";
 
 describe("createMapBackdrop", () => {
   it("renders 4 equal-width bands spanning the viewBox, in stage order", () => {
@@ -178,5 +188,102 @@ describe("createMapCaption", () => {
     const directTspans = caption.querySelectorAll(":scope > tspan");
     expect(directTspans).toHaveLength(1);
     expect(directTspans[0].hasAttribute("dy")).toBe(false);
+  });
+});
+
+describe("buildFlowParticlePath", () => {
+  const from = { x: 0, y: 0 };
+  const to = { x: 100, y: 0 };
+
+  it("returns the straight line path unchanged when curveWildness is 0", () => {
+    const path = buildFlowParticlePath(from, to, { curveWildness: 0, missChance: 1 });
+    expect(path).toBe(`path("M 0,0 L 100,0")`);
+  });
+
+  it("returns the straight line path for a degenerate zero-length line", () => {
+    const path = buildFlowParticlePath(from, from, { curveWildness: 0.5, missChance: 0 });
+    expect(path).toBe(`path("M 0,0 L 0,0")`);
+  });
+
+  it("returns a curved path landing exactly on the target when missChance is 0", () => {
+    const path = buildFlowParticlePath(from, to, { curveWildness: 0.4, missChance: 0 });
+    expect(path).toContain(" Q ");
+    expect(path.endsWith(`100,0")`)).toBe(true);
+  });
+
+  it("never lands exactly on the target when missChance is 1", () => {
+    for (let i = 0; i < 20; i++) {
+      const path = buildFlowParticlePath(from, to, { curveWildness: 0.4, missChance: 1 });
+      expect(path.endsWith(`100,0")`)).toBe(false);
+    }
+  });
+});
+
+describe("flowParamsForStage", () => {
+  it("gives Product and Commodity a straight, certain path (unchanged from a plain line)", () => {
+    expect(flowParamsForStage("Product")).toMatchObject({ curveWildness: 0, missChance: 0 });
+    expect(flowParamsForStage("Commodity")).toMatchObject({ curveWildness: 0, missChance: 0 });
+  });
+
+  it("gives Genesis the wildest, most miss-prone curve", () => {
+    const genesis = flowParamsForStage("Genesis");
+    const customBuilt = flowParamsForStage("Custom-Built");
+    expect(genesis.curveWildness).toBeGreaterThan(customBuilt.curveWildness);
+    expect(genesis.missChance).toBeGreaterThan(customBuilt.missChance);
+    expect(customBuilt.curveWildness).toBeGreaterThan(0);
+    expect(customBuilt.missChance).toBeGreaterThan(0);
+  });
+
+  it("falls back to a straight, certain path when no stage is given", () => {
+    expect(flowParamsForStage(undefined)).toMatchObject({ curveWildness: 0, missChance: 0 });
+  });
+});
+
+describe("createFlowParticles", () => {
+  const conn: DemoConnection = { from: "need", to: "cap-1" };
+  const nodesById = new Map<string, DemoNode>([
+    ["need", { id: "need", label: "Need", x: 0, y: 0, draggable: false }],
+    ["cap-1", { id: "cap-1", label: "Capability", x: 100, y: 0, draggable: false }],
+  ]);
+
+  it("keeps Product/Commodity/undefined stages on a straight line, same as before curves existed", () => {
+    for (const stage of [undefined, "Product", "Commodity"] as const) {
+      const particles = createFlowParticles(conn, nodesById, stage);
+      particles.forEach((p) => {
+        expect(p.style.offsetPath).toBe(`path("M 0,0 L 100,0")`);
+        expect(p.style.offsetPath).not.toContain(" Q ");
+      });
+    }
+  });
+
+  it("gives Commodity 4 fast particles and Product 3, matching today's tuning", () => {
+    const commodity = createFlowParticles(conn, nodesById, "Commodity");
+    expect(commodity).toHaveLength(4);
+    expect(commodity[0].style.animationDuration).toBe("1.3s");
+
+    const product = createFlowParticles(conn, nodesById, "Product");
+    expect(product).toHaveLength(3);
+    expect(product[0].style.animationDuration).toBe("1.9s");
+  });
+
+  it("curves every Genesis/Custom-Built particle's path", () => {
+    for (const stage of ["Genesis", "Custom-Built"] as const) {
+      const particles = createFlowParticles(conn, nodesById, stage);
+      particles.forEach((p) => expect(p.style.offsetPath).toContain(" Q "));
+    }
+  });
+
+  it("rolls an independent curve per particle, so Custom-Built's two particles differ", () => {
+    const particles = createFlowParticles(conn, nodesById, "Custom-Built");
+    expect(particles).toHaveLength(2);
+    expect(particles[0].style.offsetPath).not.toBe(particles[1].style.offsetPath);
+  });
+
+  it("no longer applies a sputter class to any stage", () => {
+    (["Genesis", "Custom-Built", "Product", "Commodity", undefined] as const).forEach((stage) => {
+      createFlowParticles(conn, nodesById, stage).forEach((p) => {
+        expect(p.classList.contains("wd-flow-particle--sputter")).toBe(false);
+      });
+    });
   });
 });

@@ -255,11 +255,6 @@ const CSS = `
   animation-iteration-count: infinite;
 }
 
-/** genesis/custom-built: same travel keyframes, but stepped rather than eased — reads as an unreliable, stalling supply instead of a smooth glide */
-.wd-flow-particle--sputter {
-  animation-timing-function: steps(14, jump-end);
-}
-
 @keyframes wd-particle-travel {
   0% { offset-distance: 100%; opacity: 0; }
   10% { opacity: 1; }

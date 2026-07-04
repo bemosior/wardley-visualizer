@@ -373,28 +373,72 @@ interface FlowStageParams {
   count: number;
   /** seconds for one particle to travel the full line */
   durationS: number;
-  /** genesis/custom-built read as unreliable supply: irregular, stalling motion rather than a smooth glide */
-  sputter: boolean;
+  /** fraction of the from->to line length used as the max perpendicular control-point offset; 0 = perfectly straight */
+  curveWildness: number;
+  /** probability [0,1] that an individual particle's curve overshoots the target rather than landing on it */
+  missChance: number;
 }
 
 /**
- * particle count/speed/regularity per evolution stage — the concrete form of the "genesis
- * sputters, commodity flows smoothly" requirement: a component early on the axis is supplied by
- * one slow, stalling particle; a commodity is supplied by a dense, fast, evenly-spaced stream.
+ * particle count/speed/curviness per evolution stage — the concrete form of the "genesis is a
+ * wayward, mostly-missing attempt at delivery; commodity flows smoothly" requirement: a component
+ * early on the axis is supplied by one slow particle on a wildly curving, usually-overshooting
+ * path; a commodity is supplied by a dense, fast, dead-straight stream.
  */
 const FLOW_STAGE_PARAMS: Record<EvolutionStage, FlowStageParams> = {
-  Genesis: { count: 1, durationS: 3.4, sputter: true },
-  "Custom-Built": { count: 2, durationS: 2.6, sputter: true },
-  Product: { count: 3, durationS: 1.9, sputter: false },
-  Commodity: { count: 4, durationS: 1.3, sputter: false },
+  Genesis: { count: 1, durationS: 3.4, curveWildness: 0.45, missChance: 0.6 },
+  "Custom-Built": { count: 2, durationS: 2.6, curveWildness: 0.22, missChance: 0.2 },
+  Product: { count: 3, durationS: 1.9, curveWildness: 0, missChance: 0 },
+  Commodity: { count: 4, durationS: 1.3, curveWildness: 0, missChance: 0 },
 };
 
 /** the look of a line whose `to` node hasn't been placed on the evolution axis yet (Phase 0/1, before Phase 2's map exists) — unchanged from the fixed count/duration this module used before stage-dependent flow existed */
-const DEFAULT_FLOW_PARAMS: FlowStageParams = { count: 1, durationS: 2.0, sputter: false };
+const DEFAULT_FLOW_PARAMS: FlowStageParams = { count: 1, durationS: 2.0, curveWildness: 0, missChance: 0 };
+
+/** how far past the target a "miss" particle swings, as a fraction of line length */
+const FLOW_MISS_OVERSHOOT_FRACTION = 0.12;
+/** a particle's curve magnitude is randomized within [this, 1.0] * stage's curveWildness * line length, so not every particle swings the maximum amount */
+const FLOW_CURVE_MIN_FACTOR = 0.5;
 
 /** exposed so callers (e.g. `WardleyDemo`) can derive an even inter-particle stagger from the same count/duration `createFlowParticles` used. Omit `stage` for a node not yet placed on the evolution axis. */
 export function flowParamsForStage(stage?: EvolutionStage): FlowStageParams {
   return stage ? FLOW_STAGE_PARAMS[stage] : DEFAULT_FLOW_PARAMS;
+}
+
+/**
+ * builds the CSS `offset-path` string for one flow particle riding from -> to. `curveWildness <= 0`
+ * (Product/Commodity, and the degenerate from===to case) returns the original straight `M...L...`
+ * path unchanged. Otherwise returns a random quadratic Bezier bowed perpendicular to the line, whose
+ * endpoint either lands exactly on `to` or overshoots past it (a "miss") per `missChance`. Each call
+ * rolls its own randomness — callers needing N independent particles on one connection must call
+ * this N times, not share one result.
+ */
+export function buildFlowParticlePath(
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+  { curveWildness, missChance }: Pick<FlowStageParams, "curveWildness" | "missChance">,
+): string {
+  const straight = `path("M ${from.x},${from.y} L ${to.x},${to.y}")`;
+  if (curveWildness <= 0) return straight;
+
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const len = Math.hypot(dx, dy);
+  if (len === 0) return straight;
+
+  const perpX = -dy / len;
+  const perpY = dx / len;
+  const sign = Math.random() < 0.5 ? -1 : 1;
+  const magnitude = len * curveWildness * (FLOW_CURVE_MIN_FACTOR + Math.random() * (1 - FLOW_CURVE_MIN_FACTOR));
+
+  const controlX = (from.x + to.x) / 2 + perpX * sign * magnitude;
+  const controlY = (from.y + to.y) / 2 + perpY * sign * magnitude;
+
+  const isMiss = Math.random() < missChance;
+  const endX = isMiss ? to.x + perpX * sign * len * FLOW_MISS_OVERSHOOT_FRACTION : to.x;
+  const endY = isMiss ? to.y + perpY * sign * len * FLOW_MISS_OVERSHOOT_FRACTION : to.y;
+
+  return `path("M ${from.x},${from.y} Q ${controlX},${controlY} ${endX},${endY}")`;
 }
 
 /**
@@ -410,19 +454,17 @@ export function createFlowParticles(
 ): SVGCircleElement[] {
   const from = nodesById.get(conn.from)!;
   const to = nodesById.get(conn.to)!;
-  const path = `path("M ${from.x},${from.y} L ${to.x},${to.y}")`;
   const radius = conn.from === "user" && conn.to === "need" ? FLOW_PARTICLE_RADIUS * 1.5 : FLOW_PARTICLE_RADIUS;
-  const { count, durationS, sputter } = flowParamsForStage(stage);
+  const { count, durationS, curveWildness, missChance } = flowParamsForStage(stage);
 
   const particles: SVGCircleElement[] = [];
   for (let i = 0; i < count; i++) {
     const circle = document.createElementNS(SVG_NS, "circle") as SVGCircleElement;
     circle.classList.add("wd-flow-particle");
-    if (sputter) circle.classList.add("wd-flow-particle--sputter");
     circle.dataset.from = conn.from;
     circle.dataset.to = conn.to;
     circle.setAttribute("r", String(radius));
-    circle.style.offsetPath = path;
+    circle.style.offsetPath = buildFlowParticlePath(from, to, { curveWildness, missChance });
     circle.style.animationDuration = `${durationS}s`;
     particles.push(circle);
   }

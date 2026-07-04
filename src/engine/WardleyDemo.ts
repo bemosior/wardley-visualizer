@@ -1,6 +1,7 @@
 import type { DemoConfig, DemoConnection, DemoNode } from "./types";
 import type { EvolutionStage } from "../domain/evolution";
 import {
+  buildFlowParticlePath,
   createAnnotation,
   createConnectionLine,
   createEvolutionChevron,
@@ -544,7 +545,11 @@ export class WardleyDemo {
       if (conn.from !== nodeId && conn.to !== nodeId) return;
       const from = conn.from === nodeId ? pos : this.nodesById.get(conn.from)!;
       const to = conn.to === nodeId ? pos : this.nodesById.get(conn.to)!;
-      const path = `path("M ${from.x},${from.y} L ${to.x},${to.y}")`;
+      // rolls a fresh random curve/miss on every drag-frame tick (no persisted per-particle
+      // state) — a curved stage's particle will visibly jitter between curves while dragging,
+      // which reads as fitting "unreliable supply" texture rather than as a bug
+      const { curveWildness, missChance } = flowParamsForStage(this.nodeStage.get(conn.to));
+      const path = buildFlowParticlePath(from, to, { curveWildness, missChance });
       this.particleLayer
         .querySelectorAll<SVGCircleElement>(`[data-from="${conn.from}"][data-to="${conn.to}"]`)
         .forEach((el) => {
