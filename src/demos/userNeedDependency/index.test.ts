@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { runValueChainScenario } from "./userNeedDependency";
-import { MAP_CAPTION_FADE_MS } from "../engine/WardleyDemo";
-import { NEED_CATALOG } from "../domain/needCatalog";
-import { BIAS_CHECK_QUESTION, BUILD_BUY_OUTSOURCE_QUESTION, QUESTION_POOL } from "../domain/questionBank";
+import { runValueChainScenario } from "./index";
+import { MAP_CAPTION_FADE_MS } from "../../engine/WardleyDemo";
+import { NEED_CATALOG } from "../../domain/needCatalog";
+import { BIAS_CHECK_QUESTION, BUILD_BUY_OUTSOURCE_QUESTION, QUESTION_POOL } from "../../domain/questionBank";
 
 function drag(handle: Element, to: { x: number; y: number }): void {
   handle.dispatchEvent(new PointerEvent("pointerdown", { clientX: 0, clientY: 0, pointerId: 1 }));

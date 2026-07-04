@@ -38,8 +38,16 @@ Four layers, strict one-way dependency (lower layers know nothing about higher o
 - **`src/application/`** — translates domain → engine.
   - `valueChainLayout.ts` — `layoutValueChain(chain, options?)`: positions a `ValueChain` as a `DemoConfig` (User centered above the viewBox, Need below it, Capabilities spread evenly along a row). Currently always marks the Need as the one draggable node with a `start` position — that default is Phase-0-specific and will need an option to disable for Phase 1 (no dragging at all).
 
-- **`src/demos/`** — one file per tutorial scenario, composing the layers above.
-  - `userNeedDependency.ts` — exports `runValueChainScenario(options)`. **As of now this is still only Phase 0**: build the chain with generic placeholder labels, show one drag slot in the Panel, mount, done. It is *not* yet the multi-step Phase 1 flow (dropdown → 4 text fields → celebration) — don't assume the "Scenario" refactor mentioned in past TODO revisions already covers Phase 1's steps. It only removed the toolbox-toggling duplication that used to live in `index.html`/`preview.html`'s inline `<script>` blocks.
+- **`src/demos/`** — one directory per tutorial scenario, composing the layers above.
+  - `userNeedDependency/` — the full Phase 0 → Finale flow, split one file per phase, threaded by a
+    shared `ScenarioContext` (`{ demo, mascot, chain, options }`):
+    - `index.ts` — `ValueChainScenarioOptions`, `ScenarioContext`, and `runValueChainScenario(options)`, a thin sequencer that awaits each phase in turn and returns the final `WardleyDemo`. This is the file `src/index.ts` imports (module resolution finds `userNeedDependency/index.ts` from the same `"./demos/userNeedDependency"` specifier as before — no caller changes needed).
+    - `phase0.ts` — seed the `ValueChain`, lay it out, mount the `Mascot` + `WardleyDemo`, drag the Need into place. Returns the initial `ScenarioContext`.
+    - `phase1.ts` — the 5-step personalization form (need → user → 3 capabilities), relabeling both the domain chain and the rendered nodes as each answer comes in.
+    - `phase2.ts` — the map backdrop and the evolution-axis drag/confirm loop (Need, then Capability-1/2/3); owns the private `awaitEvolutionConfirm` helper shared by that loop.
+    - `phase3.ts` — the Q&A loop (bias-check, build/buy/outsource, one pool question), annotating each capability on the map.
+    - `finale.ts` — the closing recap + CTA link.
+    - `index.test.ts` — end-to-end integration tests driving the whole scenario through `runValueChainScenario`; kept as one file (not split per phase) since most tests depend on state built up by earlier phases.
 
 - **`src/index.ts`** — the public API surface (`WardleyDemo.demos.userNeedDependency`, etc.), consumed by `index.html` (Vite dev server, source) and `preview.html` (loads `dist/wardley-demo.js`, the built bundle — mirrors how the real host page `lwm-html` would embed this).
 
