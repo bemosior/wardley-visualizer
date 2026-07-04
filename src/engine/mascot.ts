@@ -87,7 +87,6 @@ export class Mascot {
    * the node's circle instead of covering it, and remembers `nodeId` so a window resize re-tracks it
    */
   moveTo(nodeId: string, pos: { x: number; y: number; radius?: number }): void {
-    console.log("DEBUG moveTo " + JSON.stringify({ nodeId, pos }));
     this.currentAnchorNodeId = nodeId;
     this.lastPos = pos;
     this.reposition();
