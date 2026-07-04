@@ -57,7 +57,53 @@ describe("createMapBackdrop", () => {
     expect(band.getAttribute("height")).toBe("520");
     expect(divider.getAttribute("y1")).toBe("0");
     expect(divider.getAttribute("y2")).toBe("520");
-    expect(label.getAttribute("y")).toBe("506");
+    expect(label.getAttribute("y")).toBe("500");
+  });
+
+  it("renders a bordered label chip per stage, colored to match its band and centered on the label", () => {
+    const g = createMapBackdrop({ width: 400, height: 300 });
+    const chips = g.querySelectorAll(".wd-backdrop-label-chip");
+    const labels = g.querySelectorAll(".wd-backdrop-label");
+
+    expect(chips).toHaveLength(4);
+    expect(["genesis", "custom", "product", "commodity"].every((stage, i) =>
+      chips[i].classList.contains(`wd-backdrop-label-chip--${stage}`),
+    )).toBe(true);
+
+    chips.forEach((chip, i) => {
+      const chipCenterX = Number(chip.getAttribute("x")) + Number(chip.getAttribute("width")) / 2;
+      expect(chipCenterX).toBe(Number(labels[i].getAttribute("x")));
+    });
+  });
+
+  it("renders a distinct, uniquely-id'd pattern fill per stage so bands stay distinguishable without color", () => {
+    const g = createMapBackdrop({ width: 400, height: 300 });
+    const patterns = g.querySelectorAll("defs > pattern");
+    const textures = g.querySelectorAll(".wd-backdrop-band-texture");
+
+    expect(patterns).toHaveLength(4);
+    expect(textures).toHaveLength(4);
+
+    const ids = [...patterns].map((p) => p.getAttribute("id"));
+    expect(new Set(ids).size).toBe(4);
+
+    textures.forEach((texture, i) => {
+      expect(texture.getAttribute("fill")).toBe(`url(#${ids[i]})`);
+    });
+
+    // each stage's pattern content should differ in shape (not just color) from the others
+    const marksPerPattern = [...patterns].map((p) => p.querySelectorAll(".wd-backdrop-pattern-mark").length);
+    expect(marksPerPattern).toEqual([1, 1, 2, 2]);
+  });
+
+  it("uses a fresh pattern-id suffix per call, so two mounted instances never collide", () => {
+    const first = createMapBackdrop({ width: 400, height: 300 });
+    const second = createMapBackdrop({ width: 400, height: 300 });
+
+    const firstIds = [...first.querySelectorAll("defs > pattern")].map((p) => p.getAttribute("id"));
+    const secondIds = [...second.querySelectorAll("defs > pattern")].map((p) => p.getAttribute("id"));
+
+    expect(firstIds.some((id) => secondIds.includes(id))).toBe(false);
   });
 });
 

@@ -143,7 +143,53 @@ export function fitNodeLabel(label: SVGTextElement, radius: number = NODE_RADIUS
 }
 
 const EVOLUTION_STAGE_CLASSES = ["genesis", "custom", "product", "commodity"] as const;
-const BACKDROP_LABEL_INSET = 14;
+const BACKDROP_LABEL_INSET = 20;
+const BACKDROP_LABEL_CHIP_HEIGHT = 20;
+const BACKDROP_LABEL_CHIP_CHAR_WIDTH = 7.5;
+const BACKDROP_LABEL_CHIP_PADDING = 20;
+
+/** unique per-call suffix for this backdrop's `<pattern>` ids, so two `WardleyDemo` instances mounted on the same page never collide on a hardcoded id. */
+let backdropInstanceCounter = 0;
+
+/**
+ * one non-color primitive per evolution stage, tiled via an SVG `<pattern>`, so bands stay
+ * distinguishable with zero color perception (not just low contrast) — the shapes get denser
+ * and more regular left to right, echoing the genesis→commodity "less structured → more
+ * standardized" story the color tint alone was telling. Drawn with a fixed neutral stroke
+ * (`wd-backdrop-pattern-mark`, styled in styles.ts) independent of the stage's hue.
+ */
+function createStagePatternContent(stage: EvolutionStage): SVGElement[] {
+  const mark = (el: SVGElement) => {
+    el.classList.add("wd-backdrop-pattern-mark");
+    return el;
+  };
+  const line = (x1: number, y1: number, x2: number, y2: number) => {
+    const el = document.createElementNS(SVG_NS, "line");
+    el.setAttribute("x1", String(x1));
+    el.setAttribute("y1", String(y1));
+    el.setAttribute("x2", String(x2));
+    el.setAttribute("y2", String(y2));
+    return mark(el);
+  };
+  const dot = (cx: number, cy: number) => {
+    const el = document.createElementNS(SVG_NS, "circle");
+    el.setAttribute("cx", String(cx));
+    el.setAttribute("cy", String(cy));
+    el.setAttribute("r", "1.5");
+    return mark(el);
+  };
+
+  switch (stage) {
+    case "Genesis":
+      return [line(0, 8, 8, 0)];
+    case "Custom-Built":
+      return [dot(4, 4)];
+    case "Product":
+      return [line(0, 8, 8, 0), line(0, 0, 8, 8)];
+    case "Commodity":
+      return [line(0, 2, 8, 2), line(0, 6, 8, 6)];
+  }
+}
 
 /**
  * the four evolution-axis stage bands + dividers + labels, rendered behind everything else.
@@ -167,18 +213,41 @@ export function createMapBackdrop(viewBox: { width: number; height: number }): S
   const g = document.createElementNS(SVG_NS, "g") as SVGGElement;
   g.classList.add("wd-backdrop");
 
+  const instanceId = backdropInstanceCounter++;
   const bandWidth = viewBox.width / EVOLUTION_STAGES.length;
+
+  const defs = document.createElementNS(SVG_NS, "defs");
+  g.appendChild(defs);
 
   EVOLUTION_STAGES.forEach((stage, i) => {
     const x = i * bandWidth;
+    const stageClass = EVOLUTION_STAGE_CLASSES[i];
+    const patternId = `wd-backdrop-pattern-${stageClass}-${instanceId}`;
+
+    const pattern = document.createElementNS(SVG_NS, "pattern");
+    pattern.setAttribute("id", patternId);
+    pattern.setAttribute("patternUnits", "userSpaceOnUse");
+    pattern.setAttribute("width", "8");
+    pattern.setAttribute("height", "8");
+    createStagePatternContent(stage).forEach((mark) => pattern.appendChild(mark));
+    defs.appendChild(pattern);
 
     const band = document.createElementNS(SVG_NS, "rect");
-    band.classList.add("wd-backdrop-band", `wd-backdrop-band--${EVOLUTION_STAGE_CLASSES[i]}`);
+    band.classList.add("wd-backdrop-band", `wd-backdrop-band--${stageClass}`);
     band.setAttribute("x", String(x));
     band.setAttribute("y", "0");
     band.setAttribute("width", String(bandWidth));
     band.setAttribute("height", String(viewBox.height));
     g.appendChild(band);
+
+    const texture = document.createElementNS(SVG_NS, "rect");
+    texture.classList.add("wd-backdrop-band-texture");
+    texture.setAttribute("x", String(x));
+    texture.setAttribute("y", "0");
+    texture.setAttribute("width", String(bandWidth));
+    texture.setAttribute("height", String(viewBox.height));
+    texture.setAttribute("fill", `url(#${patternId})`);
+    g.appendChild(texture);
 
     if (i > 0) {
       const divider = document.createElementNS(SVG_NS, "line");
@@ -190,11 +259,24 @@ export function createMapBackdrop(viewBox: { width: number; height: number }): S
       g.appendChild(divider);
     }
 
+    const labelX = x + bandWidth / 2;
+    const labelY = viewBox.height - BACKDROP_LABEL_INSET;
+
+    const chip = document.createElementNS(SVG_NS, "rect");
+    chip.classList.add("wd-backdrop-label-chip", `wd-backdrop-label-chip--${stageClass}`);
+    const chipWidth = stage.length * BACKDROP_LABEL_CHIP_CHAR_WIDTH + BACKDROP_LABEL_CHIP_PADDING;
+    chip.setAttribute("x", String(labelX - chipWidth / 2));
+    chip.setAttribute("y", String(labelY - BACKDROP_LABEL_CHIP_HEIGHT * 0.7));
+    chip.setAttribute("width", String(chipWidth));
+    chip.setAttribute("height", String(BACKDROP_LABEL_CHIP_HEIGHT));
+    chip.setAttribute("rx", "6");
+    g.appendChild(chip);
+
     const label = document.createElementNS(SVG_NS, "text");
     label.classList.add("wd-backdrop-label");
     label.textContent = stage;
-    label.setAttribute("x", String(x + bandWidth / 2));
-    label.setAttribute("y", String(viewBox.height - BACKDROP_LABEL_INSET));
+    label.setAttribute("x", String(labelX));
+    label.setAttribute("y", String(labelY));
     g.appendChild(label);
   });
 

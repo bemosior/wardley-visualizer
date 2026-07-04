@@ -143,12 +143,20 @@ testers hit the same thing (strongest signal first).
       as semantically wrong for that input — suggests the Phase 2/3
       assessment cues assume specific example content rather than being
       robust to whatever the visitor typed in Phase 1.
-- [ ] **Accessibility pass on evolution-stage color coding.** `velocirachael.txt`:
+- [x] **Accessibility pass on evolution-stage color coding.** `velocirachael.txt`:
       color bars used for evolution stages were not visible to her (high
       eye pressure/migraine, possibly compounded by monitor settings) —
       color-only encoding is a known contrast failure mode regardless of
       her specific condition; add higher-contrast or bordered/labeled
-      alternatives.
+      alternatives. Fixed in `createMapBackdrop` (`src/engine/render.ts`):
+      each band now also carries a distinct non-color texture (diagonal
+      hatch/dots/crosshatch/horizontal lines via SVG `<pattern>` defs) so
+      stages stay distinguishable with zero color perception, and each
+      stage's axis label is wrapped in a bordered chip (`wd-backdrop-label-chip`,
+      full-opacity stage-colored `stroke`) instead of relying on the faint
+      band tint alone. Also addresses the separately-flagged small axis-label
+      font size: `.wd-backdrop-label` went from 10px/`#999` to 13px/`#333`/
+      bold (`src/engine/styles.ts`).
 - [ ] **Mobile drag/select gesture polish.** `rianporter.txt`: needed to
       zoom, and distinguishing "select" from "drag" took some learning on
       mobile — worth a dedicated mobile pass once desktop flow is settled.

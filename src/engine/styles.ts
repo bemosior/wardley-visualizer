@@ -59,16 +59,49 @@ const CSS = `
   fill: var(--wd-color-stage-commodity);
 }
 
+.wd-backdrop-band-texture {
+  pointer-events: none;
+}
+
+.wd-backdrop-pattern-mark {
+  stroke: var(--wd-color-ink, #1a1a1a);
+  stroke-opacity: 0.2;
+  stroke-width: 1;
+}
+
 .wd-backdrop-divider {
   stroke: var(--wd-color-border);
   stroke-width: 1;
   stroke-dasharray: 4 4;
 }
 
+.wd-backdrop-label-chip {
+  fill: rgba(255, 255, 255, 0.9);
+  stroke-width: 2;
+  pointer-events: none;
+}
+
+.wd-backdrop-label-chip--genesis {
+  stroke: var(--wd-color-stage-genesis);
+}
+
+.wd-backdrop-label-chip--custom {
+  stroke: var(--wd-color-stage-custom);
+}
+
+.wd-backdrop-label-chip--product {
+  stroke: var(--wd-color-stage-product);
+}
+
+.wd-backdrop-label-chip--commodity {
+  stroke: var(--wd-color-stage-commodity);
+}
+
 .wd-backdrop-label {
   font-family: var(--wd-font-ui);
-  font-size: 10px;
-  fill: #999;
+  font-size: 13px;
+  font-weight: 600;
+  fill: #333;
   text-anchor: middle;
   pointer-events: none;
   user-select: none;
