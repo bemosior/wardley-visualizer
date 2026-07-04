@@ -1,5 +1,4 @@
 import { WardleyDemo, MAP_CAPTION_FADE_MS } from "../engine/WardleyDemo";
-import type { PanelDragSlot } from "../engine/panel";
 import { Mascot } from "../engine/mascot";
 import { PANEL_CONTENT_MIN_HEIGHT } from "../engine/styles";
 import { showNextLink } from "../engine/nextLink";
@@ -52,8 +51,6 @@ function awaitEvolutionConfirm(
   });
 }
 
-const NEED_DRAG_SLOT: PanelDragSlot[] = [{ id: "need", iconText: "User Need", label: "What They Get", active: true }];
-
 /** the mascot's Phase 0/1 bubble copy — shown before the first drag, then at each "waiting for Next" pause */
 const MASCOT_INTRO = { heading: "Finish the Value Chain.", subheading: "Drag the User Need to begin." };
 const MASCOT_NEED_PLACED = { heading: "Nice!", subheading: "Click Next when you're ready to continue." };
@@ -103,9 +100,12 @@ export interface ValueChainScenarioOptions {
 /**
  * One continuous flow, guided by a single `Mascot` (`engine/mascot.ts`) — a node-anchored
  * speech bubble plus small avatar, composed of one `Panel` instance — from the moment it
- * mounts. The mascot renders its drag-slot bubble (`Mascot.showDragHandles`) anchored to the
- * Need's pre-drag position, greets the visitor (`MASCOT_INTRO`), and waits for the Need to be
- * dragged into place (Phase 0). Once it snaps, the mascot re-anchors to the Need's settled
+ * mounts. The Need node itself renders already on the canvas, out of place at its `start`
+ * position (`layoutValueChain`'s default, same row as its final spot but off to one side) and
+ * pulsing (`wd-node--beckon`) to invite a direct drag — no separate toolbox slot to pick up
+ * from. The mascot anchors to that pre-drag position (`WardleyDemo.getViewBoxPixelPosition`)
+ * and greets the visitor (`MASCOT_INTRO`, via `Mascot.showPlaceholder`), then waits for the
+ * Need to be dragged into place (Phase 0). Once it snaps, the mascot re-anchors to the Need's settled
  * position and shows a short "Nice!" placeholder (`MASCOT_NEED_PLACED`) while the visitor
  * clicks the "Next" link rendered into `nextControl`. The mascot then walks the visitor
  * through a 5-step form (`Mascot.showField`: need -> user -> 3 capabilities), re-anchoring to
@@ -144,27 +144,19 @@ export async function runValueChainScenario(options: ValueChainScenarioOptions):
 
   const mascot = new Mascot(options.mascotHost);
   mascot.mount();
-  const dragHandle = mascot.showDragHandles(NEED_DRAG_SLOT, MASCOT_INTRO);
+  mascot.showPlaceholder(MASCOT_INTRO.heading, MASCOT_INTRO.subheading);
 
   let demo!: WardleyDemo;
   await new Promise<void>((resolve) => {
-    demo = WardleyDemo.mount(
-      options.canvas,
-      {
-        ...demoConfig,
-        onComplete: () => {
-          dragHandle.complete();
-          resolve();
-        },
-      },
-      { dragHandle: dragHandle.activeElement },
-    );
+    demo = WardleyDemo.mount(options.canvas, { ...demoConfig, onComplete: resolve });
+    const needStart = demoConfig.nodes.find((n) => n.id === chain.need.id)?.start;
+    if (needStart) mascot.moveTo(chain.need.id, demo.getViewBoxPixelPosition(needStart.x, needStart.y));
     options.onMount?.(demo);
   });
 
   mascot.attachDemo(demo);
-  const needStart = demo.getNodePixelPosition(chain.need.id);
-  if (needStart) mascot.moveTo(chain.need.id, needStart);
+  const needPlacedPos = demo.getNodePixelPosition(chain.need.id);
+  if (needPlacedPos) mascot.moveTo(chain.need.id, needPlacedPos);
 
   options.onNeedPlaced?.();
   mascot.showPlaceholder(MASCOT_NEED_PLACED.heading, MASCOT_NEED_PLACED.subheading);

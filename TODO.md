@@ -58,6 +58,12 @@ Four layers, strict one-way dependency (lower layers know nothing about higher o
 - [x] Mascot as sole guide — the mascot now renders Phase 0's drag affordance and Phase 1's
       form (walking Need → User → Capability-1/2/3 between questions) instead of a sidebar
       Toolbox, which has been removed entirely. See the unresolved hand-holding tension noted
+- [x] Phase 0 opening reframed — the Need node itself now renders on the canvas from the
+      start, out of place at its `start` position and pulsing (`wd-node--beckon`) to invite a
+      direct drag; the visitor picks it up like any other node instead of dragging a separate
+      toolbox-slot icon out of the mascot's bubble. `Panel.showDragHandles`/`PanelDragSlot`/
+      `PanelDragHandle` (`panel.ts`) and `Mascot.showDragHandles` (`mascot.ts`) still exist but
+      are no longer called by `userNeedDependency.ts` — nothing currently uses them.
       below, since this leans toward more guidance, not less.
 
 ## Phase 3 — Thinking with the map (not started; needs new abstractions)

@@ -596,6 +596,18 @@ export class WardleyDemo {
     return { ...pos, radius: NODE_RADIUS * scaleX };
   }
 
+  /**
+   * container-pixel position of an arbitrary viewBox coordinate, plus the standard node radius —
+   * for anchoring UI (e.g. the mascot) to a draggable node's pre-drag `start` position, which
+   * `getNodePixelPosition` can't give since it always reads a node's stored *target* x/y, not
+   * wherever `start` rendered it before the first drag.
+   */
+  getViewBoxPixelPosition(x: number, y: number): Point & { radius: number } {
+    const pos = this.viewBoxToContainerPx(x, y);
+    const scaleX = this.svg.getBoundingClientRect().width / this.viewBox.width;
+    return { ...pos, radius: NODE_RADIUS * scaleX };
+  }
+
   /** spawns a one-shot firework burst at the given viewBox coordinates, in container pixel space */
   private fireworkAt(x: number, y: number): void {
     const { x: pxX, y: pxY } = this.viewBoxToContainerPx(x, y);

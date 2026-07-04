@@ -70,11 +70,11 @@ describe("layoutValueChain overrides", () => {
     expect(config.snapThreshold).toBe(50);
   });
 
-  it("defaults the need's start position level with a custom needY when needStart isn't given", () => {
+  it("defaults the need's start position clear of the User/Capability rows, ignoring a custom needY", () => {
     const config = layoutValueChain(chainWithCapabilities(1), { needY: 90 });
     const need = config.nodes.find((n) => n.id === "need")!;
 
-    expect(need.start).toEqual({ x: 35, y: 90 });
+    expect(need.start).toEqual({ x: 35, y: 24 });
   });
 
   it("honors an explicit needStart over the needY-derived default", () => {

@@ -28,6 +28,11 @@ const DEFAULT_NEED_Y = 76;
 const DEFAULT_CAPABILITY_Y = 157;
 const DEFAULT_CAPABILITY_GAP = 140;
 const DEFAULT_NEED_START_X = 35;
+/** clears both the User and Capability rows (unlike `needY`, which sits close enough to the
+ * Capability row to overlap it at `DEFAULT_NEED_START_X`) — now that the Need renders here from
+ * the very start instead of staying hidden until picked up from a toolbox slot, its start
+ * position has to look like a real (non-overlapping) spot on the canvas */
+const DEFAULT_NEED_START_Y = 24;
 
 /**
  * lays out a ValueChain as a draggable teaching demo: User anchored above the
@@ -42,7 +47,7 @@ export function layoutValueChain(chain: ValueChain, options: ValueChainLayoutOpt
   const needY = options.needY ?? DEFAULT_NEED_Y;
   const capabilityY = options.capabilityY ?? DEFAULT_CAPABILITY_Y;
   const capabilityGap = options.capabilityGap ?? DEFAULT_CAPABILITY_GAP;
-  const needStart = options.needStart ?? { x: DEFAULT_NEED_START_X, y: needY };
+  const needStart = options.needStart ?? { x: DEFAULT_NEED_START_X, y: DEFAULT_NEED_START_Y };
   const centerX = viewBox.width / 2;
 
   const positions = new Map<string, Point>();
