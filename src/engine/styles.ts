@@ -632,7 +632,7 @@ const CSS = `
   content: "";
   position: absolute;
   left: -8px;
-  top: 20px;
+  top: var(--wd-tail-top, 20px);
   width: 0;
   height: 0;
   border-top: 8px solid transparent;
@@ -644,7 +644,7 @@ const CSS = `
   content: "";
   position: absolute;
   left: -7px;
-  top: 20px;
+  top: var(--wd-tail-top, 20px);
   width: 0;
   height: 0;
   border-top: 8px solid transparent;

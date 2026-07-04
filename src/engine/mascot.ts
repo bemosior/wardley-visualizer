@@ -10,6 +10,14 @@ const TALK_DURATION_MS = 600;
 /** matches `.wardley-demo-root .wd-mascot-avatar`'s width in styles.ts, so the avatar can be centered under a node */
 const AVATAR_WIDTH = 40;
 
+/** matches `.wardley-demo-root .wd-mascot-avatar`'s height in styles.ts, used to keep the avatar itself
+ * clear of the node without needing to measure it (it never changes size) */
+const AVATAR_HEIGHT = 60;
+
+/** minimum distance the speech-bubble tail is kept from the bubble's top/bottom corners, so it never
+ * renders past the rounded border while tracking the avatar's real position */
+const TAIL_MARGIN = 16;
+
 /** vertical breathing room between a node's edge and the avatar planted below it */
 const NODE_CLEARANCE = 12;
 
@@ -82,40 +90,41 @@ export class Mascot {
    * node moving can, and `lastPos` lets it redo that math without the caller re-supplying it.
    * No-ops the bounds math (but still sets left/top) when the host has no real layout yet (e.g.
    * unit tests) — same as this code always assumed before it was split out of `moveTo`.
+   *
+   * Picks one shared side -- below the node, or above it -- for *both* the avatar and the bubble,
+   * based on whichever of the two (the small fixed-size avatar, or the bubble's actual measured
+   * height) needs more room, so a tall panel can pull the whole group above the node instead of
+   * only the bubble. This is the key invariant: `NODE_CLEARANCE` from the node's own circle is a
+   * hard floor neither the avatar's nor the bubble's near edge ever crosses, even if that means
+   * overflowing the *far* edge of the canvas -- a draggable node moves only horizontally at a
+   * fixed y, so keeping the whole group's y-range off that node's row guarantees the bubble can
+   * never end up in the node's path, regardless of where it's dragged along the axis. Canvas
+   * containment is a secondary, best-effort concern the old code over-prioritized, which is what
+   * let a tall bubble creep back up into the node's row when the canvas was short.
    */
   private reposition(): void {
     if (!this.lastPos) return;
     const { x, y, radius = 0 } = this.lastPos;
     const hostRect = this.host.getBoundingClientRect();
+    const bubbleHeight = this.bubbleEl.getBoundingClientRect().height;
 
-    const below = y + radius + NODE_CLEARANCE; // the two node-clear zones: below it, or above it
-    let top = below; // default: planted below the node
+    const clearBelow = y + radius + NODE_CLEARANCE; // top edge of the safe zone below the node
+    const clearAbove = y - radius - NODE_CLEARANCE; // bottom edge of the safe zone above the node
+    const groupHeight = Math.max(AVATAR_HEIGHT, bubbleHeight);
+
+    let side: "below" | "above" = "below";
     if (hostRect.height) {
-      const rootHeight = this.root.getBoundingClientRect().height;
-      const above = y - radius - NODE_CLEARANCE - rootHeight;
-      // each zone can only overflow on the one edge that points away from the node (below can
-      // only run past the host's bottom, above can only run past its top) -- if neither zone
-      // fits outright (e.g. a tall question panel anchored to a node with little canvas below
-      // *and* little above it), pick whichever overflows less rather than always defaulting to
-      // "below".
-      const belowOverflow = Math.max(0, below + rootHeight - hostRect.height);
-      const aboveOverflow = Math.max(0, -above);
-      if (aboveOverflow < belowOverflow) top = above;
-      // if the content is shorter than the whole canvas but simply can't clear the node on
-      // either side within it (e.g. a tall question panel anchored to a node sitting mid-canvas),
-      // clamp fully inside rather than let the pick above still spill past an edge. Safe to prefer
-      // full containment here even though it can now vertically overlap the node's own row,
-      // because `clampBubbleHorizontally` below always keeps the *bubble* clear of the node's
-      // full circle (not just the avatar it's attached to), so nothing ends up rendered on top of
-      // the node itself.
-      if (rootHeight <= hostRect.height) {
-        top = Math.min(Math.max(top, 0), hostRect.height - rootHeight);
-      }
+      const belowOverflow = Math.max(0, clearBelow + groupHeight - hostRect.height);
+      const aboveOverflow = Math.max(0, groupHeight - clearAbove);
+      if (aboveOverflow < belowOverflow) side = "above";
     }
 
+    const avatarTop = side === "below" ? clearBelow : clearAbove - AVATAR_HEIGHT;
+
     this.root.style.left = `${x - AVATAR_WIDTH / 2}px`;
-    this.root.style.top = `${top}px`;
+    this.root.style.top = `${avatarTop}px`;
     this.clampBubbleHorizontally(radius);
+    this.positionBubbleVertically(side, avatarTop, clearBelow, clearAbove, bubbleHeight);
   }
 
   /**
@@ -151,6 +160,34 @@ export class Mascot {
 
     this.bubbleEl.style.left = `${targetLeft - naturalLeft}px`;
     this.bubbleEl.classList.toggle("wd-mascot-bubble--flip", flip);
+  }
+
+  /**
+   * plants the bubble's near edge on the *same* `clearBelow`/`clearAbove` line as the avatar (per
+   * `reposition`'s shared `side` decision), so it grows away from the node in lockstep with the
+   * avatar instead of independently drifting back toward it -- the bug this replaced. No-ops when
+   * the host has no real layout yet, or the bubble hasn't rendered any measurable content yet
+   * (e.g. unit tests), same as this code always assumed. Also points the speech-bubble tail (via
+   * the `--wd-tail-top` custom property styles.ts reads) back at the avatar's real vertical
+   * center, since a tall bubble growing upward can land avatar and bubble on different rows --
+   * clamped away from the bubble's rounded corners so it always lands on the straight edge.
+   */
+  private positionBubbleVertically(
+    side: "below" | "above",
+    avatarTop: number,
+    clearBelow: number,
+    clearAbove: number,
+    bubbleHeight: number,
+  ): void {
+    if (!bubbleHeight) return;
+
+    const bubbleTop = side === "below" ? clearBelow : clearAbove - bubbleHeight;
+    this.bubbleEl.style.top = `${bubbleTop - avatarTop}px`;
+
+    const avatarCenter = avatarTop + AVATAR_HEIGHT / 2;
+    const tailMargin = Math.min(TAIL_MARGIN, bubbleHeight / 2);
+    const tailTop = Math.min(Math.max(avatarCenter - bubbleTop, tailMargin), bubbleHeight - tailMargin);
+    this.bubbleEl.style.setProperty("--wd-tail-top", `${tailTop}px`);
   }
 
   setState(state: MascotState): void {

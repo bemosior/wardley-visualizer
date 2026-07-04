@@ -139,3 +139,11 @@ testers hit the same thing (strongest signal first).
       ("people are smart"), while `tomgeraghty.txt`, `joshkruszynski.txt`,
       and `joeltosi.txt` all ask for more explicit prompts. Not a bug — a
       design call to make deliberately, not average away.
+- [ ] **Flow animation change by evolutionary stage.**
+      Commodity and product flow animations are perfect. Genesis currently
+      "sputters" by having a more jagged, slow animation. Instead of that,
+      let's have the animation path follow a random path in the general
+      direction of the connected node (think baseball curveball). Conveys
+      that an attempt is made to deliver value, but it's mostly missing.
+      Custom-built is then a less unpredictable version of that; curves
+      but hits most of the time.

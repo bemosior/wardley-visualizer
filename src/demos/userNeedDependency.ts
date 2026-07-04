@@ -35,10 +35,11 @@ function awaitEvolutionConfirm(
 ): Promise<void> {
   return new Promise<void>((resolve) => {
     const evolutionStep = demo.runEvolutionDragStep(nodeId, {
+      // deliberately doesn't call mascot.moveTo here -- the mascot stays put at the node's
+      // pre-drag position (set once, before this drag step starts) rather than chasing the node
+      // pixel-by-pixel, which read as distracting motion during the drag itself.
       onPositionChange: (stageLabel) => {
         mascot.updateInstrumentPanel(stageLabel);
-        const pos = demo.getNodePixelPosition(nodeId);
-        if (pos) mascot.moveTo(nodeId, pos);
       },
       onReadyToConfirm: () => {
         mascot.confirmPlacement().then(() => {

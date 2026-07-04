@@ -118,70 +118,90 @@ describe("Mascot.moveTo", () => {
     expect(bubble.classList.contains("wd-mascot-bubble--flip")).toBe(false);
   });
 
-  it("flips the mascot above the node when the bubble is too tall to fit below", () => {
+  it("flips the avatar above the node when it doesn't fit below, based on its own fixed size", () => {
     const host = makeHost();
     vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 500, height: 300 } as DOMRect);
     const mascot = new Mascot(host, buildDemo());
     const root = (mascot as any).root as HTMLElement;
-    const bubble = (mascot as any).bubbleEl as HTMLElement;
-    vi.spyOn(root, "getBoundingClientRect").mockReturnValue({ height: 150 } as DOMRect);
-    vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 80 } as DOMRect);
 
-    mascot.moveTo("need", { x: 250, y: 200, radius: 20 });
+    mascot.moveTo("need", { x: 250, y: 270, radius: 20 });
 
-    // below (200+20+12=232) plus a 150px-tall row would overflow a 300px-tall host; above
-    // (200-20-12-150=18) fits, so it should flip there instead.
-    expect(root.style.top).toBe("18px");
+    // below (270+20+12=302) plus the avatar's own 60px height would overflow a 300px-tall host;
+    // above (270-20-12-60=178) fits, so the avatar should flip there instead.
+    expect(root.style.top).toBe("178px");
   });
 
-  it("keeps the default below position when the bubble is short enough to fit", () => {
+  it("keeps the avatar and bubble together, below the node, when the bubble comfortably fits there", () => {
     const host = makeHost();
     vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 500, height: 300 } as DOMRect);
     const mascot = new Mascot(host, buildDemo());
     const root = (mascot as any).root as HTMLElement;
     const bubble = (mascot as any).bubbleEl as HTMLElement;
-    vi.spyOn(root, "getBoundingClientRect").mockReturnValue({ height: 40 } as DOMRect);
-    vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 80 } as DOMRect);
+    vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 80, height: 68 } as DOMRect);
 
     mascot.moveTo("need", { x: 250, y: 200, radius: 20 });
 
     expect(root.style.top).toBe("232px");
+    expect(bubble.style.top).toBe("0px"); // same row as the avatar -- no independent shift needed
   });
 
-  it("clamps fully inside the canvas when the content fits the host but not either clear zone", () => {
+  it("moves the avatar and bubble above the node together when the bubble is too tall to fit below", () => {
+    const host = makeHost();
+    vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 500, height: 300 } as DOMRect);
+    const mascot = new Mascot(host, buildDemo());
+    const root = (mascot as any).root as HTMLElement;
+    const bubble = (mascot as any).bubbleEl as HTMLElement;
+    vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 80, height: 250 } as DOMRect);
+
+    mascot.moveTo("need", { x: 250, y: 200, radius: 20 });
+
+    // below (232 + 250 = 482) would badly overflow a 300px host; above fits the 250px bubble
+    // (200 - 20 - 12 - 250 = -82, only 82px short of the top) far better, so *both* the avatar and
+    // the bubble move there together, each flush against the node's clearance line (168) from
+    // above -- the avatar's bottom edge at 168, the taller bubble's bottom edge also at 168.
+    expect(root.style.top).toBe("108px"); // 168 - AVATAR_HEIGHT(60)
+    expect(bubble.style.top).toBe("-190px"); // bubble top -82, minus avatar top 108
+    // the tail tracks the avatar's real center (108 + 30 = 138) relative to the bubble's new top (-82)
+    expect(bubble.style.getPropertyValue("--wd-tail-top")).toBe("220px");
+  });
+
+  it("never lets the bubble cross back toward the node, even if that leaves it overflowing the canvas", () => {
     const host = makeHost();
     vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 500, height: 150 } as DOMRect);
     const mascot = new Mascot(host, buildDemo());
     const root = (mascot as any).root as HTMLElement;
     const bubble = (mascot as any).bubbleEl as HTMLElement;
-    vi.spyOn(root, "getBoundingClientRect").mockReturnValue({ height: 120 } as DOMRect);
-    vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 80 } as DOMRect);
+    vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 80, height: 200 } as DOMRect);
 
-    mascot.moveTo("need", { x: 250, y: 100, radius: 20 });
+    mascot.moveTo("need", { x: 250, y: 50, radius: 0 });
 
-    // below (100+20+12=132, +120 tall row = 252) overflows a 150px host by 102px; above
-    // (100-20-12-120=-52) overflows the top by only 52px, so it wins the pick -- but since the
-    // 120px-tall row still fits inside a 150px host on its own, it gets clamped fully inside
-    // (to 0) instead of being left hanging 52px above the canvas.
-    expect(root.style.top).toBe("0px");
+    // a 200px-tall bubble can never fit a 150px host either above or below, so "below" wins as the
+    // lesser overflow -- but rather than shrinking the gap to the node to compensate (the old,
+    // buggy behavior), the avatar and bubble both plant flush on the node's clearance line (62)
+    // and simply run past the host's bottom edge instead, since that's the harmless direction.
+    expect(root.style.top).toBe("62px");
+    expect(bubble.style.top).toBe("0px");
   });
 
-  it("re-clamps vertically when a later content change makes the bubble taller", () => {
+  it("moves the avatar along with the bubble when a later content change forces a side flip", () => {
     const host = makeHost();
     vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 500, height: 300 } as DOMRect);
     const mascot = new Mascot(host, buildDemo());
     const root = (mascot as any).root as HTMLElement;
     const bubble = (mascot as any).bubbleEl as HTMLElement;
-    const rootRect = vi.spyOn(root, "getBoundingClientRect").mockReturnValue({ height: 40 } as DOMRect);
-    vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 80 } as DOMRect);
+    const bubbleRect = vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 80, height: 40 } as DOMRect);
 
     mascot.moveTo("need", { x: 250, y: 200, radius: 20 });
-    expect(root.style.top).toBe("232px"); // fits fine while the bubble is short
+    expect(root.style.top).toBe("232px");
+    expect(bubble.style.top).toBe("0px"); // fits fine below while the bubble is short
 
-    rootRect.mockReturnValue({ height: 150 } as DOMRect); // e.g. showQuestion renders taller content
+    bubbleRect.mockReturnValue({ width: 80, height: 150 } as DOMRect); // e.g. showQuestion renders taller content
     mascot.showPlaceholder("Wardley Map", "All placed!");
 
-    expect(root.style.top).toBe("18px"); // no longer fits below -- flips above, same as moveTo would
+    // the taller bubble no longer fits below, so the whole group -- avatar included -- flips
+    // above the node together, rather than the bubble alone drifting back toward it.
+    expect(root.style.top).toBe("108px");
+    expect(bubble.style.top).toBe("-90px");
   });
 
   it("stops tracking resizes after unmount", () => {
