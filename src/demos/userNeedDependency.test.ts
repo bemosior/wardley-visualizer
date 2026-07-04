@@ -244,7 +244,7 @@ describe("runValueChainScenario", () => {
 
     expect(mascotHost.querySelector(".wd-mascot")).not.toBeNull();
     expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe(need.label);
-    expect(mascotHost.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe("Genesis");
+    expect(mascotHost.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe("Is it Genesis?");
   });
 
   /** walks the Phase 1 form and clicks past the Phase 1->2 gate, landing right where the Need starts beckoning on the map (default layout's Genesis x is 50, at the Need's unchanged y of 76) */
@@ -299,12 +299,12 @@ describe("runValueChainScenario", () => {
     });
     await reachEvolutionStep(toolbox, nextControl);
 
-    expect(mascotHost.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe("Genesis");
+    expect(mascotHost.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe("Is it Genesis?");
 
     drag(canvas.querySelector('[data-node-id="need"]')!, { x: 250, y: 76 });
     await flush();
 
-    expect(mascotHost.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe("Product");
+    expect(mascotHost.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe("Is it Product?");
     expect(resolved).toBe(false);
 
     clickConfirm(mascotHost);
@@ -314,7 +314,7 @@ describe("runValueChainScenario", () => {
     // the same drag-confirm pattern before the whole thing is done
     expect(resolved).toBe(false);
     expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("A kettle");
-    expect(mascotHost.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe("Genesis");
+    expect(mascotHost.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe("Is it Genesis?");
     vi.useRealTimers();
   });
 

@@ -221,7 +221,7 @@ export class Panel {
 
     const stageEl = document.createElement("div");
     stageEl.classList.add("wd-panel-placeholder-subheading");
-    stageEl.textContent = initialStage;
+    stageEl.textContent = `Is it ${initialStage}?`;
 
     const characteristicsEl = document.createElement("div");
     characteristicsEl.classList.add("wd-panel-instrument-characteristics");
@@ -238,7 +238,7 @@ export class Panel {
     if (!this.instrumentKind) return;
     const stageEl = this.container.querySelector<HTMLElement>(".wd-panel-placeholder-subheading");
     const characteristicsEl = this.container.querySelector<HTMLElement>(".wd-panel-instrument-characteristics");
-    if (stageEl) stageEl.textContent = stage;
+    if (stageEl) stageEl.textContent = `Is it ${stage}?`;
     if (characteristicsEl) characteristicsEl.textContent = characteristicsFor(this.instrumentKind, stage);
   }
 

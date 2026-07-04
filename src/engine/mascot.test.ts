@@ -97,7 +97,7 @@ describe("Mascot delegation to the composed Panel", () => {
     mascot.showInstrumentPanel("User Need", "need", "Genesis");
 
     expect(host.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("User Need");
-    expect(host.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe("Genesis");
+    expect(host.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe("Is it Genesis?");
   });
 
   it("updateInstrumentPanel updates the live stage text", () => {
@@ -108,7 +108,7 @@ describe("Mascot delegation to the composed Panel", () => {
 
     mascot.updateInstrumentPanel("Product");
 
-    expect(host.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe("Product");
+    expect(host.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe("Is it Product?");
   });
 
   it("confirmPlacement resolves once its link is clicked", async () => {
