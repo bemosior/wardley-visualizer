@@ -315,6 +315,12 @@ const CSS = `
   justify-content: center;
 }
 
+/* the floating mascot bubble has no sidebar layout to keep stable across mode switches like the
+   Toolbox does, so it should hug its content instead of reserving the Toolbox's full height */
+.wd-mascot-bubble .wd-panel-content {
+  min-height: 0;
+}
+
 .wd-panel-content--top {
   justify-content: flex-start;
 }
