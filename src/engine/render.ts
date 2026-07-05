@@ -476,7 +476,7 @@ const FLOW_STAGE_PARAMS: Record<EvolutionStage, FlowStageParams> = {
   Commodity: { count: 4, durationS: 1.3, orbitAmplitude: 0, orbitCount: 0, missChance: 0 },
 };
 
-/** the look of a line whose `to` node hasn't been placed on the evolution axis yet (Phase 0/1, before Phase 2's map exists) — unchanged from the fixed count/duration this module used before stage-dependent flow existed */
+/** the look of a line whose `to` node hasn't been placed on the evolution axis yet (Phase 0/10, before Phase 20's map exists) — unchanged from the fixed count/duration this module used before stage-dependent flow existed */
 const DEFAULT_FLOW_PARAMS: FlowStageParams = { count: 1, durationS: 2.0, orbitAmplitude: 0, orbitCount: 0, missChance: 0 };
 
 /** a bow's wobble magnitude is randomized within [this, 1.0] * orbitAmplitude * line length, so the loops aren't perfectly uniform */

@@ -8,7 +8,7 @@ export interface NeedOption {
 }
 
 /**
- * preset choices for Phase 1's "pick a user need" dropdown. Each option
+ * preset choices for Phase 10's "pick a user need" dropdown. Each option
  * carries its own example placeholders so the form's suggested answers
  * always match the selected need — previously the placeholders were
  * hardcoded to the tea example ("Commuter", "Kettle") regardless of which

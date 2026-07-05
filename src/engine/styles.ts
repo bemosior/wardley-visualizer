@@ -195,7 +195,7 @@ const CSS = `
 }
 
 /**
- * a node whose evolution-drag turn hasn't arrived yet (see Phase 2's capability loop) — muted so
+ * a node whose evolution-drag turn hasn't arrived yet (see Phase 20's capability loop) — muted so
  * it doesn't read as interactive next to whichever node is currently beckoning. Muted via stroke/
  * fill color rather than opacity: the shape's white fill must stay fully opaque, or the connection
  * line and backdrop band behind it bleed through and the node reads as a hollow ghost outline

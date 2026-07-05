@@ -21,31 +21,31 @@ Four layers, strict one-way dependency (lower layers know nothing about higher o
     - `addConnection(conn)` — register + render one line (endpoints must already be added).
     - `relabelNode(id, label)` — update a node's text in place, refit font size.
     - `runDragStep(node, options)` — wire one drag-to-target interaction; on snap, calls `celebrateSnap` (lines activate, flow particles, firework burst, `options.onComplete`).
-    - **Important gotcha:** the constructor auto-runs `runDragStep` for whichever node in `config.nodes` has `draggable: true` (at most one). If a phase has *no* drag step (Phase 1 doesn't), make sure no node in the initial `DemoConfig` is `draggable: true` — otherwise `mount` will wire a drag step you didn't ask for.
+    - **Important gotcha:** the constructor auto-runs `runDragStep` for whichever node in `config.nodes` has `draggable: true` (at most one). If a phase has *no* drag step (Phase 10 doesn't), make sure no node in the initial `DemoConfig` is `draggable: true` — otherwise `mount` will wire a drag step you didn't ask for.
   - `panel.ts` — `Panel`, the mode-swapping content renderer. One `Panel` instance owns a container element and swaps between modes; the mascot (`mascot.ts`) composes the only `Panel` instance now in use, pointed at its speech bubble, and is the sole renderer of every mode below (there is no sidebar Toolbox anymore — the mascot guides the whole scenario, from Phase 0's drag affordance through the closing recap). Every mode wraps its rendered content in a `wd-panel-content` div; the base rule reserves `min-height: 360px` (`styles.ts`: `PANEL_CONTENT_MIN_HEIGHT`, also passed to `showMapBackdrop` to size the map's reserved height), but `.wd-mascot-bubble .wd-panel-content` overrides that to `min-height: 0` so the bubble hugs its content instead.
     - `showDragHandles(slots: PanelDragSlot[], intro?)` → `PanelDragHandle` (used by Phase 0; `intro` renders a heading/subheading above the slot row).
-    - `showField(field: PanelField)` → `Promise<string>`, resolves with the trimmed answer once the visitor submits (`type: "select"` or `type: "text"`). Wired into Phase 1's 5-step form sequence (`userNeedDependency.ts`).
+    - `showField(field: PanelField)` → `Promise<string>`, resolves with the trimmed answer once the visitor submits (`type: "select"` or `type: "text"`). Wired into Phase 10's 5-step form sequence (`userNeedDependency.ts`).
   - `nextLink.ts` — `showNextLink(container: HTMLElement)` → `Promise<void>`, a standalone (non-`Panel`) helper that appends a small "Next" link into whatever container it's given and resolves once clicked. Used to gate a step transition behind a deliberate visitor action instead of a guessed timer. Deliberately not a `Panel` method — it renders into host-owned page regions (e.g. beneath a host's own explanation text), so it can't assume `.wd-panel`'s CSS variable scope; its `.wd-next-link` style (`styles.ts`) carries explicit fallback colors for that reason.
-    - Not yet built: an "instrument panel" mode (live evolutionary-characteristics readout, Phase 2) and a "Q&A" mode (Phase 3). See those phases below for what they need.
+    - Not yet built: an "instrument panel" mode (live evolutionary-characteristics readout, Phase 20) and a "Q&A" mode (Phase 30). See those phases below for what they need.
   - `styles.ts` — `injectStylesOnce`, all CSS-in-JS class names (`wd-node`, `wd-panel-*`, etc.).
 
 - **`src/domain/`** — Wardley Mapping vocabulary, framework-agnostic, no DOM.
   - `component.ts` — `Component { id, label, kind }`, `relabelComponent`.
   - `dependency.ts` — `Dependency { from, to }`.
   - `valueChain.ts` — `ValueChain { user, need, capabilities }` aggregate. `createValueChain(spec)` (throws if `capabilities.length === 0`), `valueChainComponents`, `valueChainDependencies`, `relabelUser`, `relabelNeed`, `relabelCapability`. **The chain is an immutable value** — every relabel function returns a new `ValueChain`; nothing mutates in place.
-  - `needCatalog.ts` — `NEED_CATALOG: NeedOption[]` (`{id, label}`), the preset list for Phase 1's dropdown. Phase 3's question bank should follow the same `{id, label}`-ish shape.
+  - `needCatalog.ts` — `NEED_CATALOG: NeedOption[]` (`{id, label}`), the preset list for Phase 10's dropdown. Phase 30's question bank should follow the same `{id, label}`-ish shape.
 
 - **`src/application/`** — translates domain → engine.
-  - `valueChainLayout.ts` — `layoutValueChain(chain, options?)`: positions a `ValueChain` as a `DemoConfig` (User centered above the viewBox, Need below it, Capabilities spread evenly along a row). Currently always marks the Need as the one draggable node with a `start` position — that default is Phase-0-specific and will need an option to disable for Phase 1 (no dragging at all).
+  - `valueChainLayout.ts` — `layoutValueChain(chain, options?)`: positions a `ValueChain` as a `DemoConfig` (User centered above the viewBox, Need below it, Capabilities spread evenly along a row). Currently always marks the Need as the one draggable node with a `start` position — that default is Phase-0-specific and will need an option to disable for Phase 10 (no dragging at all).
 
 - **`src/demos/`** — one directory per tutorial scenario, composing the layers above.
   - `userNeedDependency/` — the full Phase 0 → Finale flow, split one file per phase, threaded by a
     shared `ScenarioContext` (`{ demo, mascot, chain, options }`):
     - `index.ts` — `ValueChainScenarioOptions`, `ScenarioContext`, and `runValueChainScenario(options)`, a thin sequencer that awaits each phase in turn and returns the final `WardleyDemo`. This is the file `src/index.ts` imports (module resolution finds `userNeedDependency/index.ts` from the same `"./demos/userNeedDependency"` specifier as before — no caller changes needed).
     - `phase0.ts` — seed the `ValueChain`, lay it out, mount the `Mascot` + `WardleyDemo`, drag the Need into place. Returns the initial `ScenarioContext`.
-    - `phase1.ts` — the 5-step personalization form (need → user → 3 capabilities), relabeling both the domain chain and the rendered nodes as each answer comes in.
-    - `phase2.ts` — the map backdrop and the evolution-axis drag/confirm loop (Need, then Capability-1/2/3); owns the private `awaitEvolutionConfirm` helper shared by that loop.
-    - `phase3.ts` — the Q&A loop (bias-check, build/buy/outsource, one pool question), annotating each capability on the map.
+    - `phase10.ts` — the 5-step personalization form (need → user → 3 capabilities), relabeling both the domain chain and the rendered nodes as each answer comes in.
+    - `phase20.ts` — the map backdrop and the evolution-axis drag/confirm loop (Need, then Capability-1/2/3); owns the private `awaitEvolutionConfirm` helper shared by that loop.
+    - `phase30.ts` — the Q&A loop (bias-check, build/buy/outsource, one pool question), annotating each capability on the map.
     - `finale.ts` — the closing recap + CTA link.
     - `index.test.ts` — end-to-end integration tests driving the whole scenario through `runValueChainScenario`; kept as one file (not split per phase) since most tests depend on state built up by earlier phases.
 
@@ -60,10 +60,10 @@ Four layers, strict one-way dependency (lower layers know nothing about higher o
 
 - [x] Phase 0 — Value Chain: generic User → User Need → Capability x3, drag Need into place, celebration.
 - [x] Phase 0.5 — Refactor prep: mutable domain labels, decomposed `WardleyDemo` engine ops, swappable-mode `Panel`, `needCatalog.ts`, removed host-page toolbox duplication.
-- [x] Phase 1 — Personalize the value chain: drag-then-form flow (need dropdown → User/Capability text fields), live relabeling of domain + rendered nodes, `celebrate(nodeId)` finale.
-- [x] Phase 2 — Evolution: map backdrop, per-node evolution-axis drag + confirm (Need then Capability-1/2/3), live characteristics instrument-panel readout, stage-dependent flow-particle animation.
+- [x] Phase 10 — Personalize the value chain: drag-then-form flow (need dropdown → User/Capability text fields), live relabeling of domain + rendered nodes, `celebrate(nodeId)` finale.
+- [x] Phase 20 — Evolution: map backdrop, per-node evolution-axis drag + confirm (Need then Capability-1/2/3), live characteristics instrument-panel readout, stage-dependent flow-particle animation.
 - [x] Finale — big celebration + `Panel.showRecap` with CTA link to LearnWardleyMapping.com.
-- [x] Mascot as sole guide — the mascot now renders Phase 0's drag affordance and Phase 1's
+- [x] Mascot as sole guide — the mascot now renders Phase 0's drag affordance and Phase 10's
       form (walking Need → User → Capability-1/2/3 between questions) instead of a sidebar
       Toolbox, which has been removed entirely. See the unresolved hand-holding tension noted
 - [x] Phase 0 opening reframed — the Need node itself now renders on the canvas from the
@@ -74,7 +74,7 @@ Four layers, strict one-way dependency (lower layers know nothing about higher o
       are no longer called by `userNeedDependency.ts` — nothing currently uses them.
       below, since this leans toward more guidance, not less.
 
-## Phase 3 — Thinking with the map (not started; needs new abstractions)
+## Phase 30 — Thinking with the map (not started; needs new abstractions)
 
 Goal: Toolbox becomes a Q&A panel. Three questions in sequence, each anchored
 to a capability, each answer rendered as a map annotation near that capability.
@@ -82,10 +82,10 @@ to a capability, each answer rendered as a map annotation near that capability.
 New pieces needed, not yet present:
 - **Q&A Panel mode.** Another new `Panel` method (e.g. `showQuestion(...)`), parallel to `showField` but for the question→annotate flow described in the forecast (bias-check question, build/buy/outsource question, then a repeatable "random question" picker).
 - **Question bank module.** `src/domain/questionBank.ts` or similar, shaped like `needCatalog.ts`'s `{id, label}` pattern — the forecast explicitly anticipated reusing that shape here.
-- **Map annotation rendering.** Nothing currently renders free text near a node on the map. New `render.ts` factory (e.g. `createAnnotation(node, text)`) plus placement logic to avoid overlapping the node/backdrop from Phase 2.
+- **Map annotation rendering.** Nothing currently renders free text near a node on the map. New `render.ts` factory (e.g. `createAnnotation(node, text)`) plus placement logic to avoid overlapping the node/backdrop from Phase 20.
 - **"Random question, re-roll until you like it" UI.** A button in the Q&A panel mode that re-picks before the visitor commits an answer — straightforward once the Q&A mode and question bank exist.
 
-This phase is entirely downstream of Phase 2's map backdrop existing (annotations are positioned relative to it), so don't start scoping it precisely until Phase 2 lands.
+This phase is entirely downstream of Phase 20's map backdrop existing (annotations are positioned relative to it), so don't start scoping it precisely until Phase 20 lands.
 
 ## Feedback-driven TODOs (from `feedback/` playtests, 2026-07-03)
 
@@ -106,12 +106,12 @@ testers hit the same thing (strongest signal first).
       could be dragged until they accidentally clicked it first — no visual
       cue (cursor, glow, handle) currently signals draggability before the
       first interaction. Addressed by the `wd-node--beckon` pulse (already
-      wired to the toolbox's active drag slot for Phase 0/1, and to
-      `beckonNode` calls before each Phase 2 evolution-drag step) plus the
+      wired to the toolbox's active drag slot for Phase 0/10, and to
+      `beckonNode` calls before each Phase 20 evolution-drag step) plus the
       directional `wd-node-chevron` cues added alongside `runEvolutionDragStep`
       (`chevrons`, `unsubtle beckon`, `WIP to help focus during evolution
       dragging` commits).
-- [x] **Clarify the opening frame before Phase 0/1 starts.** Five separate
+- [x] **Clarify the opening frame before Phase 0/10 starts.** Five separate
       testers (`jamesfairbairn.txt`, `joeltosi.txt`, `joshkruszynski.txt`,
       `tomgeraghty.txt`, `pablogil.txt`) got lost before or during the
       capabilities step — unclear what a "value chain" is, who the demo is
@@ -128,7 +128,7 @@ testers hit the same thing (strongest signal first).
       drag. **Update:** the host page's `.wd-explanation` column (`#vc-answer`
       + `#vc-next`) has since been removed entirely; that payoff copy and both
       "Next" gates now render inside the mascot's own speech bubble
-      (`Mascot.confirmPlacement`, `phase1.ts`'s `MASCOT_NEED_PLACED`), so
+      (`Mascot.confirmPlacement`, `phase10.ts`'s `MASCOT_NEED_PLACED`), so
       `ValueChainScenarioOptions` no longer takes a `nextControl`.
 - [ ] **Scaffold the capabilities step.** Testers had no confidence in what
       counts as a capability or at what abstraction level
@@ -145,9 +145,9 @@ testers hit the same thing (strongest signal first).
 - [ ] **Audit assessment/self-check copy against arbitrary user input.**
       `pablogil.txt`: an invented example ("messaging with friends") landed
       in "deep commoditization" and produced a self-check answer that read
-      as semantically wrong for that input — suggests the Phase 2/3
+      as semantically wrong for that input — suggests the Phase 20/30
       assessment cues assume specific example content rather than being
-      robust to whatever the visitor typed in Phase 1.
+      robust to whatever the visitor typed in Phase 10.
 - [x] **Accessibility pass on evolution-stage color coding.** `velocirachael.txt`:
       color bars used for evolution stages were not visible to her (high
       eye pressure/migraine, possibly compounded by monitor settings) —
@@ -170,7 +170,7 @@ testers hit the same thing (strongest signal first).
       ("people are smart"), while `tomgeraghty.txt`, `joshkruszynski.txt`,
       and `joeltosi.txt` all ask for more explicit prompts. Not a bug — a
       design call to make deliberately, not average away. Note: extending the
-      mascot to Phase 0/1 (see "Done so far") leans toward the more-guidance
+      mascot to Phase 0/10 (see "Done so far") leans toward the more-guidance
       side of this tension, not something playtesters asked for by name — not
       resolved here, just flagged since it's now more load-bearing than before.
 - [ ] **Flow animation change by evolutionary stage.**

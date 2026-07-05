@@ -162,7 +162,7 @@ export interface AxisDragHandle {
  * auto-commit on release — the node stays wherever it's dropped (clamped to
  * `[minX, maxX]`) and stays draggable until `confirm()` is called. This is a
  * different interaction mode than `attachDrag`'s snap-to-target, not a
- * parameterization of it (Phase 2's evolution-axis placement: free movement,
+ * parameterization of it (Phase 20's evolution-axis placement: free movement,
  * live feedback, then an explicit confirm action).
  */
 export function attachAxisDrag(options: AxisDragOptions): AxisDragHandle {

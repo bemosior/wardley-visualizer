@@ -34,7 +34,7 @@ const MASCOT_INTRO = { heading: "Solve the puzzle.", subheading: "Drag the missi
  * about to pick up. It greets the visitor (`MASCOT_INTRO`, via `Mascot.showPlaceholder`), then
  * waits for the Need to be dragged into place. Once it snaps, the mascot re-anchors to the Need's
  * settled position and fires `onNeedPlaced` (Phase 0 done) — the caller then shows the "That's a
- * Value Chain!" placeholder and a "Next" link (see `phase1.ts`).
+ * Value Chain!" placeholder and a "Next" link (see `phase10.ts`).
  */
 export async function runPhase0(options: ValueChainScenarioOptions): Promise<ScenarioContext> {
   const chain = seedValueChain;
@@ -48,8 +48,8 @@ export async function runPhase0(options: ValueChainScenarioOptions): Promise<Sce
   await new Promise<void>((resolve) => {
     demo = WardleyDemo.mount(options.canvas, { ...demoConfig, onComplete: resolve });
     // grows the viewBox to fill the container right away, so the canvas is already the same size
-    // it'll be in Phase 2 (see `growToFillContainer`'s doc comment) instead of visibly widening
-    // later at the Phase 2 transition.
+    // it'll be in Phase 20 (see `growToFillContainer`'s doc comment) instead of visibly widening
+    // later at the Phase 20 transition.
     demo.growToFillContainer(PANEL_CONTENT_MIN_HEIGHT);
     const needDestination = demo.getNodePixelPosition(chain.need.id);
     // anchors beside the Need's *destination* marker (the dashed target circle), not its

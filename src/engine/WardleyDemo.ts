@@ -88,9 +88,9 @@ export class WardleyDemo {
   private nodesById = new Map<string, DemoNode>();
   private nodeGroups = new Map<string, SVGGElement>();
   private lines: { conn: DemoConnection; el: SVGLineElement }[] = [];
-  /** a node's confirmed evolution stage, driving how the flow particles on its lines look (see `spawnParticlesForLine`); unset until it's actually placed on the evolution axis, which falls back to Phase 0/1's fixed pre-evolution look */
+  /** a node's confirmed evolution stage, driving how the flow particles on its lines look (see `spawnParticlesForLine`); unset until it's actually placed on the evolution axis, which falls back to Phase 0/10's fixed pre-evolution look */
   private nodeStage = new Map<string, EvolutionStage>();
-  /** every callout box placed so far (Phase 3), so a new one can pick a tier that doesn't collide with it — see `createAnnotation` */
+  /** every callout box placed so far (Phase 30), so a new one can pick a tier that doesn't collide with it — see `createAnnotation` */
   private annotationRects: AnnotationRect[] = [];
 
   /** the in-flight drag step, if any — lets `skipDrag()` complete it without a real pointer gesture */
@@ -173,7 +173,7 @@ export class WardleyDemo {
    * if given — every already-placed node keeps its exact pixel size and position; only new,
    * empty viewBox area appears alongside/beneath them. A non-positive `scale`, or a container with
    * no real layout yet (e.g. tests), is a no-op. Shared by `growToFillContainer` (called once,
-   * right after mount) and `showMapBackdrop` (called again at the Phase 2 transition, where it's
+   * right after mount) and `showMapBackdrop` (called again at the Phase 20 transition, where it's
    * normally a no-op now that the container doesn't resize in between — see both doc comments).
    */
   private growViewBox(scale: number, targetHeightPx?: number): void {
@@ -191,7 +191,7 @@ export class WardleyDemo {
    * grows the viewBox to fill the container's current width, at the scale the value chain's
    * nodes were authored at (`scale` default of 1 — 1 viewBox unit ≈ 1px, e.g. `NODE_RADIUS`'s 48
    * renders as a 48px-radius circle). Call this once, right after mount, so the canvas is already
-   * the same size for the whole scenario instead of visibly growing later at the Phase 2
+   * the same size for the whole scenario instead of visibly growing later at the Phase 20
    * transition (that used to be `showMapBackdrop`'s job, driven by `captureScale`/container-resize
    * timing — now the container never resizes, so this just does the growth eagerly using the
    * same math). `targetHeightPx` behaves like `showMapBackdrop`'s.
@@ -352,7 +352,7 @@ export class WardleyDemo {
 
   /**
    * adds the inviting "beckon" pulse (the same cue Phase 0 uses on the undragged Need) to a
-   * node, e.g. to prompt the visitor toward Phase 2's evolution-axis drag once the map appears.
+   * node, e.g. to prompt the visitor toward Phase 20's evolution-axis drag once the map appears.
    * Also clears any "pending" dimming `markPending` applied, since the node's turn has arrived.
    */
   beckonNode(nodeId: string): void {
@@ -362,7 +362,7 @@ export class WardleyDemo {
   }
 
   /**
-   * dims the given nodes to signal they aren't interactive yet — used for Phase 2's
+   * dims the given nodes to signal they aren't interactive yet — used for Phase 20's
    * capability queue, so a node waiting its turn doesn't read as draggable next to whichever
    * node is currently beckoning. Cleared automatically by `beckonNode` once a node's turn starts.
    */
@@ -374,9 +374,9 @@ export class WardleyDemo {
 
   /**
    * removes the idle "charged" pulsing glow from the given nodes, without touching anything
-   * else (lines stay active, flow particles keep running). Used when Phase 2's map backdrop
-   * appears — the glow is a Phase 0/1 "this connection is alive" cue that competes with the
-   * evolution-axis drag interaction Phase 2 wants the visitor's attention on instead.
+   * else (lines stay active, flow particles keep running). Used when Phase 20's map backdrop
+   * appears — the glow is a Phase 0/10 "this connection is alive" cue that competes with the
+   * evolution-axis drag interaction Phase 20 wants the visitor's attention on instead.
    */
   stopCharging(nodeIds: string[]): void {
     for (const id of nodeIds) {
@@ -386,7 +386,7 @@ export class WardleyDemo {
 
   /**
    * animates a node (and its connected lines) horizontally to the center of the map's Genesis
-   * column, keeping its current y — used right as Phase 2's map backdrop appears, so the Need
+   * column, keeping its current y — used right as Phase 20's map backdrop appears, so the Need
    * visibly settles onto its starting evolution stage instead of just appearing there already
    * placed. Updates the node's stored position and respawns flow particles on lines touching it
    * afterward, so the particle flow keeps tracking the line's new path. A no-op if the node id
@@ -424,12 +424,12 @@ export class WardleyDemo {
   }
 
   /**
-   * wires Phase 2's evolution-axis interaction for an already-registered node: free horizontal
+   * wires Phase 20's evolution-axis interaction for an already-registered node: free horizontal
    * drag (no snap, no auto-commit) with live `onPositionChange(stageLabel)` callbacks, and a
    * returned `confirm()` the caller invokes once the visitor has committed to where they dropped
    * it — that stops the beckon pulse, respawns flow particles on its lines, and fires a firework
    * at its final position as the "placement confirmed" cue. Doesn't re-add the "charged" glow
-   * `stopCharging` cleared going into Phase 2 — it'd compete with the evolution-drag interaction.
+   * `stopCharging` cleared going into Phase 20 — it'd compete with the evolution-drag interaction.
    */
   runEvolutionDragStep(nodeId: string, options: EvolutionDragStepOptions = {}): EvolutionDragHandle {
     const node = this.nodesById.get(nodeId)!;
@@ -488,7 +488,7 @@ export class WardleyDemo {
 
   /**
    * non-drag celebration: fires one firework burst per node, top to bottom, repeated `rounds`
-   * times (default 1). For flows (e.g. Phase 1's form sequence, or the Phase 2 finale) that
+   * times (default 1). For flows (e.g. Phase 10's form sequence, or the Phase 20 finale) that
    * finish without a drag/snap to anchor the celebration to. The lines/charging/flow-particle
    * animations from Phase 0's `celebrateSnap` are already running continuously by this point
    * and aren't re-triggered here.
@@ -507,7 +507,7 @@ export class WardleyDemo {
 
   /**
    * anchors a short text callout near an already-registered node's current position, permanently
-   * visible (Phase 3, one per capability). Basic overlap avoidance: if the callout would collide
+   * visible (Phase 30, one per capability). Basic overlap avoidance: if the callout would collide
    * horizontally with one already placed, it stacks one tier higher instead (see `createAnnotation`)
    * rather than solving full layout — at most three of these ever exist.
    */
@@ -534,7 +534,7 @@ export class WardleyDemo {
 
   /**
    * a line's flow is driven by the evolution stage of its `to` node (the "supplier" end) —
-   * unset (Phase 0/1's fixed look) until that node has actually been placed on the evolution axis.
+   * unset (Phase 0/10's fixed look) until that node has actually been placed on the evolution axis.
    */
   private spawnParticlesForLine(index: number): void {
     const { conn } = this.lines[index];

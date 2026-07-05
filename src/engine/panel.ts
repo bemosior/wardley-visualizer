@@ -41,9 +41,9 @@ export type PanelField =
  * progresses — the mascot (`engine/mascot.ts`) composes one `Panel` instance
  * pointed at its speech bubble and is the sole renderer of every mode below.
  * Today: drag-handle (pick up a node), form (answer one prompt at a time),
- * instrument-panel (live evolution-stage characteristics readout, Phase 2),
+ * instrument-panel (live evolution-stage characteristics readout, Phase 20),
  * and question (multiple-choice doctrine prompt with an optional reroll,
- * Phase 3).
+ * Phase 30).
  */
 export class Panel {
   private container: HTMLElement;
@@ -198,7 +198,7 @@ export class Panel {
 
   /**
    * renders a heading + subheading placeholder at full panel height, fading in after `delayMs`
-   * (used to stagger this behind the map caption's own fade-in); stands in for Phase 2's
+   * (used to stagger this behind the map caption's own fade-in); stands in for Phase 20's
    * instrument-panel mode (not built yet)
    */
   showPlaceholder(heading: string, subheading: string, delayMs = 0): void {
@@ -223,10 +223,10 @@ export class Panel {
   }
 
   /**
-   * live-updating readout for Phase 2's evolution drag: heading (the node's label) + current
+   * live-updating readout for Phase 20's evolution drag: heading (the node's label) + current
    * stage name + real characteristics text (`domain/evolution.ts`'s `characteristicsFor`) for
    * that stage/kind. Reuses `showPlaceholder`'s layout/fade-in so it stays visually consistent
-   * with the rest of Phase 2; `updateInstrumentPanel` then swaps stage + characteristics as the
+   * with the rest of Phase 20; `updateInstrumentPanel` then swaps stage + characteristics as the
    * visitor drags, without a full re-render.
    */
   showInstrumentPanel(heading: string, kind: EvolutionKind, initialStage: EvolutionStage, delayMs = 0): void {

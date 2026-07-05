@@ -45,7 +45,7 @@
       import { attachAutopilot, parseSkipTarget } from "/src/dev/autopilot.ts";
       const mascotHost = document.getElementById("mascot-host");
 
-      // Dev-only test shortcut: reload with ?skipTo=phase1 | celebrate | phase2 | finale | thinking
+      // Dev-only test shortcut: reload with ?skipTo=phase10 | celebrate | phase20 | finale | thinking
       // to jump straight past earlier phases instead of replaying drag + 5 form fields by hand.
       const skipTarget = parseSkipTarget(location.search);
       const autopilot = skipTarget ? attachAutopilot({ mascotHost, target: skipTarget }) : undefined;

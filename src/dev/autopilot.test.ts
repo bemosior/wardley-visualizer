@@ -4,15 +4,15 @@ import { runValueChainScenario } from "../demos/userNeedDependency";
 
 describe("parseSkipTarget", () => {
   it("returns the requested target when valid", () => {
-    expect(parseSkipTarget("?skipTo=phase1")).toBe("phase1");
+    expect(parseSkipTarget("?skipTo=phase10")).toBe("phase10");
     expect(parseSkipTarget("?skipTo=celebrate")).toBe("celebrate");
-    expect(parseSkipTarget("?skipTo=phase2")).toBe("phase2");
+    expect(parseSkipTarget("?skipTo=phase20")).toBe("phase20");
   });
 
   it("returns null when the param is missing or unrecognized", () => {
     expect(parseSkipTarget("")).toBeNull();
     expect(parseSkipTarget("?skipTo=bogus")).toBeNull();
-    expect(parseSkipTarget("?other=phase1")).toBeNull();
+    expect(parseSkipTarget("?other=phase10")).toBeNull();
   });
 });
 
@@ -41,9 +41,9 @@ function buildScenario(target: Parameters<typeof attachAutopilot>[0]["target"], 
 }
 
 describe("attachAutopilot", () => {
-  it("phase1: skips the drag and stops at the first form field, without auto-submitting it", async () => {
+  it("phase10: skips the drag and stops at the first form field, without auto-submitting it", async () => {
     const onNeedPlaced = vi.fn();
-    const { canvas, mascotHost } = buildScenario("phase1", { onNeedPlaced });
+    const { canvas, mascotHost } = buildScenario("phase10", { onNeedPlaced });
     await flushAll();
 
     expect(onNeedPlaced).toHaveBeenCalledOnce();
@@ -65,16 +65,16 @@ describe("attachAutopilot", () => {
     expect(canvas.querySelector('[data-node-id="need"] .wd-node-label')!.textContent).not.toBe("Need");
   });
 
-  it("phase2: also clicks past the second gate, firing onEvolutionReady", async () => {
+  it("phase20: also clicks past the second gate, firing onEvolutionReady", async () => {
     const onEvolutionReady = vi.fn();
-    const { mascotHost } = buildScenario("phase2", { onEvolutionReady });
+    const { mascotHost } = buildScenario("phase20", { onEvolutionReady });
     await flushAll();
 
     expect(onEvolutionReady).toHaveBeenCalledOnce();
     expect(mascotHost.querySelector(".wd-next-link")).toBeNull();
   });
 
-  it("finale: also auto-confirms every Phase 2 placement, stopping at the placement finale before Phase 3 begins", async () => {
+  it("finale: also auto-confirms every Phase 20 placement, stopping at the placement finale before Phase 30 begins", async () => {
     const { mascotHost } = buildScenario("finale");
     await flushAll();
 
@@ -84,7 +84,7 @@ describe("attachAutopilot", () => {
     expect(gateLink!.textContent).toBe("Let's think about it →");
   });
 
-  it("thinking: also clicks into Phase 3 and auto-picks an option for every question, stopping before the finale's own Next link", async () => {
+  it("thinking: also clicks into Phase 30 and auto-picks an option for every question, stopping before the finale's own Next link", async () => {
     const { canvas, mascotHost } = buildScenario("thinking");
     await flushAll();
 

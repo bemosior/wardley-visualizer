@@ -36,8 +36,8 @@ function awaitEvolutionConfirm(
 }
 
 /**
- * Phase 2: turn the value chain into a Wardley Map. Waits for the visitor to click the second
- * "Next" link (the Phase 1 -> Phase 2 gate, rendered inside the mascot's own bubble via
+ * Phase 20: turn the value chain into a Wardley Map. Waits for the visitor to click the second
+ * "Next" link (the Phase 10 -> Phase 20 gate, rendered inside the mascot's own bubble via
  * `Mascot.confirmPlacement`), fires `onEvolutionReady`, then shows the map
  * backdrop and the Need's label, its starting evolution stage ("Genesis"), and the matching
  * characteristics text from `domain/evolution.ts` — updating live (`Mascot.updateInstrumentPanel`)
@@ -49,9 +49,9 @@ function awaitEvolutionConfirm(
  * heading/subheading, the mascot re-anchoring to each in turn), and once all four nodes are placed
  * the scenario fires `demo.celebrateAll()` (with the mascot celebrating alongside it) for the
  * placement finale — the caller then waits on a "Confirm placement"-style link that gates the move
- * into Phase 3 (`phase3.ts`).
+ * into Phase 30 (`phase30.ts`).
  */
-export async function runPhase2(ctx: ScenarioContext): Promise<void> {
+export async function runPhase20(ctx: ScenarioContext): Promise<void> {
   const { demo, mascot, chain, options } = ctx;
 
   await mascot.confirmPlacement("Next");
@@ -67,7 +67,7 @@ export async function runPhase2(ctx: ScenarioContext): Promise<void> {
     "Now let's turn your *Value Chain*\r\ninto a *Wardley Map*!",
   );
   // staggered by the same delay as the mascot bubble's fade-in (mascot.showInstrumentPanel
-  // above), so the Need visibly settles into Genesis in step with the rest of Phase 2's reveal
+  // above), so the Need visibly settles into Genesis in step with the rest of Phase 20's reveal
   // rather than sliding immediately while the caption/bubble are still fading in.
   setTimeout(
     () =>

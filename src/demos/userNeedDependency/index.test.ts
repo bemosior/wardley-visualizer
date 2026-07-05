@@ -211,7 +211,7 @@ describe("runValueChainScenario", () => {
     vi.useRealTimers();
   });
 
-  it("mounts the mascot immediately, before any drag/form step, then swaps in a Need-label/Genesis bubble once Phase 2 begins", async () => {
+  it("mounts the mascot immediately, before any drag/form step, then swaps in a Need-label/Genesis bubble once Phase 20 begins", async () => {
     const canvas = document.createElement("div");
     const mascotHost = document.createElement("div");
     document.body.append(canvas, mascotHost);
@@ -240,7 +240,7 @@ describe("runValueChainScenario", () => {
     expect(mascotHost.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe("Is it Genesis?");
   });
 
-  /** walks the Phase 1 form and clicks past the Phase 1->2 gate, landing right where the Need starts beckoning on the map (default layout's Genesis x is 50, at the Need's unchanged y of 76) */
+  /** walks the Phase 10 form and clicks past the Phase 10->20 gate, landing right where the Need starts beckoning on the map (default layout's Genesis x is 50, at the Need's unchanged y of 76) */
   async function reachEvolutionStep(canvas: HTMLElement, mascotHost: HTMLElement): Promise<void> {
     await completeDragStep(canvas, mascotHost);
     submitSelect(mascotHost, NEED_CATALOG[0].id);
@@ -351,7 +351,7 @@ describe("runValueChainScenario", () => {
     expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Wardley Map");
     expect(resolved).toBe(false);
 
-    // the placement finale's confirm link starts Phase 3's Q&A rather than resolving the scenario
+    // the placement finale's confirm link starts Phase 30's Q&A rather than resolving the scenario
     clickNext(mascotHost);
     await flush();
 
@@ -360,7 +360,7 @@ describe("runValueChainScenario", () => {
     vi.useRealTimers();
   });
 
-  /** walks placement through the Phase 2->3 gate, landing on Capability 1's bias-check question */
+  /** walks placement through the Phase 20->30 gate, landing on Capability 1's bias-check question */
   async function reachThinkingStep(canvas: HTMLElement, mascotHost: HTMLElement): Promise<void> {
     await reachEvolutionStep(canvas, mascotHost);
     await confirmEvolutionStep(canvas, mascotHost, "need", 150, 76);

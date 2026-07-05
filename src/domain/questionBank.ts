@@ -12,7 +12,7 @@ export interface Question {
   options: QuestionOption[];
 }
 
-/** Phase 3's first question, anchored to Capability 1 — checks for the classic anchoring/novelty bias. */
+/** Phase 30's first question, anchored to Capability 1 — checks for the classic anchoring/novelty bias. */
 export const BIAS_CHECK_QUESTION: Question = {
   id: "bias-check",
   prompt: "Look at where you placed this — are you treating it as more novel or bespoke than that position suggests?",
@@ -35,7 +35,7 @@ export const BIAS_CHECK_QUESTION: Question = {
   ],
 };
 
-/** Phase 3's second question, anchored to Capability 2 — build vs buy vs outsource doctrine. */
+/** Phase 30's second question, anchored to Capability 2 — build vs buy vs outsource doctrine. */
 export const BUILD_BUY_OUTSOURCE_QUESTION: Question = {
   id: "build-buy-outsource",
   prompt: "Given where this sits on the map, how should you treat it?",
@@ -58,7 +58,7 @@ export const BUILD_BUY_OUTSOURCE_QUESTION: Question = {
   ],
 };
 
-/** pool for Phase 3's third question, anchored to Capability 3 — re-rollable via `pickRandomQuestion`. */
+/** pool for Phase 30's third question, anchored to Capability 3 — re-rollable via `pickRandomQuestion`. */
 export const QUESTION_POOL: Question[] = [
   {
     id: "inertia",

@@ -1,7 +1,7 @@
 import type { ScenarioContext } from "./index";
 
 /**
- * Finale: recap and exit. Waits for the visitor to click "What's next →" (the Phase 3 -> Finale
+ * Finale: recap and exit. Waits for the visitor to click "What's next →" (the Phase 30 -> Finale
  * gate), then swaps the mascot's bubble to `Mascot.showRecap` — a three-line recap of the whole
  * session (value chain, map, strategic thinking) plus an external CTA link to
  * LearnWardleyMapping.com — before firing `onComplete`.
