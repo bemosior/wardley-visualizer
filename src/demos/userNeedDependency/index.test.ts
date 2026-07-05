@@ -80,7 +80,7 @@ describe("runValueChainScenario", () => {
     expect(onNeedPlaced).toHaveBeenCalledOnce();
     expect(mascotHost.querySelector("form")).toBeNull();
     expect(mascotHost.querySelector(".wd-next-link")).not.toBeNull();
-    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("You just made a Value Chain!");
+    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Nice! You made a Value Chain!");
   });
 
   it("relabels the three Capability nodes to Part A/B/C and explains multi-part needs between the 'Value Chain' placeholder and the form", async () => {
@@ -93,7 +93,7 @@ describe("runValueChainScenario", () => {
 
     expect(mascotHost.querySelector("form")).toBeNull();
     expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe(
-      "It's usually not just one thing.",
+      "The recipe often calls for multiple parts.",
     );
     expect(canvas.querySelector('[data-node-id="dependency-1"] .wd-node-label')!.textContent).toBe("Part A");
     expect(canvas.querySelector('[data-node-id="dependency-2"] .wd-node-label')!.textContent).toBe("Part B");

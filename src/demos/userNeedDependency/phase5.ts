@@ -7,8 +7,8 @@ import type { ScenarioContext } from "./index";
  * (`#vc-answer`) — now the bubble is the only place that copy lives. Moved here from
  * `phase10.ts` so it gates into the Part A/B/C beat below instead of straight into the form. */
 const MASCOT_NEED_PLACED = {
-  heading: "You just made a Value Chain!",
-  subheading: "A value chain is a picture that tells us who needs what, and how they get it.",
+  heading: "Nice! You made a Value Chain!",
+  subheading: "A value chain is a recipe: Who needs what, and how they get it.",
 };
 
 /** placeholder labels for the three Capability nodes while this phase explains their number,
@@ -17,8 +17,8 @@ const MASCOT_NEED_PLACED = {
 const PART_LABELS = ["Part A", "Part B", "Part C"];
 
 const MASCOT_MULTIPLE_PARTS = {
-  heading: "It's usually not just one thing.",
-  subheading: "To meet a need, it often takes several parts, adding up together.",
+  heading: "The recipe often calls for multiple parts.",
+  subheading: "Together, they add up to a solution that meets the need.",
 };
 
 /**

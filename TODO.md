@@ -137,19 +137,19 @@ testers hit the same thing (strongest signal first).
       "Next" gates now render inside the mascot's own speech bubble
       (`Mascot.confirmPlacement`, `phase10.ts`'s `MASCOT_NEED_PLACED`), so
       `ValueChainScenarioOptions` no longer takes a `nextControl`.
-- [ ] **Scaffold the capabilities step.** Testers had no confidence in what
+- [-] **Scaffold the capabilities step.** Testers had no confidence in what
       counts as a capability or at what abstraction level
       (`pablogil.txt`, `joshkruszynski.txt`). `michaellindqvist.txt` proposes
       a concrete fill-in-the-blank scaffold ("I want / Because of / Depends
       on") that could be pre-filled as a worked example before the visitor
       free-types their own.
-- [ ] **Reconsider single-layer value chain scope.** `jamesfairbairn.txt`:
+- [-] **Reconsider single-layer value chain scope.** `jamesfairbairn.txt`:
       the grocery-delivery example's one-layer chain prompted an
       unproductive "do I depend on a truck? a farm? the cold chain?"
       recursion spiral that may work against the learning goal rather than
       for it. Worth deciding whether to bound the chain more explicitly or
       address the recursion question head-on in a later phase.
-- [ ] **Audit assessment/self-check copy against arbitrary user input.**
+- [-] **Audit assessment/self-check copy against arbitrary user input.**
       `pablogil.txt`: an invented example ("messaging with friends") landed
       in "deep commoditization" and produced a self-check answer that read
       as semantically wrong for that input — suggests the Phase 20/30
@@ -172,7 +172,7 @@ testers hit the same thing (strongest signal first).
 - [ ] **Mobile drag/select gesture polish.** `rianporter.txt`: needed to
       zoom, and distinguishing "select" from "drag" took some learning on
       mobile — worth a dedicated mobile pass once desktop flow is settled.
-- [ ] **Unresolved product tension — guided prompts vs. discovery.**
+- [-] **Unresolved product tension — guided prompts vs. discovery.**
       `rianporter.txt` explicitly argues against more hand-holding
       ("people are smart"), while `tomgeraghty.txt`, `joshkruszynski.txt`,
       and `joeltosi.txt` all ask for more explicit prompts. Not a bug — a
@@ -180,7 +180,7 @@ testers hit the same thing (strongest signal first).
       mascot to Phase 0/10 (see "Done so far") leans toward the more-guidance
       side of this tension, not something playtesters asked for by name — not
       resolved here, just flagged since it's now more load-bearing than before.
-- [ ] **Flow animation change by evolutionary stage.**
+- [x] **Flow animation change by evolutionary stage.**
       Commodity and product flow animations are perfect. Genesis currently
       "sputters" by having a more jagged, slow animation. Instead of that,
       let's have the animation path follow a random path in the general
