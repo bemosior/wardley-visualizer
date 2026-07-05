@@ -208,7 +208,7 @@ describe("Mascot.moveTo", () => {
     expect(bubble.style.top).toBe("-90px");
   });
 
-  it("keeps a northeast-placed bubble above the node even when 'below' the shifted anchor would otherwise fit", () => {
+  it("lets a northeast-shifted bubble settle below the shifted anchor when that's where the real room is", () => {
     const host = makeHost();
     vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 500, height: 500 } as DOMRect);
     const mascot = new Mascot(host);
@@ -216,19 +216,39 @@ describe("Mascot.moveTo", () => {
     const bubble = (mascot as any).bubbleEl as HTMLElement;
     vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 200, height: 130 } as DOMRect);
 
-    // node's row spans y 152..248 (y 200, radius 48). The shifted northeast anchor (180, 120) has
-    // plenty of room to grow "below" within a 500px-tall host, which is exactly what used to pull
-    // the bubble back down into the node's own row -- a horizontally-draggable node (Phase 20's
-    // evolution axis) then drags right back underneath it. Forcing "above" for northeast keeps the
-    // whole group's y-range clear of the row regardless of overflow room.
+    // "northeast" only shifts the anchor up-and-right before the normal, measured below/above pick
+    // runs -- it doesn't force a side. The shifted anchor (180, 120) has plenty of room to grow
+    // "below" within a 500px-tall host, so that's where it settles; static re-anchors like this one
+    // (a mascot beat beside a node that isn't about to be dragged) don't need a harder guarantee
+    // than "wherever there's real room" -- see `"pinned"` below for the one placement that does.
     mascot.moveTo("need", { x: 100, y: 200, radius: 48 }, "northeast");
+
+    expect(root.style.top).toBe("132px"); // clearBelow: shifted y(120) + NODE_CLEARANCE(12)
+  });
+
+  it("forces a pinned bubble above the node when there's real, unclipped room for it", () => {
+    const host = makeHost();
+    vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 500, height: 500 } as DOMRect);
+    const mascot = new Mascot(host);
+    const root = (mascot as any).root as HTMLElement;
+    const bubble = (mascot as any).bubbleEl as HTMLElement;
+    vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 200, height: 130 } as DOMRect);
+
+    // same anchor as the "northeast" test above, where letting the normal pick run would settle
+    // "below" the shifted anchor -- fine for a static re-anchor, but wrong for a node about to drag
+    // freely along its own row (Phase 20's evolution axis) with the mascot not chasing it: growing
+    // "below" the shifted anchor still reaches back down into the node's own row, which the node's
+    // horizontal drag would then pass right back underneath. "pinned" forces "above" instead, since
+    // there's real room for it here (no real `top` mocked, so the page-edge check no-ops and can't
+    // veto it).
+    mascot.moveTo("need", { x: 100, y: 200, radius: 48 }, "pinned");
 
     expect(root.style.top).toBe("48px"); // clearAbove(108) - AVATAR_HEIGHT(60)
     const bubbleBottom = parseFloat(bubble.style.top) + parseFloat(root.style.top) + 130;
     expect(bubbleBottom).toBeLessThanOrEqual(152); // clear of the node's own top edge
   });
 
-  it("falls back off a northeast-placed node with no room above it instead of pushing the mascot off-screen", () => {
+  it("falls back off a pinned node with no room above it instead of pushing the mascot off-screen", () => {
     const host = makeHost();
     vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 500, height: 500 } as DOMRect);
     const mascot = new Mascot(host);
@@ -237,22 +257,22 @@ describe("Mascot.moveTo", () => {
     vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 200, height: 130 } as DOMRect);
 
     // the value chain's User node is rendered tangent to the canvas's own top edge (y = -radius),
-    // so a northeast shift (up and to the right) has no real room to move into -- forcing "above"
-    // regardless used to plant the avatar well above y=0 (off-screen). It should fall back to
-    // "below" (a mostly-horizontal shift) instead, same as `northeastPoint`'s own doc comment
-    // always promised for this case.
-    mascot.moveTo("user", { x: 200, y: -20, radius: 20 }, "northeast");
+    // so a northeast shift (up and to the right) has no real room to move into -- `northeastPoint`
+    // reports this as `clamped`, which skips "pinned"'s force-above attempt entirely (there's
+    // nothing to verify room for) and falls through to the same measured pick every other
+    // placement uses, landing "below" (a mostly-horizontal shift) instead of off-screen.
+    mascot.moveTo("user", { x: 200, y: -20, radius: 20 }, "pinned");
 
     expect(parseFloat(root.style.top)).toBeGreaterThanOrEqual(0);
     const bubbleTop = parseFloat(bubble.style.top) + parseFloat(root.style.top);
     expect(bubbleTop).toBeGreaterThanOrEqual(0);
   });
 
-  it("floors a northeast-placed bubble at the page's own top edge when the node has some room above it but not enough", () => {
+  it("falls back to the out-of-the-way corner when a pinned node has some room above it but not enough to be a hard guarantee", () => {
     const host = makeHost();
     // the host sits only 20px into the real document (e.g. a host page with little headroom above
-    // its canvas) -- mocking a real `top` (unlike every other test here) is what turns on the
-    // page-aware floor at all.
+    // its canvas) -- mocking a real `top` (unlike most tests here) is what turns on the page-aware
+    // room check at all.
     vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 500, height: 500, top: 20 } as DOMRect);
     vi.spyOn(window, "scrollY", "get").mockReturnValue(0);
     const mascot = new Mascot(host);
@@ -261,33 +281,15 @@ describe("Mascot.moveTo", () => {
     vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 200, height: 130 } as DOMRect);
 
     // node at y=100, radius=48 has *some* room above it (unlike the tangent User node above), so
-    // `northeastPoint` isn't `clamped` and "above" is still forced -- but the raw math would still
-    // plant the group at avatarTop -12 (host-local), 8px past the real document's top (20-12=8
-    // short). The floor below should pull it back down to the document's edge instead.
-    mascot.moveTo("user", { x: 200, y: 100, radius: 48 }, "northeast");
+    // `northeastPoint` isn't `clamped` -- but forcing "above" here would still land the group 122px
+    // short of fitting before the real document's top edge (only 8px of local clearance against a
+    // 130px group). Rather than clip it against the page edge (the old, buggy behavior), "pinned"
+    // recognizes there's no *real* guarantee available and anchors to the same corner
+    // `moveToTopRight` uses instead -- clear of every row, node-drag hazard or not.
+    mascot.moveTo("need", { x: 200, y: 100, radius: 48 }, "pinned");
 
-    const hostDocTop = 20; // hostRect.top + scrollY
-    expect(parseFloat(root.style.top) + hostDocTop).toBeGreaterThanOrEqual(0);
-    const bubbleTop = parseFloat(bubble.style.top) + parseFloat(root.style.top);
-    expect(bubbleTop + hostDocTop).toBeGreaterThanOrEqual(0);
-  });
-
-  it("shifts an east-placed bubble beside the node without lifting it, unlike northeast", () => {
-    const host = makeHost();
-    vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 500, height: 500 } as DOMRect);
-    const mascot = new Mascot(host);
-    const root = (mascot as any).root as HTMLElement;
-    const bubble = (mascot as any).bubbleEl as HTMLElement;
-    vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 200, height: 60 } as DOMRect);
-
-    // same anchor as the "northeast" tests above (x: 100, y: 200, radius: 48), but "east" only
-    // shifts horizontally -- the avatar should land close to the node's own y (only the small
-    // NODE_CLEARANCE gap away, via the normal below/above pick), not lifted well above it the way
-    // "northeast" forces.
-    mascot.moveTo("need", { x: 100, y: 200, radius: 48 }, "east");
-
-    expect(parseFloat(root.style.left)).toBeCloseTo(100 + 48 + 32 - 20); // x + radius + SIDE_GAP - AVATAR_WIDTH/2
-    expect(parseFloat(root.style.top)).toBeCloseTo(200 + 12); // clearBelow: y + NODE_CLEARANCE (radius already zeroed by eastPoint)
+    expect(root.style.left).toBe("416px"); // topRightPoint: (500 - CORNER_MARGIN(64)) - AVATAR_WIDTH/2(20)
+    expect(root.style.top).toBe("76px"); // topRightPoint's y(64) + NODE_CLEARANCE(12): plenty of room below it
   });
 
   it("stops tracking resizes after unmount", () => {

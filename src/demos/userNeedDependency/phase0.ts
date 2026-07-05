@@ -25,9 +25,9 @@ const MASCOT_INTRO = { heading: "Solve the puzzle.", subheading: "Drag the missi
  * to pick up from. Mounts the sole `Mascot` guide (`engine/mascot.ts`) before `WardleyDemo` itself,
  * since the mascot renders from the very start of the scenario. The mascot anchors beside the
  * Need's *destination* marker instead — the dashed target circle at its final `layoutValueChain`
- * position (`WardleyDemo.getNodePixelPosition`), via `Mascot`'s `"east"` placement — so it points
- * at where the Need is headed rather than sitting on top of the node the visitor is about to pick
- * up. It greets the visitor (`MASCOT_INTRO`, via `Mascot.showPlaceholder`), then waits for the
+ * position (`WardleyDemo.getNodePixelPosition`), via `Mascot`'s `"northeast"` placement — so it
+ * points at where the Need is headed rather than sitting on top of the node the visitor is about
+ * to pick up. It greets the visitor (`MASCOT_INTRO`, via `Mascot.showPlaceholder`), then waits for the
  * Need to be dragged into place. Once it snaps, the mascot re-anchors to the Need's settled
  * position (`"northeast"`, clear of the Capability row underneath) and fires `onNeedPlaced`
  * (Phase 0 done) — the caller then shows the "That's a Value Chain!" placeholder and a "Next" link
@@ -52,7 +52,7 @@ export async function runPhase0(options: ValueChainScenarioOptions): Promise<Sce
     // anchors beside the Need's *destination* marker (the dashed target circle), not its
     // out-of-place `start` position -- keeps the mascot clear of the node the visitor is about
     // to pick up and drag, and points at where it's headed instead.
-    if (needDestination) mascot.moveTo(chain.need.id, needDestination, "east");
+    if (needDestination) mascot.moveTo(chain.need.id, needDestination, "northeast");
     options.onMount?.(demo);
   });
 

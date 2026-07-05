@@ -85,11 +85,10 @@ export async function runPhase5(ctx: ScenarioContext): Promise<void> {
   const capabilities = ctx.chain.capabilities;
   const anchor = capabilities.find((capability) => demo.hasNode(capability.id))!;
   const anchorPixelPos = demo.getNodePixelPosition(anchor.id);
-  // "east" (not "northeast") here: NE always lifts the mascot *up*, which is right for the
-  // User/Need stops above (each has a row of nodes directly below it to clear) but wrong for the
-  // Capability row, which has nothing below it to avoid -- lifting up would instead drive the
-  // mascot into the Need row sitting just above the Capability row.
-  if (anchorPixelPos) mascot.moveTo(anchor.id, anchorPixelPos, "east");
+  // "south", not "northeast": this capability sits beside its side-by-side siblings, so
+  // "northeast"'s rightward shift would walk the bubble straight into the next one over -- see
+  // `MascotPlacement`'s doc comment.
+  if (anchorPixelPos) mascot.moveTo(anchor.id, anchorPixelPos, "south");
   mascot.showPlaceholder(MASCOT_CAPABILITY.heading, MASCOT_CAPABILITY.subheading);
   await mascot.confirmPlacement("Next");
 

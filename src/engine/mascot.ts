@@ -34,19 +34,39 @@ const SIDE_GAP = 32;
 const CORNER_MARGIN = 64;
 
 /**
- * `"auto"` is `reposition`'s default below/above-the-node behavior. `"northeast"` instead anchors
- * up and to the right of the node -- for anchors whose "below" spot would land on another row of
- * nodes underneath (this demo stacks several rows close together), NE clears it instead of
- * covering it. `"east"` is the same rightward shift without the vertical lift -- for anchors with
- * nothing below them to avoid, where lifting up would just walk the bubble into a row sitting
- * *above* instead (e.g. the value chain's Capability row, sitting right under its Need). `"south"`
- * forces the below side even when `reposition`'s overflow math would otherwise flip to "above" --
- * for anchors with another row directly *above* them (e.g. a Capability, sitting right under its
- * Need), flipping up would plant the bubble on that row instead of clearing it. Below-the-node is
- * a safe floor for these since nothing else renders underneath the bottom row; spilling past the
- * canvas's bottom edge is an acceptable, secondary trade-off (see `reposition`'s doc comment).
+ * Two independent axes, not four hand-picked directions: *does the anchor shift before the
+ * below/above pick runs*, and *is that pick measured or forced*. Getting this wrong (forcing a
+ * side, or shifting sideways, for the wrong kind of row) is what actually caused the bugs this
+ * type used to produce -- see git history on this file.
+ *
+ * `"auto"`: no shift, and a *measured* below/above pick (whichever side has less real overflow
+ * against the host's actual bounds). Right for a node with no row of *side-by-side siblings*
+ * squeezed in beside it -- `moveToTopRight`'s corner, a lone capability once the map has settled,
+ * or the last of several capabilities once the whole row is already laid out (nothing further
+ * right to walk into).
+ *
+ * `"northeast"`: shifts the anchor up-and-right first, *then* the same measured pick -- for
+ * anchoring beside a node that has *other rows* stacked close above or below it (this demo stacks
+ * several close together), so the mascot reads as "pointing at" the node rather than sitting on
+ * top of whichever row is closest. Wrong for a node with side-by-side siblings in its *own* row
+ * (e.g. one of several Capability nodes) -- the rightward shift has nowhere to go but into the
+ * next sibling, regardless of which vertical side gets picked.
+ *
+ * `"south"`: no shift, but *forces* "below" -- for anchoring beside one of several side-by-side
+ * siblings that has another row directly above it and nothing below (a Capability node, with its
+ * Need above): the measured pick can occasionally still choose "above" here (a tall canvas can
+ * make "below" *look* like the worse overflow even though nothing is actually there), so this
+ * removes that measurement entirely rather than let it gamble on the one row that's never safe.
+ *
+ * `"pinned"`: `"northeast"`'s stricter sibling, for a node that will itself be dragged *along* its
+ * own row afterward while the mascot stays put (the evolution axis, `WardleyDemo.
+ * runEvolutionDragStep`). Forcing "above" isn't a hard-enough guarantee there on its own -- a
+ * tight row can still leave the group dipping back into the node's path even once forced above --
+ * so `"pinned"` additionally verifies real, unclipped room exists before committing to that spot,
+ * and falls back to the same out-of-the-way corner `moveToTopRight` uses when it doesn't -- see
+ * `reposition`'s `pinned` branch.
  */
-export type MascotPlacement = "auto" | "northeast" | "east" | "south";
+export type MascotPlacement = "auto" | "northeast" | "south" | "pinned";
 
 /**
  * the mascot's speech-bubble guide — the sole guide for the whole scenario, from the moment
@@ -178,6 +198,21 @@ export class Mascot {
   }
 
   /**
+   * a point `SIDE_GAP` clear of the node's circle on both axes, clamped so the vertical shift
+   * never lifts the point above the host's own top edge -- keeps nodes already near the canvas
+   * top (e.g. the value chain's User row, which has no room above it) from being pushed
+   * off-canvas; they degrade gracefully to a mostly-horizontal shift instead (see `reposition`'s
+   * `clamped` handling below). Returns `radius: 0` since the shift already bakes the node's own
+   * radius into the gap, and `clamped: true` when the vertical shift hit that floor -- i.e. there
+   * was no real room above the node to begin with.
+   */
+  private northeastPoint(pos: { x: number; y: number; radius?: number }): { x: number; y: number; radius: number; clamped: boolean } {
+    const radius = pos.radius ?? 0;
+    const rawY = pos.y - radius - SIDE_GAP;
+    return { x: pos.x + radius + SIDE_GAP, y: Math.max(rawY, 0), radius: 0, clamped: rawY < 0 };
+  }
+
+  /**
    * (re)computes the mascot's left/top from `lastPos`, then re-clamps the bubble — called by
    * `moveTo` and by every panel-content method below, since a content change (e.g. swapping in a
    * taller `showQuestion` panel) can push the bubble out of bounds just as much as the anchor
@@ -194,59 +229,60 @@ export class Mascot {
    * fixed y, so keeping the whole group's y-range off that node's row guarantees the bubble can
    * never end up in the node's path, regardless of where it's dragged along the axis. Canvas
    * containment is a secondary, best-effort concern the old code over-prioritized, which is what
-   * let a tall bubble creep back up into the node's row when the canvas was short.
+   * let a tall bubble creep back up into the node's row when the canvas was short. `"pinned"`
+   * strengthens this further still, for the one case where even that isn't enough -- see its own
+   * comment below.
    */
-  /**
-   * a point `SIDE_GAP` clear of the node's circle on both axes, clamped so the vertical shift
-   * never lifts the point above the host's own top edge -- keeps nodes already near the canvas
-   * top (e.g. the value chain's User row, which has no room above it) from being pushed
-   * off-canvas; they degrade gracefully to a mostly-horizontal shift instead (see `reposition`'s
-   * `clamped` handling below). Returns `radius: 0` since the shift already bakes the node's own
-   * radius into the gap, and `clamped: true` when the vertical shift hit that floor -- i.e. there
-   * was no real room above the node to begin with.
-   */
-  private northeastPoint(pos: { x: number; y: number; radius?: number }): { x: number; y: number; radius: number; clamped: boolean } {
-    const radius = pos.radius ?? 0;
-    const rawY = pos.y - radius - SIDE_GAP;
-    return { x: pos.x + radius + SIDE_GAP, y: Math.max(rawY, 0), radius: 0, clamped: rawY < 0 };
-  }
-
-  /**
-   * a point `SIDE_GAP` clear of the node's circle horizontally, at the node's own vertical
-   * center -- unlike `northeastPoint`, never lifted, so `reposition`'s below/above pick still
-   * applies to this (already-shifted, zero-radius) point afterward and only has to cover the
-   * small `NODE_CLEARANCE` gap, not the node's own radius again. That's what keeps this reading
-   * as "beside" rather than "below/above" for anchors with nothing on one side to avoid.
-   */
-  private eastPoint(pos: { x: number; y: number; radius?: number }): { x: number; y: number; radius: number } {
-    const radius = pos.radius ?? 0;
-    return { x: pos.x + radius + SIDE_GAP, y: pos.y, radius: 0 };
-  }
-
   private reposition(): void {
     if (!this.lastPos) return;
-    const northeast = this.placement === "northeast" ? this.northeastPoint(this.lastPos) : null;
-    const east = this.placement === "east" ? this.eastPoint(this.lastPos) : null;
-    const { x, y, radius } = northeast ?? east ?? { x: this.lastPos.x, y: this.lastPos.y, radius: this.lastPos.radius ?? 0 };
+    const shiftsSideways = this.placement === "northeast" || this.placement === "pinned";
+    const shifted = shiftsSideways ? this.northeastPoint(this.lastPos) : null;
+    let { x, y, radius } = shifted ?? { x: this.lastPos.x, y: this.lastPos.y, radius: this.lastPos.radius ?? 0 };
     const hostRect = this.host.getBoundingClientRect();
     const bubbleHeight = this.bubbleEl.getBoundingClientRect().height;
+    const groupHeight = Math.max(AVATAR_HEIGHT, bubbleHeight);
+
+    // "pinned" exists for a node that will itself be dragged along its own row afterward (the
+    // evolution axis) while the mascot stays put -- forcing "above" further down still isn't a
+    // hard guarantee on its own, since a tight row can leave the group dipping back into the
+    // node's path even once forced there (see `effectiveClearAbove`'s floor below). So this
+    // verifies *real*, unclipped room exists above the shifted anchor before ever committing to
+    // "above" -- past the host's own document position, not just past y=0 -- and falls back to
+    // the same out-of-the-way corner `moveToTopRight` uses when it doesn't, rather than planting
+    // the group somewhere the node's drag can still reach, or half off the page. That corner isn't
+    // a *perfect* guarantee either -- a row stacked this close to the canvas's own top edge (the
+    // very reason the "real room" check above failed) leaves little vertical gap between the
+    // corner and the row, so a node dragged far enough toward that corner's *side* of the axis can
+    // still brush the bubble with its own (large) radius. The alternative -- anchoring below the
+    // row instead of in the corner -- was tried and rejected: it immediately collides with
+    // whatever row sits underneath (e.g. the Capability row just below Need's), trading one
+    // guaranteed overlap for another. Same "spilling is an acceptable, secondary trade-off"
+    // philosophy as `reposition`'s canvas-containment comments elsewhere in this file.
+    let forcePinnedAbove = false;
+    if (this.placement === "pinned" && shifted && !shifted.clamped) {
+      const clearAbove = y - NODE_CLEARANCE; // shifted.radius is always 0
+      const hostDocTop = hostRect.top + window.scrollY;
+      const hasRealRoom = !Number.isFinite(hostDocTop) || clearAbove - groupHeight >= -hostDocTop;
+      if (hasRealRoom) {
+        forcePinnedAbove = true;
+      } else {
+        const corner = this.topRightPoint();
+        x = corner.x;
+        y = corner.y;
+        radius = 0;
+      }
+    }
 
     const clearBelow = y + radius + NODE_CLEARANCE; // top edge of the safe zone below the node
     const clearAbove = y - radius - NODE_CLEARANCE; // bottom edge of the safe zone above the node
-    const groupHeight = Math.max(AVATAR_HEIGHT, bubbleHeight);
 
-    // "northeast" exists specifically to escape a node whose "below" spot would land on another
-    // row underneath it -- growing the group back "below" the already-shifted anchor would grow
-    // it right back toward that same row (and, for a horizontally-draggable node, back into the
-    // node's own path as it drags through the anchor's x). Always growing "above" keeps the whole
-    // group's y-range moving further away from the node instead, the same invariant "auto" gets
-    // from picking whichever side clears the node's row. But when `northeastPoint` had no real
-    // room above the node to shift into (`clamped` -- e.g. the User node, rendered tangent to the
-    // canvas's own top edge), forcing "above" anyway pushes the whole group off-screen instead of
-    // just failing to clear the row -- fall through to the same overflow-based pick "auto" uses,
-    // which degrades to "below" for these (a mostly-horizontal shift, off to the node's side).
+    // "auto" and "northeast" pick whichever side actually has less overflow, measured against the
+    // host's real bounds, rather than a per-call-site guess. "south" forces "below" instead --
+    // for a node with side-by-side siblings and only a row *above* it to avoid, the measured pick
+    // can occasionally still gamble on "above" (a tall canvas can make "below" look like the
+    // worse overflow even with nothing actually there), which this removes entirely.
     let side: "below" | "above" = "below";
-    if (this.placement === "northeast" && !northeast!.clamped) {
+    if (forcePinnedAbove) {
       side = "above";
     } else if (this.placement !== "south" && hostRect.height) {
       const belowOverflow = Math.max(0, clearBelow + groupHeight - hostRect.height);
@@ -254,11 +290,10 @@ export class Mascot {
       if (aboveOverflow < belowOverflow) side = "above";
     }
 
-    // even when a node genuinely has *some* clearance above it (so the checks above chose or
-    // forced "above" without `northeastPoint` ever hitting its own floor), that clearance can
-    // still be shorter than `groupHeight` -- e.g. a node just far enough from the canvas top to
-    // look "clear", paired with a tall multi-line bubble. Host-local overflow past *its own*
-    // origin is normally fine (a host embedded with headroom above it -- `.wd-canvas`'s margin in
+    // even when a node genuinely has *some* clearance above it, that clearance can still be
+    // shorter than `groupHeight` -- e.g. a node just far enough from the canvas top to look
+    // "clear", paired with a tall multi-line bubble. Host-local overflow past *its own* origin is
+    // normally fine (a host embedded with headroom above it -- `.wd-canvas`'s margin in
     // index.html, a hero section's padding in preview.html -- can absorb it harmlessly), but past
     // the actual *page's* top edge there's nothing left to scroll to. Floor `clearAbove` at
     // whatever keeps the group's top on the page, using the host's real document-relative
