@@ -52,16 +52,23 @@ export async function runPhase10(ctx: ScenarioContext): Promise<void> {
     NEED_CATALOG.find((need) => need.label.toLowerCase() === needLabel.trim().toLowerCase()) ?? NEED_CATALOG[0];
 
   const capabilityCount = ctx.chain.capabilities.length;
+  const usedCapabilityLabels = new Set<string>();
   for (let i = 0; i < capabilityCount; i++) {
     const capability = ctx.chain.capabilities[i];
     const capabilityPos = demo.getNodePixelPosition(capability.id);
     if (capabilityPos) mascot.moveTo(capability.id, capabilityPos, "south");
+    // offer all three of the need's capabilities as pills (not just the one at this index),
+    // minus any already picked in an earlier slot so the same option isn't offered twice
+    const remainingCapabilities = needOption.capabilityPlaceholders.filter(
+      (label) => !usedCapabilityLabels.has(label.toLowerCase()),
+    );
     const capabilityLabel = await mascot.showField({
       type: "text",
       prompt: `What's something they depend on to get this need met? \r\n(${i + 1} of ${capabilityCount})`,
       placeholder: needOption.capabilityPlaceholders[i],
-      examples: [needOption.capabilityPlaceholders[i]],
+      examples: remainingCapabilities,
     });
+    usedCapabilityLabels.add(capabilityLabel.trim().toLowerCase());
     ctx.chain = relabelCapability(ctx.chain, capability.id, capabilityLabel);
     demo.relabelNode(capability.id, capabilityLabel);
   }
