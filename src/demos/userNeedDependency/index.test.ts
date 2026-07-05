@@ -100,7 +100,7 @@ describe("runValueChainScenario", () => {
 
     expect(mascotHost.querySelector("form")).toBeNull();
     expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe(
-      "The recipe often calls for many parts.",
+      "Our Value Chain recipe often calls for many parts.",
     );
     expect(canvas.querySelector('[data-node-id="dependency-1"] .wd-node-label')!.textContent).toBe("Part A");
     expect(canvas.querySelector('[data-node-id="dependency-2"] .wd-node-label')!.textContent).toBe("Part B");

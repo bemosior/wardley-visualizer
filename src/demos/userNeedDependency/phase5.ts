@@ -41,7 +41,7 @@ const MASCOT_CAPABILITY_GAP = 32;
 const PART_LABELS = ["Part A", "Part B", "Part C"];
 
 const MASCOT_MULTIPLE_PARTS = {
-  heading: "The recipe often calls for many parts.",
+  heading: "Our Value Chain recipe often calls for many parts.",
   subheading: "These parts come together to meet the need(s) of someone we care about.",
 };
 
