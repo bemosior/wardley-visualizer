@@ -1,6 +1,7 @@
 import type { DemoConfig, DemoConnection, DemoNode } from "./types";
 import type { EvolutionStage } from "../domain/evolution";
 import {
+  backdropSafeBottomY,
   buildFlowParticlePath,
   createAnnotation,
   createConnectionLine,
@@ -214,6 +215,7 @@ export class WardleyDemo {
   showMapBackdrop(scale: number, targetHeightPx?: number, captionText?: string): void {
     const previousWidth = this.viewBox.width;
     this.growViewBox(scale, targetHeightPx);
+    this.clearBottomLabelBand();
     this.backdropLayer.appendChild(createMapBackdrop(this.viewBox));
 
     if (captionText) {
@@ -235,6 +237,43 @@ export class WardleyDemo {
       caption.classList.remove("wd-map-caption--visible");
       setTimeout(() => caption.remove(), MAP_CAPTION_FADE_MS);
     }, MAP_CAPTION_VISIBLE_MS);
+  }
+
+  /**
+   * lifts every currently-registered node (and its connected lines) straight up, just enough that
+   * the lowest one clears `backdropSafeBottomY` — called once by `showMapBackdrop`, right before
+   * the bottom evolution-stage labels render, so a value chain laid out before Phase 20 existed
+   * (with no notion of that reserved band) doesn't end up with a node sitting on top of/against
+   * them. The shift is capped at whatever headroom the topmost node already has above the viewBox
+   * top edge, so this never pushes a fully-visible node off-screen to buy the bottom clearance; if
+   * that cap isn't enough, some residual overlap is accepted rather than clipping the top. A no-op
+   * (and no flow-particle respawn) if nothing actually overlaps the reserved band.
+   */
+  private clearBottomLabelBand(): void {
+    const safeBottom = backdropSafeBottomY(this.viewBox.height);
+    let maxBottom = -Infinity;
+    let minTop = Infinity;
+    for (const node of this.nodesById.values()) {
+      maxBottom = Math.max(maxBottom, node.y + NODE_RADIUS);
+      minTop = Math.min(minTop, node.y - NODE_RADIUS);
+    }
+    const overlap = maxBottom - safeBottom;
+    if (overlap <= 0) return;
+    const shift = Math.min(overlap, Math.max(0, minTop));
+    if (shift <= 0) return;
+
+    for (const [id, node] of this.nodesById) {
+      node.y -= shift;
+      const group = this.nodeGroups.get(id);
+      if (!group) continue;
+      const connectedLines: ConnectedLine[] = this.lines
+        .filter(({ conn }) => conn.from === id || conn.to === id)
+        .map(({ conn, el }) => ({ line: el, endpoint: conn.from === id ? "from" : "to" }));
+      setNodePosition(group, connectedLines, { x: node.x, y: node.y });
+    }
+    for (const id of this.nodesById.keys()) {
+      this.respawnFlowParticlesTouching(id);
+    }
   }
 
   /** registers a node's data and renders its group into the node layer, at its `start` position if draggable */
@@ -455,6 +494,12 @@ export class WardleyDemo {
   runEvolutionDragStep(nodeId: string, options: EvolutionDragStepOptions = {}): EvolutionDragHandle {
     const node = this.nodesById.get(nodeId)!;
     const nodeGroup = this.nodeGroups.get(nodeId)!;
+
+    // re-appending an already-attached child moves it to the end of nodeLayer's children, i.e. the
+    // top of paint order among nodes — so whichever node is currently taking its turn on the
+    // evolution axis always renders above every other node instead of being obstructed by one
+    // already placed nearby (or one still waiting its turn, added later at mount).
+    this.nodeLayer.appendChild(nodeGroup);
 
     const connectedLines: ConnectedLine[] = this.lines
       .filter(({ conn }) => conn.from === nodeId || conn.to === nodeId)
