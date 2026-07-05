@@ -93,4 +93,16 @@ describe("attachAutopilot", () => {
     expect(finalLink).not.toBeNull();
     expect(finalLink!.textContent).toBe("What's next →");
   });
+
+  it("recap: also clicks the final Next link, landing on the closing recap", async () => {
+    const onComplete = vi.fn();
+    const { mascotHost } = buildScenario("recap", { onComplete });
+    await flushAll();
+
+    expect(onComplete).toHaveBeenCalledOnce();
+    expect(mascotHost.querySelector(".wd-panel-recap")).not.toBeNull();
+    const cta = mascotHost.querySelector<HTMLAnchorElement>(".wd-panel-recap-cta");
+    expect(cta).not.toBeNull();
+    expect(cta!.textContent).toBe("Take your next step →");
+  });
 });

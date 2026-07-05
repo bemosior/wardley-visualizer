@@ -10,10 +10,11 @@ import type { WardleyDemo, EvolutionDragHandle } from "../engine/WardleyDemo";
  * `finale`: also auto-click every Phase 20 confirm-placement link, land at the placement celebration.
  * `thinking`: also click into Phase 30 and auto-pick the first option for every question, land at
  * the Phase 30 celebration (its own final "What's next →" is still left for a real click).
+ * `recap`: also click that final "What's next →" gate, land on the closing recap + CTA link.
  */
-export type SkipTarget = "phase10" | "celebrate" | "phase20" | "finale" | "thinking";
+export type SkipTarget = "phase10" | "celebrate" | "phase20" | "finale" | "thinking" | "recap";
 
-const SKIP_TARGETS: SkipTarget[] = ["phase10", "celebrate", "phase20", "finale", "thinking"];
+const SKIP_TARGETS: SkipTarget[] = ["phase10", "celebrate", "phase20", "finale", "thinking", "recap"];
 
 /** reads `?skipTo=` from a query string (e.g. `location.search`); null if absent/unrecognized */
 export function parseSkipTarget(search: string): SkipTarget | null {
@@ -35,7 +36,7 @@ export interface AutopilotOptions {
 export interface Autopilot {
   /** pass as `ValueChainScenarioOptions.onMount` — completes the Phase 0 drag instantly */
   onMount: (demo: WardleyDemo) => void;
-  /** pass as `ValueChainScenarioOptions.onEvolutionStep` — skips Phase 20 drag steps for `finale`/`thinking` */
+  /** pass as `ValueChainScenarioOptions.onEvolutionStep` — skips Phase 20 drag steps for `finale`/`thinking`/`recap` */
   onEvolutionStep?: (handle: EvolutionDragHandle) => void;
 }
 
@@ -88,25 +89,30 @@ export function attachAutopilot({ mascotHost, target }: AutopilotOptions): Autop
         // introduction gate
         link!.click();
       } else if (plainNextCount === 6) {
-        if (target === "phase20" || target === "finale" || target === "thinking") link!.click();
-        if (target !== "finale" && target !== "thinking") disconnect();
+        if (target === "phase20" || target === "finale" || target === "thinking" || target === "recap") link!.click();
+        if (target !== "finale" && target !== "thinking" && target !== "recap") disconnect();
       }
     } else if (linkText === "Nice to meet you!") {
       // Phase 7's "I'm Ben" introduction gate -- always skip past it too; `phase10` lands right
       // after, at the start of Phase 10's form
       link!.click();
       if (target === "phase10") disconnect();
-    } else if (linkText === "Confirm placement" && (target === "finale" || target === "thinking")) {
+    } else if (linkText === "Confirm placement" && (target === "finale" || target === "thinking" || target === "recap")) {
       // auto-click "Confirm placement" links that appear during Phase 20,
       // but not the finale's "What's next →" which should be left for the visitor
       link!.click();
-    } else if (linkText === "Let's get strategic →" && target === "thinking") {
+    } else if (linkText === "Let's get strategic →" && (target === "thinking" || target === "recap")) {
       // auto-click the Phase 20->30 gate, but leave Phase 30's own "What's next →" for the visitor,
       // same as `finale` leaves Phase 20's
       link!.click();
+    } else if (linkText === "What's next →" && target === "recap") {
+      // auto-click the Phase 30->Finale gate -- the one gate `thinking` leaves for the visitor --
+      // to land on the closing recap itself
+      link!.click();
+      disconnect();
     }
 
-    if (target === "thinking") {
+    if (target === "thinking" || target === "recap") {
       const option = mascotHost.querySelector<HTMLButtonElement>(".wd-panel-question-option");
       if (option) option.click();
     }
@@ -118,6 +124,8 @@ export function attachAutopilot({ mascotHost, target }: AutopilotOptions): Autop
   return {
     onMount: (demo) => demo.skipDrag(),
     onEvolutionStep:
-      target === "finale" || target === "thinking" ? (handle: EvolutionDragHandle) => handle.skipDrag() : undefined,
+      target === "finale" || target === "thinking" || target === "recap"
+        ? (handle: EvolutionDragHandle) => handle.skipDrag()
+        : undefined,
   };
 }

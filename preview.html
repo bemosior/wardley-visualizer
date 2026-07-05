@@ -93,6 +93,7 @@
           <option value="phase20">Phase 20 gate</option>
           <option value="finale">Placement finale</option>
           <option value="thinking">Thinking finale</option>
+          <option value="recap">Recap</option>
         </select>
       </label>
     </div>
@@ -114,7 +115,7 @@
       var mascotHost = document.getElementById("mascot-host-a");
 
       // Dev-only test shortcut: pick a moment from the dropdown (or load with
-      // ?skipTo=phase10|celebrate|phase20) to jump straight past earlier phases
+      // ?skipTo=phase10|celebrate|phase20|finale|thinking|recap) to jump straight past earlier phases
       // instead of replaying drag + 5 form fields + two "Next" clicks by hand.
       var skipSelect = document.getElementById("dev-skip-select");
       var skipTarget = WardleyDemo.dev.parseSkipTarget(location.search);
