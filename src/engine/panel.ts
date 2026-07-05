@@ -31,7 +31,7 @@ export type PanelField = {
   type: "text";
   prompt: string;
   placeholder?: string;
-  /** fallback suggestions rendered as clickable chips below the input; clicking one fills the input without submitting */
+  /** fallback suggestions rendered as clickable chips below the input; clicking one confirms it immediately */
   examples?: string[];
 };
 
@@ -139,8 +139,8 @@ export class Panel {
   /**
    * renders one prompt + one text input; resolves with the trimmed value once the visitor
    * submits a non-empty answer. If `field.examples` is given, also renders a row of clickable
-   * chips below the input — clicking one fills the input with that example (and focuses it)
-   * without submitting, so the visitor can still edit it before confirming.
+   * chips below the input — clicking one confirms that example immediately, resolving the
+   * field without requiring a separate submit.
    */
   showField(field: PanelField): Promise<string> {
     this.clear();
@@ -171,7 +171,7 @@ export class Panel {
           chip.textContent = example;
           chip.addEventListener("click", () => {
             input.value = example;
-            input.focus();
+            resolve(example.trim());
           });
           examples.appendChild(chip);
         }
