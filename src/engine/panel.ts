@@ -27,14 +27,13 @@ export interface PanelDragHandle {
   complete(): void;
 }
 
-export interface PanelSelectOption {
-  value: string;
-  label: string;
-}
-
-export type PanelField =
-  | { type: "select"; prompt: string; options: PanelSelectOption[] }
-  | { type: "text"; prompt: string; placeholder?: string };
+export type PanelField = {
+  type: "text";
+  prompt: string;
+  placeholder?: string;
+  /** fallback suggestions rendered as clickable chips below the input; clicking one fills the input without submitting */
+  examples?: string[];
+};
 
 /**
  * a single region that swaps between interaction modes as the tutorial
@@ -137,7 +136,12 @@ export class Panel {
     };
   }
 
-  /** renders one prompt + one input; resolves with the trimmed value once the visitor submits a non-empty answer */
+  /**
+   * renders one prompt + one text input; resolves with the trimmed value once the visitor
+   * submits a non-empty answer. If `field.examples` is given, also renders a row of clickable
+   * chips below the input — clicking one fills the input with that example (and focuses it)
+   * without submitting, so the visitor can still edit it before confirming.
+   */
   showField(field: PanelField): Promise<string> {
     this.clear();
     return new Promise((resolve) => {
@@ -149,24 +153,30 @@ export class Panel {
       prompt.textContent = field.prompt;
       form.appendChild(prompt);
 
-      const input: HTMLSelectElement | HTMLInputElement =
-        field.type === "select" ? document.createElement("select") : document.createElement("input");
+      const input = document.createElement("input");
+      input.type = "text";
       input.classList.add("wd-panel-form-input");
-
-      if (field.type === "select") {
-        for (const option of field.options) {
-          const optionEl = document.createElement("option");
-          optionEl.value = option.value;
-          optionEl.textContent = option.label;
-          input.appendChild(optionEl);
-        }
-      } else {
-        (input as HTMLInputElement).type = "text";
-        if (field.placeholder) {
-          (input as HTMLInputElement).placeholder = field.placeholder;
-        }
+      if (field.placeholder) {
+        input.placeholder = field.placeholder;
       }
       form.appendChild(input);
+
+      if (field.examples?.length) {
+        const examples = document.createElement("div");
+        examples.classList.add("wd-panel-form-examples");
+        for (const example of field.examples) {
+          const chip = document.createElement("button");
+          chip.type = "button";
+          chip.classList.add("wd-panel-form-example");
+          chip.textContent = example;
+          chip.addEventListener("click", () => {
+            input.value = example;
+            input.focus();
+          });
+          examples.appendChild(chip);
+        }
+        form.appendChild(examples);
+      }
 
       const submit = document.createElement("button");
       submit.type = "submit";
@@ -182,9 +192,7 @@ export class Panel {
       });
 
       this.container.appendChild(form);
-      if (field.type !== "select") {
-        (input as HTMLInputElement).focus();
-      }
+      input.focus();
     });
   }
 
