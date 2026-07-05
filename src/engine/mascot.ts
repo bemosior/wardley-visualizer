@@ -179,6 +179,7 @@ export class Mascot {
     this.anchoredToCorner = true;
     this.viewBoxAnchor = null;
     this.lastPos = this.topRightPoint();
+    this.lastPos.y = this.lastPos.y - 50;
     this.placement = "auto";
     this.reposition();
     this.scrollIntoViewIfNeeded();
