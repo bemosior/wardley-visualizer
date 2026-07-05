@@ -77,7 +77,7 @@ export function attachAutopilot({ mascotHost, target }: AutopilotOptions): Autop
     const form = mascotHost.querySelector<HTMLFormElement>(".wd-panel-form");
     if (form) fillAndSubmit(form);
 
-    const link = mascotHost.querySelector<HTMLAnchorElement>(".wd-next-link");
+    const link = mascotHost.querySelector<HTMLButtonElement>(".wd-next-link");
     const linkText = link?.textContent?.trim();
 
     if (linkText === "Next") {

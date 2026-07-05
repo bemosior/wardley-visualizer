@@ -32,7 +32,7 @@ describe("showNextLink", () => {
     const container = makeContainer();
     const result = showNextLink(container);
 
-    container.querySelector<HTMLAnchorElement>(".wd-next-link")!.click();
+    container.querySelector<HTMLButtonElement>(".wd-next-link")!.click();
     await result;
 
     expect(container.querySelector(".wd-next-link")).toBeNull();

@@ -29,7 +29,7 @@ function submitSelect(mascotHost: HTMLElement, value: string): void {
 
 /** every gate/confirm link (every "Next" click point in the scenario) renders inside the mascot's own speech bubble */
 function clickNext(mascotHost: HTMLElement): void {
-  mascotHost.querySelector<HTMLAnchorElement>(".wd-next-link")!.click();
+  mascotHost.querySelector<HTMLButtonElement>(".wd-next-link")!.click();
 }
 
 function buildScenario(onCelebrate: () => void) {
@@ -291,7 +291,7 @@ describe("runValueChainScenario", () => {
     drag(canvas.querySelector('[data-node-id="need"]')!, { x: 150, y: 76 });
     await flush();
 
-    const confirmLink = mascotHost.querySelector<HTMLAnchorElement>(".wd-next-link");
+    const confirmLink = mascotHost.querySelector<HTMLButtonElement>(".wd-next-link");
     expect(confirmLink).not.toBeNull();
     expect(confirmLink!.textContent).toBe("Confirm placement");
     vi.useRealTimers();
@@ -472,7 +472,7 @@ describe("runValueChainScenario", () => {
     await flush();
     expect(canvas.querySelectorAll(".wd-annotation").length).toBe(3);
 
-    const finalLink = mascotHost.querySelector<HTMLAnchorElement>(".wd-next-link")!;
+    const finalLink = mascotHost.querySelector<HTMLButtonElement>(".wd-next-link")!;
     expect(finalLink.textContent).toBe("What's next →");
     finalLink.click();
     await flush();

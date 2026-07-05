@@ -289,7 +289,7 @@ describe("Mascot delegation to the composed Panel", () => {
     mascot.showPlaceholder("Wardley Map", "All placed!");
 
     const result = mascot.confirmPlacement("Let's think about it →");
-    host.querySelector<HTMLAnchorElement>(".wd-next-link")!.click();
+    host.querySelector<HTMLButtonElement>(".wd-next-link")!.click();
 
     await expect(result).resolves.toBeUndefined();
   });

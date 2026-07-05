@@ -410,16 +410,24 @@ const CSS = `
 
 .wd-next-link {
   display: block;
+  width: 100%;
+  box-sizing: border-box;
   font-family: var(--wd-font-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   line-height: 1.3rem;
-  color: var(--wd-color-link, #005f99);
-  text-decoration: underline;
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--wd-color-link, #005f99);
+  border-radius: 8px;
+  background: var(--wd-color-link, #005f99);
+  color: #fff;
+  text-decoration: none;
+  text-align: center;
   cursor: pointer;
 }
 
 .wd-next-link:hover {
-  color: var(--wd-color-link-hover, #003d6b);
+  background: var(--wd-color-link-hover, #003d6b);
+  border-color: var(--wd-color-link-hover, #003d6b);
 }
 
 .wd-panel-placeholder .wd-next-link {

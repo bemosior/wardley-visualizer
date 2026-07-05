@@ -1,26 +1,26 @@
 import { injectStylesOnce } from "./styles";
 
 /**
- * renders a small "Next" link (or `label`, if given) into `container`;
- * resolves once the visitor clicks it, then removes the link. Used to gate a
- * step transition behind a deliberate action instead of a guessed timer.
+ * renders a big "Next" button (or `label`, if given) into `container`; resolves once the visitor
+ * clicks it, then removes the button. Used to gate a step transition behind a deliberate action
+ * instead of a guessed timer. Same filled-button treatment as Phase 10's field-submit button
+ * (`.wd-panel-form-submit`), since both are "confirm and move on" actions.
  */
 export function showNextLink(container: HTMLElement, label = "Next"): Promise<void> {
   injectStylesOnce();
   return new Promise((resolve) => {
-    const link = document.createElement("a");
-    link.href = "#";
-    link.classList.add("wd-next-link");
-    link.textContent = label;
-    link.addEventListener(
+    const button = document.createElement("button");
+    button.type = "button";
+    button.classList.add("wd-next-link");
+    button.textContent = label;
+    button.addEventListener(
       "click",
-      (event) => {
-        event.preventDefault();
-        link.remove();
+      () => {
+        button.remove();
         resolve();
       },
       { once: true },
     );
-    container.appendChild(link);
+    container.appendChild(button);
   });
 }

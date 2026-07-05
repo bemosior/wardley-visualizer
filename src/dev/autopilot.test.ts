@@ -79,7 +79,7 @@ describe("attachAutopilot", () => {
     await flushAll();
 
     expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Wardley Map");
-    const gateLink = mascotHost.querySelector<HTMLAnchorElement>(".wd-next-link");
+    const gateLink = mascotHost.querySelector<HTMLButtonElement>(".wd-next-link");
     expect(gateLink).not.toBeNull();
     expect(gateLink!.textContent).toBe("Let's think about it →");
   });
@@ -89,7 +89,7 @@ describe("attachAutopilot", () => {
     await flushAll();
 
     expect(canvas.querySelectorAll(".wd-annotation").length).toBe(3);
-    const finalLink = mascotHost.querySelector<HTMLAnchorElement>(".wd-next-link");
+    const finalLink = mascotHost.querySelector<HTMLButtonElement>(".wd-next-link");
     expect(finalLink).not.toBeNull();
     expect(finalLink!.textContent).toBe("What's next →");
   });
