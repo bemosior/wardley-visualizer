@@ -398,6 +398,21 @@ describe("Mascot delegation to the composed Panel", () => {
     expect(await result).toEqual(question.options[1]);
   });
 
+  it("showGate renders the prompt/subtitle/options and resolves with the clicked option's id", async () => {
+    const host = makeHost();
+    const mascot = new Mascot(host);
+    mascot.mount();
+
+    const result = mascot.showGate("Could exploring bias with A kettle teach us something?", "Keep going!", [
+      { id: "yes", label: "Yes" },
+      { id: "no", label: "No" },
+    ]);
+    const buttons = host.querySelectorAll<HTMLButtonElement>(".wd-panel-question-option");
+    buttons[0].click();
+
+    expect(await result).toBe("yes");
+  });
+
   it("showRecap renders the CTA link", () => {
     const host = makeHost();
     const mascot = new Mascot(host);

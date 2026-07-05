@@ -58,7 +58,7 @@ Four layers, strict one-way dependency (lower layers know nothing about higher o
       handing off to Phase 10's form.
     - `phase10.ts` — the 5-step personalization form (user → need → 3 capabilities), relabeling both the domain chain and the rendered nodes as each answer comes in.
     - `phase20.ts` — the map backdrop and the evolution-axis drag/confirm loop (Need, then Capability-1/2/3); owns the private `awaitEvolutionConfirm` helper shared by that loop.
-    - `phase30.ts` — the Q&A loop (bias-check, build/buy/outsource, one pool question), annotating each capability on the map.
+    - `phase30.ts` — walks `domain/conceptBank.ts`'s `CONCEPT_BANK` against candidate nodes on the map, gating each (concept, node) pairing behind a Yes/No/"Try something else" question before digging into the concept's deep-dive multiple-choice question and annotating the map; a "Done" option appears once 3 concepts have settled.
     - `finale.ts` — the closing recap + CTA link.
     - `index.test.ts` — end-to-end integration tests driving the whole scenario through `runValueChainScenario`; kept as one file (not split per phase) since most tests depend on state built up by earlier phases.
 
@@ -88,18 +88,26 @@ Four layers, strict one-way dependency (lower layers know nothing about higher o
       are no longer called by `userNeedDependency.ts` — nothing currently uses them.
       below, since this leans toward more guidance, not less.
 
-## Phase 30 — Thinking with the map (not started; needs new abstractions)
+## Phase 30 — Thinking with the map (done, concept-bank rework 2026-07-05)
 
-Goal: Toolbox becomes a Q&A panel. Three questions in sequence, each anchored
-to a capability, each answer rendered as a map annotation near that capability.
+Goal: the mascot walks a curated bank of climate/doctrine/leadership concepts
+(`domain/conceptBank.ts`'s `CONCEPT_BANK`) against candidate nodes on the map,
+each restricted to the node kinds it meaningfully applies to
+(`Concept.applicableKinds`, resolved via `candidateNodesForConcept`). For each
+(concept, node) pairing, `Panel.showGate`/`Mascot.showGate` asks "Could
+exploring {concept} with {node} teach us something?" (subtitle "Choosing is
+how you learn!" on the very first gate of the phase, "Keep going!" after) with
+Yes/No plus a "Try something else" shuffle (jumps to a random other
+unresolved pairing) and, once at least 3 concepts have settled, a "Done"
+option. Yes opens the concept's fixed deep-dive multiple-choice question
+(unchanged `Panel.showQuestion`), and the chosen answer's `annotation` is
+anchored to the map via `WardleyDemo.addAnnotation`. See `phase30.ts`'s own
+doc comment for the full settle/shuffle/done bookkeeping.
 
-New pieces needed, not yet present:
-- **Q&A Panel mode.** Another new `Panel` method (e.g. `showQuestion(...)`), parallel to `showField` but for the question→annotate flow described in the forecast (bias-check question, build/buy/outsource question, then a repeatable "random question" picker).
-- **Question bank module.** `src/domain/questionBank.ts` or similar, shaped like `needCatalog.ts`'s `{id, label}` pattern — the forecast explicitly anticipated reusing that shape here.
-- **Map annotation rendering.** Nothing currently renders free text near a node on the map. New `render.ts` factory (e.g. `createAnnotation(node, text)`) plus placement logic to avoid overlapping the node/backdrop from Phase 20.
-- **"Random question, re-roll until you like it" UI.** A button in the Q&A panel mode that re-picks before the visitor commits an answer — straightforward once the Q&A mode and question bank exist.
-
-This phase is entirely downstream of Phase 20's map backdrop existing (annotations are positioned relative to it), so don't start scoping it precisely until Phase 20 lands.
+This replaced the original fixed 3-question design (Capability-1 always
+bias-check, Capability-2 always build/buy/outsource, Capability-3 a
+re-rollable random pool question) — the pool/reroll mechanic is gone,
+superseded by the gate's node-cycling and shuffle.
 
 ## Feedback-driven TODOs (from `feedback/` playtests, 2026-07-03)
 

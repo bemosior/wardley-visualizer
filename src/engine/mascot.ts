@@ -1,4 +1,4 @@
-import { Panel, type EvolutionKind, type PanelDragSlot, type PanelDragHandle, type PanelField } from "./panel";
+import { Panel, type EvolutionKind, type GateOption, type PanelDragSlot, type PanelDragHandle, type PanelField } from "./panel";
 import { createMascotAvatar, type MascotState } from "./mascotAvatar";
 import type { WardleyDemo } from "./WardleyDemo";
 import type { EvolutionStage } from "../domain/evolution";
@@ -81,9 +81,14 @@ export type MascotPlacement = "auto" | "northeast" | "south" | "pinned";
  * it mounts (Phase 0's drag affordance) through the closing recap. Composes a `Panel` pointed
  * at a floating, node-anchored bubble instead of a fixed sidebar, so every render method below
  * is a thin delegation to that `Panel`, reusing its already-tested rendering logic (drag-handle/
- * form/instrument-panel/question/recap markup, `.wd-panel-form`/`.wd-next-link`/
+ * form/instrument-panel/gate/question/recap markup, `.wd-panel-form`/`.wd-next-link`/
  * `.wd-panel-question-option` classes) verbatim rather than reimplementing it — this also keeps
  * `src/dev/autopilot.ts`'s existing class-name selectors working unchanged against the bubble.
+ * `showGate`'s Yes/No/shuffle/Done buttons deliberately render with the same
+ * `wd-panel-question-option` class `showQuestion`'s answer buttons use (not a distinct class) so
+ * that reuse holds for Phase 30 too — autopilot's `?skipTo=thinking`/`?skipTo=recap` shortcuts just
+ * click the first `.wd-panel-question-option` on every render, which lands on "Yes" at every gate
+ * and drains the whole concept bank without any Phase-30-specific autopilot code.
  *
  * `demo` is attached via `attachDemo` rather than passed to the constructor: Phase 0's drag step
  * needs the mascot's rendered drag-slot element to exist *before* `WardleyDemo.mount()` is called
@@ -493,9 +498,16 @@ export class Mascot {
     return result;
   }
 
-  showQuestion(heading: string, question: Question, options?: { onReroll?: () => Question }): Promise<QuestionOption> {
+  showQuestion(heading: string, question: Question): Promise<QuestionOption> {
     this.talk();
-    const result = this.panel.showQuestion(heading, question, options);
+    const result = this.panel.showQuestion(heading, question);
+    this.reposition();
+    return result;
+  }
+
+  showGate(prompt: string, subtitle: string, options: GateOption[]): Promise<string> {
+    this.talk();
+    const result = this.panel.showGate(prompt, subtitle, options);
     this.reposition();
     return result;
   }

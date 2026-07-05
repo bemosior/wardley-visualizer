@@ -96,11 +96,14 @@ describe("attachAutopilot", () => {
     expect(gateLink!.textContent).toBe("Next");
   });
 
-  it("thinking: also clicks into Phase 30 and auto-picks an option for every question, stopping before the finale's own Next link", async () => {
+  it("thinking: also clicks into Phase 30 and auto-picks the first option at every gate and question, stopping before the finale's own Next link", async () => {
     const { canvas, mascotHost } = buildScenario("thinking");
     await flushAll();
 
-    expect(canvas.querySelectorAll(".wd-annotation").length).toBe(3);
+    // "Yes" is always the first `.wd-panel-question-option`, both at each concept's gate and its
+    // deep-dive question, so autopilot says Yes to every one of CONCEPT_BANK's 7 concepts and
+    // drains the whole bank, landing one annotation per concept rather than stopping early
+    expect(canvas.querySelectorAll(".wd-annotation").length).toBe(7);
     const finalLink = mascotHost.querySelector<HTMLButtonElement>(".wd-next-link");
     expect(finalLink).not.toBeNull();
     expect(finalLink!.textContent).toBe("What's next →");

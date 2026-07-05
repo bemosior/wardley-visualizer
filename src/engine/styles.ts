@@ -559,11 +559,6 @@ const CSS = `
   background: #f0f7ff;
 }
 
-.wd-panel-question-reroll {
-  text-align: center;
-  margin-top: 0.75rem;
-}
-
 .wd-panel-form {
   display: flex;
   flex-direction: column;

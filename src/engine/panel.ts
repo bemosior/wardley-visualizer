@@ -27,6 +27,11 @@ export interface PanelDragHandle {
   complete(): void;
 }
 
+export interface GateOption {
+  id: string;
+  label: string;
+}
+
 export type PanelField = {
   type: "text";
   prompt: string;
@@ -41,8 +46,10 @@ export type PanelField = {
  * pointed at its speech bubble and is the sole renderer of every mode below.
  * Today: drag-handle (pick up a node), form (answer one prompt at a time),
  * instrument-panel (live evolution-stage characteristics readout, Phase 20),
- * and question (multiple-choice doctrine prompt with an optional reroll,
- * Phase 30).
+ * gate (Yes/No/shuffle/Done prompt deciding whether to explore a concept
+ * against a node, Phase 30), and question (the concept's multiple-choice
+ * deep-dive, Phase 30). Gate and question buttons deliberately share the
+ * `wd-panel-question-option` class — see `Mascot`'s doc comment for why.
  */
 export class Panel {
   private container: HTMLElement;
@@ -280,56 +287,77 @@ export class Panel {
   }
 
   /**
-   * renders `heading` (the capability's label) + `question.prompt`, then one button per
-   * `question.options`; resolves with the chosen option once clicked. If `onReroll` is given, also
-   * renders a "Try a different question" link — clicking it calls `onReroll()` for a replacement
-   * `Question` and re-renders in place, without resolving the returned promise.
+   * renders `heading` (the node's label) + `question.prompt`, then one button per
+   * `question.options`; resolves with the chosen option once clicked.
    */
-  showQuestion(heading: string, question: Question, options?: { onReroll?: () => Question }): Promise<QuestionOption> {
+  showQuestion(heading: string, question: Question): Promise<QuestionOption> {
+    this.clear();
     return new Promise((resolve) => {
-      const render = (q: Question) => {
-        this.clear();
-        const content = document.createElement("div");
-        content.classList.add("wd-panel-content", "wd-panel-content--top", "wd-panel-question");
+      const content = document.createElement("div");
+      content.classList.add("wd-panel-content", "wd-panel-content--top", "wd-panel-question");
 
-        const headingEl = document.createElement("div");
-        headingEl.classList.add("wd-panel-placeholder-heading");
-        headingEl.textContent = heading;
-        content.appendChild(headingEl);
+      const headingEl = document.createElement("div");
+      headingEl.classList.add("wd-panel-placeholder-heading");
+      headingEl.textContent = heading;
+      content.appendChild(headingEl);
 
-        const promptEl = document.createElement("div");
-        promptEl.classList.add("wd-panel-question-prompt");
-        promptEl.textContent = q.prompt;
-        content.appendChild(promptEl);
+      const promptEl = document.createElement("div");
+      promptEl.classList.add("wd-panel-question-prompt");
+      promptEl.textContent = question.prompt;
+      content.appendChild(promptEl);
 
-        const optionList = document.createElement("div");
-        optionList.classList.add("wd-panel-question-options");
-        for (const option of q.options) {
-          const button = document.createElement("button");
-          button.type = "button";
-          button.classList.add("wd-panel-question-option");
-          button.textContent = option.label;
-          button.addEventListener("click", () => resolve(option));
-          optionList.appendChild(button);
-        }
-        content.appendChild(optionList);
+      const optionList = document.createElement("div");
+      optionList.classList.add("wd-panel-question-options");
+      for (const option of question.options) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.classList.add("wd-panel-question-option");
+        button.textContent = option.label;
+        button.addEventListener("click", () => resolve(option));
+        optionList.appendChild(button);
+      }
+      content.appendChild(optionList);
 
-        if (options?.onReroll) {
-          const reroll = document.createElement("a");
-          reroll.href = "#";
-          reroll.classList.add("wd-next-link", "wd-panel-question-reroll");
-          reroll.textContent = "Try a different question";
-          reroll.addEventListener("click", (event) => {
-            event.preventDefault();
-            render(options.onReroll!());
-          });
-          content.appendChild(reroll);
-        }
+      this.container.appendChild(content);
+    });
+  }
 
-        this.container.appendChild(content);
-      };
+  /**
+   * renders `prompt` + `subtitle`, then one button per `option` (plain string ids, unlike
+   * `showQuestion`'s `QuestionOption`+`annotation` — a gate's Yes/No/shuffle/Done choices don't
+   * carry a map annotation of their own); resolves with the chosen option's `id` once clicked.
+   * Used by Phase 30 to ask "Could exploring {concept} with {node} teach us something?" before
+   * committing to a concept's deep-dive `showQuestion`.
+   */
+  showGate(prompt: string, subtitle: string, options: GateOption[]): Promise<string> {
+    this.clear();
+    return new Promise((resolve) => {
+      const content = document.createElement("div");
+      content.classList.add("wd-panel-content", "wd-panel-content--top", "wd-panel-gate");
 
-      render(question);
+      const promptEl = document.createElement("div");
+      promptEl.classList.add("wd-panel-question-prompt");
+      promptEl.textContent = prompt;
+      content.appendChild(promptEl);
+
+      const subtitleEl = document.createElement("div");
+      subtitleEl.classList.add("wd-panel-placeholder-subheading");
+      subtitleEl.textContent = subtitle;
+      content.appendChild(subtitleEl);
+
+      const optionList = document.createElement("div");
+      optionList.classList.add("wd-panel-question-options");
+      for (const option of options) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.classList.add("wd-panel-question-option");
+        button.textContent = option.label;
+        button.addEventListener("click", () => resolve(option.id));
+        optionList.appendChild(button);
+      }
+      content.appendChild(optionList);
+
+      this.container.appendChild(content);
     });
   }
 
