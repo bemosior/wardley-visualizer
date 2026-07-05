@@ -48,7 +48,7 @@ export async function runPhase10(ctx: ScenarioContext): Promise<void> {
   for (let i = 0; i < capabilityCount; i++) {
     const capability = ctx.chain.capabilities[i];
     const capabilityPos = demo.getNodePixelPosition(capability.id);
-    if (capabilityPos) mascot.moveTo(capability.id, capabilityPos);
+    if (capabilityPos) mascot.moveTo(capability.id, capabilityPos, "south");
     const capabilityLabel = await mascot.showField({
       type: "text",
       prompt: `What's something they depend on to get this need met? \r\n(${i + 1} of ${capabilityCount})`,
