@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { runValueChainScenario } from "./index";
 import { MAP_CAPTION_FADE_MS } from "../../engine/WardleyDemo";
 import { NEED_CATALOG } from "../../domain/needCatalog";
-import { BIAS_CHECK_QUESTION, BUILD_BUY_OUTSOURCE_QUESTION, QUESTION_POOL } from "../../domain/questionBank";
+import { BIAS_CHECK_QUESTION } from "../../domain/questionBank";
 
 function drag(handle: Element, to: { x: number; y: number }): void {
   handle.dispatchEvent(new PointerEvent("pointerdown", { clientX: 0, clientY: 0, pointerId: 1 }));
@@ -396,16 +396,21 @@ describe("runValueChainScenario", () => {
       "Thinking strategically with a Wardley Map",
     );
 
-    // Phase 25's own confirm link starts Phase 30's Q&A
+    // Phase 25's own confirm link starts Phase 30's Q&A, opening on the first concept/node gate
     clickNext(mascotHost);
     await flush();
 
     expect(resolved).toBe(false);
-    expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(BIAS_CHECK_QUESTION.prompt);
+    expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(
+      "Could exploring novelty bias with A kettle teach us something?",
+    );
+    expect(mascotHost.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe(
+      "Choosing is how you learn!",
+    );
     vi.useRealTimers();
   });
 
-  /** walks placement through the Phase 20->25->30 gates, landing on Capability 1's bias-check question */
+  /** walks placement through the Phase 20->25->30 gates, landing on the first concept/node gate ("novelty bias" x Capability 1) */
   async function reachThinkingStep(canvas: HTMLElement, mascotHost: HTMLElement): Promise<void> {
     await reachEvolutionStep(canvas, mascotHost);
     await confirmEvolutionStep(canvas, mascotHost, "need", 150, 76);
@@ -422,31 +427,74 @@ describe("runValueChainScenario", () => {
     mascotHost.querySelectorAll<HTMLButtonElement>(".wd-panel-question-option")[index].click();
   }
 
-  it("asks the bias-check question for Capability 1, the build/buy/outsource question for Capability 2, and a pool question for Capability 3", async () => {
+  /** gate buttons always render Yes/No/"Try something else" in that order, with "Done" appended once eligible */
+  function clickYes(mascotHost: HTMLElement): void {
+    clickOption(mascotHost, 0);
+  }
+  function clickNo(mascotHost: HTMLElement): void {
+    clickOption(mascotHost, 1);
+  }
+  function clickShuffle(mascotHost: HTMLElement): void {
+    clickOption(mascotHost, 2);
+  }
+  function optionLabels(mascotHost: HTMLElement): (string | null)[] {
+    return Array.from(mascotHost.querySelectorAll<HTMLButtonElement>(".wd-panel-question-option")).map(
+      (b) => b.textContent,
+    );
+  }
+
+  it("shows a gate for the first concept/node pairing, offering only Yes/No/Try something else, and switches the subtitle to 'Keep going!' after a No", async () => {
     vi.useFakeTimers();
     const canvas = document.createElement("div");
     const mascotHost = document.createElement("div");
     document.body.append(canvas, mascotHost);
     runValueChainScenario({ canvas, mascotHost });
     await reachThinkingStep(canvas, mascotHost);
+
+    expect(mascotHost.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe(
+      "Choosing is how you learn!",
+    );
+    expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(
+      "Could exploring novelty bias with A kettle teach us something?",
+    );
+    expect(optionLabels(mascotHost)).toEqual(["Yes", "No", "Try something else"]);
+
+    clickNo(mascotHost);
+    await flush();
+
+    expect(mascotHost.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe("Keep going!");
+    expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(
+      "Could exploring novelty bias with Water teach us something?",
+    );
+    vi.useRealTimers();
+  });
+
+  it("answering Yes opens that concept's deep-dive question, and answering it anchors an annotation and advances to the next concept's gate", async () => {
+    vi.useFakeTimers();
+    const canvas = document.createElement("div");
+    const mascotHost = document.createElement("div");
+    document.body.append(canvas, mascotHost);
+    runValueChainScenario({ canvas, mascotHost });
+    await reachThinkingStep(canvas, mascotHost);
+
+    clickYes(mascotHost);
+    await flush();
 
     expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("A kettle");
     expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(BIAS_CHECK_QUESTION.prompt);
 
     clickOption(mascotHost);
     await flush();
-    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Water");
-    expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(BUILD_BUY_OUTSOURCE_QUESTION.prompt);
 
-    clickOption(mascotHost);
-    await flush();
-    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Electricity");
-    const poolPrompts = QUESTION_POOL.map((q) => q.prompt);
-    expect(poolPrompts).toContain(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent);
+    expect(canvas.querySelectorAll(".wd-annotation").length).toBe(1);
+    // next concept in the bank ("using the right methods") re-opens on the same first candidate node
+    expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(
+      "Could exploring using the right methods with A kettle teach us something?",
+    );
     vi.useRealTimers();
   });
 
-  it("rerolls to a different question for Capability 3 without advancing, then commits on an option click", async () => {
+  it("'Try something else' always jumps to a different pairing than the one just shown", async () => {
     vi.useFakeTimers();
     const canvas = document.createElement("div");
     const mascotHost = document.createElement("div");
@@ -454,29 +502,16 @@ describe("runValueChainScenario", () => {
     runValueChainScenario({ canvas, mascotHost });
     await reachThinkingStep(canvas, mascotHost);
 
-    clickOption(mascotHost);
-    await flush();
-    clickOption(mascotHost);
-    await flush();
-
-    const firstPrompt = mascotHost.querySelector(".wd-panel-question-prompt")!.textContent;
-    const reroll = mascotHost.querySelector<HTMLAnchorElement>(".wd-panel-question-reroll")!;
-    expect(reroll).not.toBeNull();
-    reroll.click();
-    await flush();
-
-    expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).not.toBe(firstPrompt);
-    // still Capability 3's question — rerolling doesn't advance to the finale
-    expect(mascotHost.querySelector(".wd-panel-question-prompt")).not.toBeNull();
-
-    clickOption(mascotHost);
-    await flush();
-
-    expect(mascotHost.querySelector(".wd-panel-question-prompt")).toBeNull();
+    for (let i = 0; i < 5; i++) {
+      const before = mascotHost.querySelector(".wd-panel-question-prompt")!.textContent;
+      clickShuffle(mascotHost);
+      await flush();
+      expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).not.toBe(before);
+    }
     vi.useRealTimers();
   });
 
-  it("anchors a callout to each capability's node as its question is answered, then celebrates and resolves on the final Next click", async () => {
+  it("anchors an annotation for each concept explored via Yes, offers Done only once 3 concepts have settled, and celebrates + resolves once Done then the final Next is clicked", async () => {
     vi.useFakeTimers();
     const canvas = document.createElement("div");
     const mascotHost = document.createElement("div");
@@ -487,17 +522,27 @@ describe("runValueChainScenario", () => {
     });
     await reachThinkingStep(canvas, mascotHost);
 
-    clickOption(mascotHost);
-    await flush();
+    const settleCurrentConceptWithYes = async () => {
+      clickYes(mascotHost);
+      await flush();
+      clickOption(mascotHost);
+      await flush();
+    };
+
+    await settleCurrentConceptWithYes();
     expect(canvas.querySelectorAll(".wd-annotation").length).toBe(1);
+    expect(optionLabels(mascotHost)).not.toContain("Done");
 
-    clickOption(mascotHost);
-    await flush();
+    await settleCurrentConceptWithYes();
     expect(canvas.querySelectorAll(".wd-annotation").length).toBe(2);
+    expect(optionLabels(mascotHost)).not.toContain("Done");
 
-    clickOption(mascotHost);
-    await flush();
+    await settleCurrentConceptWithYes();
     expect(canvas.querySelectorAll(".wd-annotation").length).toBe(3);
+    expect(optionLabels(mascotHost)).toContain("Done");
+
+    clickOption(mascotHost, optionLabels(mascotHost).indexOf("Done"));
+    await flush();
 
     const finalLink = mascotHost.querySelector<HTMLButtonElement>(".wd-next-link")!;
     expect(finalLink.textContent).toBe("What's next →");

@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   BIAS_CHECK_QUESTION,
   BUILD_BUY_OUTSOURCE_QUESTION,
-  pickRandomQuestion,
-  QUESTION_POOL,
+  DIFFERENTIATION_QUESTION,
+  HOW_NEEDS_EVOLVE_QUESTION,
+  INERTIA_QUESTION,
+  METHOD_QUESTION,
+  SHARED_PURPOSE_QUESTION,
   type Question,
 } from "./questionBank";
 
@@ -26,28 +29,22 @@ describe("BUILD_BUY_OUTSOURCE_QUESTION", () => {
   it("is a well-formed question", () => expectValidQuestion(BUILD_BUY_OUTSOURCE_QUESTION));
 });
 
-describe("QUESTION_POOL", () => {
-  it("has more than one question, so a reroll always has something to switch to", () => {
-    expect(QUESTION_POOL.length).toBeGreaterThan(1);
-  });
-
-  it("every question is well-formed and has a unique id", () => {
-    QUESTION_POOL.forEach(expectValidQuestion);
-    const ids = QUESTION_POOL.map((q) => q.id);
-    expect(new Set(ids).size).toBe(ids.length);
-  });
+describe("INERTIA_QUESTION", () => {
+  it("is a well-formed question", () => expectValidQuestion(INERTIA_QUESTION));
 });
 
-describe("pickRandomQuestion", () => {
-  it("returns a question from the pool", () => {
-    const question = pickRandomQuestion();
-    expect(QUESTION_POOL).toContainEqual(question);
-  });
+describe("DIFFERENTIATION_QUESTION", () => {
+  it("is a well-formed question", () => expectValidQuestion(DIFFERENTIATION_QUESTION));
+});
 
-  it("never returns the excluded question, across repeated draws", () => {
-    const excludeId = QUESTION_POOL[0].id;
-    for (let i = 0; i < 25; i++) {
-      expect(pickRandomQuestion(excludeId).id).not.toBe(excludeId);
-    }
-  });
+describe("METHOD_QUESTION", () => {
+  it("is a well-formed question", () => expectValidQuestion(METHOD_QUESTION));
+});
+
+describe("HOW_NEEDS_EVOLVE_QUESTION", () => {
+  it("is a well-formed question", () => expectValidQuestion(HOW_NEEDS_EVOLVE_QUESTION));
+});
+
+describe("SHARED_PURPOSE_QUESTION", () => {
+  it("is a well-formed question", () => expectValidQuestion(SHARED_PURPOSE_QUESTION));
 });

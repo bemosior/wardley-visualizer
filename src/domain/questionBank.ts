@@ -12,7 +12,7 @@ export interface Question {
   options: QuestionOption[];
 }
 
-/** Phase 30's first question, anchored to Capability 1 — checks for the classic anchoring/novelty bias. */
+/** the "novelty bias" doctrine concept's deep-dive question — checks for the classic anchoring/novelty bias. */
 export const BIAS_CHECK_QUESTION: Question = {
   id: "bias-check",
   prompt: "Look at where you placed this — are you treating it as more novel or bespoke than that position suggests?",
@@ -35,7 +35,7 @@ export const BIAS_CHECK_QUESTION: Question = {
   ],
 };
 
-/** Phase 30's second question, anchored to Capability 2 — build vs buy vs outsource doctrine. */
+/** the "build vs. buy vs. outsource" leadership concept's deep-dive question. */
 export const BUILD_BUY_OUTSOURCE_QUESTION: Question = {
   id: "build-buy-outsource",
   prompt: "Given where this sits on the map, how should you treat it?",
@@ -58,39 +58,56 @@ export const BUILD_BUY_OUTSOURCE_QUESTION: Question = {
   ],
 };
 
-/** pool for Phase 30's third question, anchored to Capability 3 — re-rollable via `pickRandomQuestion`. */
-export const QUESTION_POOL: Question[] = [
-  {
-    id: "inertia",
-    prompt: "Is anything — habit, a contract, sunk cost — holding us back from adapting to change here?",
-    options: [
-      { id: "no-inertia", label: "No — we adapt readily, without extra friction.", annotation: "No inertia" },
-      { id: "org-habit", label: "Yes — the team keeps treating it the way it's always been treated, regardless of where it's actually moved.", annotation: "Watch: org habit" },
-      { id: "contract-lockin", label: "Yes — an existing contract or vendor relationship locks in how we treat it.", annotation: "Watch: contract lock-in" },
-      { id: "sunk-cost-inertia", label: "Yes — we've invested too much in the old approach to change course now, even though the situation has moved on.", annotation: "Watch: sunk-cost inertia" },
-    ],
-  },
-  {
-    id: "differentiation",
-    prompt: "Does this set you apart from competitors, or is it table stakes?",
-    options: [
-      { id: "differentiates", label: "It differentiates us.", annotation: "Differentiates" },
-      { id: "table-stakes", label: "It's table stakes — everyone needs it, nobody wins because of it.", annotation: "Table stakes" },
-    ],
-  },
-  {
-    id: "method",
-    prompt: "Given its evolutionary stage, are you using the right methods for building and running this component?",
-    options: [
-      { id: "matched", label: "Yes — agile iteration if early evolution, lean continuous improvement if in the middle, six sigma towards control if late evolution.", annotation: "Methods: appropriate" },
-      { id: "stuck-in-agile", label: "No — we're still treating it as an open-ended experiment long after it became standard practice.", annotation: "Watch: misapplied agile methods" },
-      { id: "premature-six-sigma", label: "No — we're already forcing rigid, standardized process onto something that's still genuinely uncertain.", annotation: "Watch: misapplied six sigma methods" },
-    ],
-  },
-];
+/** the "organizational inertia" climate concept's deep-dive question. */
+export const INERTIA_QUESTION: Question = {
+  id: "inertia",
+  prompt: "Is anything — habit, a contract, sunk cost — holding us back from adapting to change here?",
+  options: [
+    { id: "no-inertia", label: "No — we adapt readily, without extra friction.", annotation: "No inertia" },
+    { id: "org-habit", label: "Yes — the team keeps treating it the way it's always been treated, regardless of where it's actually moved.", annotation: "Watch: org habit" },
+    { id: "contract-lockin", label: "Yes — an existing contract or vendor relationship locks in how we treat it.", annotation: "Watch: contract lock-in" },
+    { id: "sunk-cost-inertia", label: "Yes — we've invested too much in the old approach to change course now, even though the situation has moved on.", annotation: "Watch: sunk-cost inertia" },
+  ],
+};
 
-/** picks a random pool question, excluding `excludeId` (used by reroll so it never repeats the current one) */
-export function pickRandomQuestion(excludeId?: string): Question {
-  const candidates = QUESTION_POOL.filter((q) => q.id !== excludeId);
-  return candidates[Math.floor(Math.random() * candidates.length)];
-}
+/** the "commodity vs. differentiation" climate concept's deep-dive question. */
+export const DIFFERENTIATION_QUESTION: Question = {
+  id: "differentiation",
+  prompt: "Does this set you apart from competitors, or is it table stakes?",
+  options: [
+    { id: "differentiates", label: "It differentiates us.", annotation: "Differentiates" },
+    { id: "table-stakes", label: "It's table stakes — everyone needs it, nobody wins because of it.", annotation: "Table stakes" },
+  ],
+};
+
+/** the "using the right methods" doctrine concept's deep-dive question. */
+export const METHOD_QUESTION: Question = {
+  id: "method",
+  prompt: "Given its evolutionary stage, are you using the right methods for building and running this component?",
+  options: [
+    { id: "matched", label: "Yes — agile iteration if early evolution, lean continuous improvement if in the middle, six sigma towards control if late evolution.", annotation: "Methods: appropriate" },
+    { id: "stuck-in-agile", label: "No — we're still treating it as an open-ended experiment long after it became standard practice.", annotation: "Watch: misapplied agile methods" },
+    { id: "premature-six-sigma", label: "No — we're already forcing rigid, standardized process onto something that's still genuinely uncertain.", annotation: "Watch: misapplied six sigma methods" },
+  ],
+};
+
+/** the "how needs evolve" climate concept's deep-dive question. */
+export const HOW_NEEDS_EVOLVE_QUESTION: Question = {
+  id: "needs-evolve",
+  prompt: "User needs feel fixed once you've named them — but do you expect this one to change as norms and expectations shift?",
+  options: [
+    { id: "stable", label: "No — this need is fundamental and unlikely to change much.", annotation: "Need: stable" },
+    { id: "rising-expectations", label: "Yes — people will expect it delivered faster, cheaper, or with less effort over time.", annotation: "Watch: rising expectations" },
+    { id: "unclear", label: "Not sure yet — worth watching for signals before assuming either way.", annotation: "Watch: need trajectory unclear" },
+  ],
+};
+
+/** the "shared purpose" leadership concept's deep-dive question. */
+export const SHARED_PURPOSE_QUESTION: Question = {
+  id: "shared-purpose",
+  prompt: "Does everyone acting on this actually understand *why* it matters, not just what to deliver?",
+  options: [
+    { id: "clear", label: "Yes — the purpose is well understood and shared across the team.", annotation: "Purpose: clear" },
+    { id: "unclear", label: "Not really — people execute the what without much sense of why.", annotation: "Watch: missing shared purpose" },
+  ],
+};

@@ -614,9 +614,10 @@ export class WardleyDemo {
 
   /**
    * anchors a short text callout near an already-registered node's current position, permanently
-   * visible (Phase 30, one per capability). Basic overlap avoidance: if the callout would collide
-   * horizontally with one already placed, it stacks one tier higher instead (see `createAnnotation`)
-   * rather than solving full layout — at most three of these ever exist.
+   * visible (Phase 30, one per concept the visitor digs into). Basic overlap avoidance: if the
+   * callout would collide horizontally with one already placed, it stacks one tier higher instead
+   * (see `createAnnotation`) rather than solving full layout — a node can end up with more than one
+   * annotation if several concepts settle on it, so this stacking is load-bearing, not incidental.
    */
   addAnnotation(nodeId: string, text: string): void {
     const node = this.nodesById.get(nodeId)!;

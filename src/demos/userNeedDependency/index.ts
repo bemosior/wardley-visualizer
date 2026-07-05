@@ -73,7 +73,8 @@ export interface ScenarioContext {
  * - `phase10.ts` — personalize the value chain via a 5-step form.
  * - `phase20.ts` — turn the value chain into a Wardley Map by placing every node on the evolution axis.
  * - `phase25.ts` — a brief pause explaining why the map itself isn't the point, before Phase 30's Q&A.
- * - `phase30.ts` — think with the map: one doctrine question per capability, each answer anchored to the map.
+ * - `phase30.ts` — think with the map: gates a curated concept bank against candidate nodes
+ *   (Yes/No/shuffle/Done), each explored concept's answer anchored to the map.
  * - `finale.ts` — recap and an external call-to-action link.
  *
  * See each file's doc comment for that phase's exact behavior.
