@@ -77,11 +77,6 @@ export async function runPhase20(ctx: ScenarioContext): Promise<void> {
     () =>
       demo.slideToGenesis(chain.need.id, undefined, () => {
         if (allPlaced) return;
-        const pos = demo.getNodePixelPosition(chain.need.id);
-        // "pinned", not "northeast": the Need is about to drag freely along the evolution axis
-        // below while the mascot stays put -- it needs the hard "never end up in the drag's path"
-        // guarantee, not just the cosmetic beside-the-node lift. See `MascotPlacement`'s doc comment.
-        if (pos) mascot.moveTo(chain.need.id, pos, "pinned");
       }),
     MAP_CAPTION_FADE_MS,
   );
@@ -98,10 +93,6 @@ export async function runPhase20(ctx: ScenarioContext): Promise<void> {
     // confirms do not).
     demo.slideToGenesis(capability.id, undefined, () => {
       if (allPlaced) return;
-      const pos = demo.getNodePixelPosition(capability.id);
-      // same "pinned" reasoning as the Need's slide above -- this capability is about to drag
-      // freely along the evolution axis too.
-      if (pos) mascot.moveTo(capability.id, pos, "pinned");
     });
     await awaitEvolutionConfirm(demo, mascot, capability.id, options.onEvolutionStep);
   }
