@@ -17,7 +17,7 @@ export async function runPhase10(ctx: ScenarioContext): Promise<void> {
   const { demo, mascot, options } = ctx;
 
   const needPos = demo.getNodePixelPosition(ctx.chain.need.id);
-  if (needPos) mascot.moveTo(ctx.chain.need.id, needPos);
+  if (needPos) mascot.moveTo(ctx.chain.need.id, needPos, "northeast");
   const needId = await mascot.showField({
     type: "select",
     prompt: "What does the user need?",
@@ -28,7 +28,7 @@ export async function runPhase10(ctx: ScenarioContext): Promise<void> {
   demo.relabelNode(ctx.chain.need.id, ctx.chain.need.label);
 
   const userPos = demo.getNodePixelPosition(ctx.chain.user.id);
-  if (userPos) mascot.moveTo(ctx.chain.user.id, userPos);
+  if (userPos) mascot.moveTo(ctx.chain.user.id, userPos, "northeast");
   const userLabel = await mascot.showField({
     type: "text",
     prompt: "Who needs " + needOption.label + "?",

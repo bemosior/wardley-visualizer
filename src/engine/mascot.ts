@@ -24,6 +24,18 @@ const NODE_CLEARANCE = 12;
 /** matches `.wd-mascot`'s `gap: 0.5rem` in styles.ts (at the browser's 16px default root font size) */
 const BUBBLE_GAP = 8;
 
+/** clearance on both axes for a `"northeast"` placement -- matches the gap phase0.ts already uses
+ * for its own hand-rolled beside-the-node anchor */
+const NORTHEAST_GAP = 32;
+
+/**
+ * `"auto"` is `reposition`'s default below/above-the-node behavior. `"northeast"` instead anchors
+ * up and to the right of the node -- for anchors whose "below" spot would land on another row of
+ * nodes underneath (this demo stacks several rows close together), NE clears it instead of
+ * covering it.
+ */
+export type MascotPlacement = "auto" | "northeast";
+
 /**
  * the mascot's speech-bubble guide — the sole guide for the whole scenario, from the moment
  * it mounts (Phase 0's drag affordance) through the closing recap. Composes a `Panel` pointed
@@ -49,6 +61,7 @@ export class Mascot {
   private avatarState: MascotState = "idle";
   private currentAnchorNodeId: string | null = null;
   private lastPos: { x: number; y: number; radius?: number } | null = null;
+  private placement: MascotPlacement = "auto";
   private resizeHandler = (): void => this.trackAnchor();
 
   constructor(host: HTMLElement) {
@@ -84,11 +97,14 @@ export class Mascot {
   /**
    * positions the bubble+avatar just below `pos` (container-pixel space, from
    * `WardleyDemo.getNodePixelPosition`), offset by `pos.radius` so the avatar is planted clear of
-   * the node's circle instead of covering it, and remembers `nodeId` so a window resize re-tracks it
+   * the node's circle instead of covering it, and remembers `nodeId` so a window resize re-tracks it.
+   * `placement` defaults to `"auto"` (below/above); pass `"northeast"` for anchors whose "below"
+   * spot would land on another row of nodes underneath -- see `MascotPlacement`.
    */
-  moveTo(nodeId: string, pos: { x: number; y: number; radius?: number }): void {
+  moveTo(nodeId: string, pos: { x: number; y: number; radius?: number }, placement: MascotPlacement = "auto"): void {
     this.currentAnchorNodeId = nodeId;
     this.lastPos = pos;
+    this.placement = placement;
     this.reposition();
   }
 
@@ -111,9 +127,22 @@ export class Mascot {
    * containment is a secondary, best-effort concern the old code over-prioritized, which is what
    * let a tall bubble creep back up into the node's row when the canvas was short.
    */
+  /**
+   * a point `NORTHEAST_GAP` clear of the node's circle on both axes, clamped so the vertical
+   * shift never lifts the point above the host's own top edge -- keeps nodes already near the
+   * canvas top (e.g. the value chain's User row, which has no room above it) from being pushed
+   * off-canvas; they degrade gracefully to a mostly-horizontal shift instead. Returns `radius: 0`
+   * since the shift already bakes the node's own radius into the gap.
+   */
+  private northeastPoint(pos: { x: number; y: number; radius?: number }): { x: number; y: number; radius: number } {
+    const radius = pos.radius ?? 0;
+    return { x: pos.x + radius + NORTHEAST_GAP, y: Math.max(pos.y - radius - NORTHEAST_GAP, 0), radius: 0 };
+  }
+
   private reposition(): void {
     if (!this.lastPos) return;
-    const { x, y, radius = 0 } = this.lastPos;
+    const { x, y, radius } =
+      this.placement === "northeast" ? this.northeastPoint(this.lastPos) : { x: this.lastPos.x, y: this.lastPos.y, radius: this.lastPos.radius ?? 0 };
     const hostRect = this.host.getBoundingClientRect();
     const bubbleHeight = this.bubbleEl.getBoundingClientRect().height;
 
@@ -215,7 +244,7 @@ export class Mascot {
   private trackAnchor(): void {
     if (!this.demo || !this.currentAnchorNodeId) return;
     const pos = this.demo.getNodePixelPosition(this.currentAnchorNodeId);
-    if (pos) this.moveTo(this.currentAnchorNodeId, pos);
+    if (pos) this.moveTo(this.currentAnchorNodeId, pos, this.placement);
   }
 
   /**

@@ -73,7 +73,7 @@ export async function runPhase20(ctx: ScenarioContext): Promise<void> {
     () =>
       demo.slideToGenesis(chain.need.id, undefined, () => {
         const pos = demo.getNodePixelPosition(chain.need.id);
-        if (pos) mascot.moveTo(chain.need.id, pos);
+        if (pos) mascot.moveTo(chain.need.id, pos, "northeast");
       }),
     MAP_CAPTION_FADE_MS,
   );
