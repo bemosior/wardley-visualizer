@@ -208,6 +208,26 @@ describe("Mascot.moveTo", () => {
     expect(bubble.style.top).toBe("-90px");
   });
 
+  it("keeps a northeast-placed bubble above the node even when 'below' the shifted anchor would otherwise fit", () => {
+    const host = makeHost();
+    vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 500, height: 500 } as DOMRect);
+    const mascot = new Mascot(host);
+    const root = (mascot as any).root as HTMLElement;
+    const bubble = (mascot as any).bubbleEl as HTMLElement;
+    vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 200, height: 130 } as DOMRect);
+
+    // node's row spans y 152..248 (y 200, radius 48). The shifted northeast anchor (180, 120) has
+    // plenty of room to grow "below" within a 500px-tall host, which is exactly what used to pull
+    // the bubble back down into the node's own row -- a horizontally-draggable node (Phase 20's
+    // evolution axis) then drags right back underneath it. Forcing "above" for northeast keeps the
+    // whole group's y-range clear of the row regardless of overflow room.
+    mascot.moveTo("need", { x: 100, y: 200, radius: 48 }, "northeast");
+
+    expect(root.style.top).toBe("48px"); // clearAbove(108) - AVATAR_HEIGHT(60)
+    const bubbleBottom = parseFloat(bubble.style.top) + parseFloat(root.style.top) + 130;
+    expect(bubbleBottom).toBeLessThanOrEqual(152); // clear of the node's own top edge
+  });
+
   it("stops tracking resizes after unmount", () => {
     const demo = buildDemo();
     const spy = vi.spyOn(demo, "getNodePixelPosition");

@@ -211,6 +211,13 @@ export function attachAxisDrag(options: AxisDragOptions): AxisDragHandle {
       confirmed = true;
       nodeGroup.removeEventListener("pointerdown", onPointerDown as EventListener);
       node.x = currentX;
+      // re-stamps the <g>'s transform and connectedLines from currentX, same as every other
+      // write to the node's position in this file (onPointerMove, skipDrag's caller) -- without
+      // this, a confirm that isn't preceded by a real onPointerMove (e.g. a tap with no drag
+      // motion, or a pointercancel) leaves the node's on-screen position wherever it last was
+      // rendered by something else (mount, or a concurrent slideToGenesis animation), silently
+      // out of sync with the x this just committed to `node.x` and handed to `onConfirm` below.
+      setNodePosition(nodeGroup, connectedLines, { x: currentX, y: node.y });
       onConfirm(currentX);
     },
     skipDrag() {

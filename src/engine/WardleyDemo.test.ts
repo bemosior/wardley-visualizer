@@ -673,6 +673,21 @@ describe("WardleyDemo.runEvolutionDragStep", () => {
     dragAxis(nodeGroup, 150, 250);
     expect(nodeGroup.getAttribute("transform")).toBe("translate(150, 150)");
   });
+
+  it("confirm() re-stamps the node's transform to the confirmed x, even if something else last wrote a different one", () => {
+    const { demo, container } = buildDemo();
+    const evolutionStep = demo.runEvolutionDragStep("need");
+    const nodeGroup = container.querySelector('[data-node-id="need"]')!;
+    dragAxis(nodeGroup, 50, 150);
+
+    // simulates a concurrent animation (e.g. slideToGenesis's own in-flight rAF loop) writing to
+    // the node's rendered transform after the drag's last pointermove but before confirm() fires
+    nodeGroup.setAttribute("transform", "translate(999, 150)");
+
+    evolutionStep.confirm();
+
+    expect(nodeGroup.getAttribute("transform")).toBe("translate(150, 150)");
+  });
 });
 
 describe("WardleyDemo.addAnnotation", () => {
