@@ -268,8 +268,9 @@ describe("runValueChainScenario", () => {
     clickNext(mascotHost);
     await flush();
 
-    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe(need.label);
-    expect(mascotHost.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe("Is it Genesis?");
+    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe(
+      `Is ${need.label} in Genesis?`,
+    );
   });
 
   /** walks the Phase 10 form and clicks past the Phase 10->20 gate, landing right where the Need starts beckoning on the map (default layout's Genesis x is 50, at the Need's unchanged y of 76) */
@@ -320,12 +321,16 @@ describe("runValueChainScenario", () => {
     });
     await reachEvolutionStep(canvas, mascotHost);
 
-    expect(mascotHost.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe("Is it Genesis?");
+    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe(
+      `Is ${NEED_CATALOG[0].label} in Genesis?`,
+    );
 
     drag(canvas.querySelector('[data-node-id="need"]')!, { x: 250, y: 76 });
     await flush();
 
-    expect(mascotHost.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe("Is it Product?");
+    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe(
+      `Is ${NEED_CATALOG[0].label} in Product?`,
+    );
     expect(resolved).toBe(false);
 
     clickNext(mascotHost);
@@ -334,8 +339,7 @@ describe("runValueChainScenario", () => {
     // the scenario doesn't resolve yet — Capability-1/2/3 still have to go through
     // the same drag-confirm pattern before the whole thing is done
     expect(resolved).toBe(false);
-    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("A kettle");
-    expect(mascotHost.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe("Is it Genesis?");
+    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Is A kettle in Genesis?");
     vi.useRealTimers();
   });
 
@@ -365,17 +369,17 @@ describe("runValueChainScenario", () => {
     await reachEvolutionStep(canvas, mascotHost);
     await confirmEvolutionStep(canvas, mascotHost, "need", 150, 76);
 
-    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("A kettle");
+    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Is A kettle in Genesis?");
     expect(canvas.querySelector('[data-node-id="dependency-1"]')!.getAttribute("transform")).toMatch(
       /^translate\(50,/,
     );
 
     await confirmEvolutionStep(canvas, mascotHost, "dependency-1", 150, 157);
-    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Water");
+    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Is Water in Genesis?");
     expect(resolved).toBe(false);
 
     await confirmEvolutionStep(canvas, mascotHost, "dependency-2", 150, 157);
-    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Electricity");
+    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Is Electricity in Genesis?");
     expect(resolved).toBe(false);
 
     await confirmEvolutionStep(canvas, mascotHost, "dependency-3", 150, 157);
