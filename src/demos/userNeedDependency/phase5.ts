@@ -27,6 +27,14 @@ const MASCOT_CAPABILITY = {
   subheading: "It's a part that helps us meet the user need.",
 };
 
+/** horizontal clearance (container px) between the anchor Capability node and the mascot avatar
+ * when it anchors beside it -- matches `phase0.ts`'s own `MASCOT_BESIDE_GAP`. Used instead of
+ * `Mascot`'s `"northeast"` placement here: NE always lifts the mascot *up*, which is right for
+ * the User/Need stops above (each has a row of nodes directly below it to clear) but wrong for the
+ * Capability row, which has nothing below it to avoid -- lifting up instead drives the mascot into
+ * the Need row sitting just above the Capability row. */
+const MASCOT_CAPABILITY_GAP = 32;
+
 /** placeholder labels for the three Capability nodes while this phase explains their number,
  * before Phase 10's form overwrites them with the visitor's own answers. Assigned left-to-right
  * by final screen position, not domain id order — see the sort in `runPhase5` below. */
@@ -85,7 +93,13 @@ export async function runPhase5(ctx: ScenarioContext): Promise<void> {
   const capabilities = ctx.chain.capabilities;
   const anchor = capabilities.find((capability) => demo.hasNode(capability.id))!;
   const anchorPixelPos = demo.getNodePixelPosition(anchor.id);
-  if (anchorPixelPos) mascot.moveTo(anchor.id, anchorPixelPos, "northeast");
+  if (anchorPixelPos) {
+    mascot.moveTo(anchor.id, {
+      x: anchorPixelPos.x + anchorPixelPos.radius + MASCOT_CAPABILITY_GAP,
+      y: anchorPixelPos.y,
+      radius: 0,
+    });
+  }
   mascot.showPlaceholder(MASCOT_CAPABILITY.heading, MASCOT_CAPABILITY.subheading);
   await mascot.confirmPlacement("Next");
 
