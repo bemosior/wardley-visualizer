@@ -99,7 +99,7 @@ export async function runPhase20(ctx: ScenarioContext): Promise<void> {
 
   allPlaced = true;
   mascot.moveToTopRight();
-  mascot.showPlaceholder("Wardley Map", "All placed!");
+  mascot.showPlaceholder("You made a Wardley Map!", "");
   mascot.setState("celebrating");
   demo.celebrateAll(2);
 }

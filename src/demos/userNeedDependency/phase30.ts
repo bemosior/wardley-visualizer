@@ -16,7 +16,7 @@ import type { ScenarioContext } from "./index";
 export async function runPhase30(ctx: ScenarioContext): Promise<void> {
   const { demo, mascot, chain } = ctx;
 
-  await mascot.confirmPlacement("Let's think about it →");
+  await mascot.confirmPlacement("Let's get strategic →");
 
   const questionPlan: { capability: Component; question: Question; reroll: boolean }[] = [
     { capability: chain.capabilities[0], question: BIAS_CHECK_QUESTION, reroll: false },
