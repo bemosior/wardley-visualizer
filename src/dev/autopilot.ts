@@ -8,8 +8,9 @@ import type { WardleyDemo, EvolutionDragHandle } from "../engine/WardleyDemo";
  * `celebrate`: also auto-fill all 5 form fields, land right after the Phase 10 celebration.
  * `phase20`: also click past the Phase 10->20 gate, land at today's frontier.
  * `finale`: also auto-click every Phase 20 confirm-placement link, land at the placement celebration.
- * `thinking`: also click into Phase 30 and auto-pick the first option for every question, land at
- * the Phase 30 celebration (its own final "What's next →" is still left for a real click).
+ * `thinking`: also click through Phase 25's explanatory gate and into Phase 30, auto-pick the
+ * first option for every question, land at the Phase 30 celebration (its own final "What's
+ * next →" is still left for a real click).
  * `recap`: also click that final "What's next →" gate, land on the closing recap + CTA link.
  */
 export type SkipTarget = "phase10" | "celebrate" | "phase20" | "finale" | "thinking" | "recap";
@@ -91,6 +92,11 @@ export function attachAutopilot({ mascotHost, target }: AutopilotOptions): Autop
       } else if (plainNextCount === 6) {
         if (target === "phase20" || target === "finale" || target === "thinking" || target === "recap") link!.click();
         if (target !== "finale" && target !== "thinking" && target !== "recap") disconnect();
+      } else if (plainNextCount === 7) {
+        // Phase 20 -> Phase 25 gate (right after "You made a Wardley Map!") -- finale stops at
+        // the placement celebration itself, so only thinking/recap click through into Phase 25's
+        // explanation before Phase 30's own "Let's get strategic →" gate
+        if (target === "thinking" || target === "recap") link!.click();
       }
     } else if (linkText === "Nice to meet you!") {
       // Phase 7's "I'm Ben" introduction gate -- always skip past it too; `phase10` lands right
@@ -102,7 +108,7 @@ export function attachAutopilot({ mascotHost, target }: AutopilotOptions): Autop
       // but not the finale's "What's next →" which should be left for the visitor
       link!.click();
     } else if (linkText === "Let's get strategic →" && (target === "thinking" || target === "recap")) {
-      // auto-click the Phase 20->30 gate, but leave Phase 30's own "What's next →" for the visitor,
+      // auto-click the Phase 25->30 gate, but leave Phase 30's own "What's next →" for the visitor,
       // same as `finale` leaves Phase 20's
       link!.click();
     } else if (linkText === "What's next →" && target === "recap") {

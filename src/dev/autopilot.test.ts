@@ -74,14 +74,14 @@ describe("attachAutopilot", () => {
     expect(mascotHost.querySelector(".wd-next-link")).toBeNull();
   });
 
-  it("finale: also auto-confirms every Phase 20 placement, stopping at the placement finale before Phase 30 begins", async () => {
+  it("finale: also auto-confirms every Phase 20 placement, stopping at the placement finale before Phase 25 begins", async () => {
     const { mascotHost } = buildScenario("finale");
     await flushAll();
 
     expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("You made a Wardley Map!");
     const gateLink = mascotHost.querySelector<HTMLButtonElement>(".wd-next-link");
     expect(gateLink).not.toBeNull();
-    expect(gateLink!.textContent).toBe("Let's get strategic →");
+    expect(gateLink!.textContent).toBe("Next");
   });
 
   it("thinking: also clicks into Phase 30 and auto-picks an option for every question, stopping before the finale's own Next link", async () => {

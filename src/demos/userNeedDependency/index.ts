@@ -8,6 +8,7 @@ import { runPhase5 } from "./phase5";
 import { runPhase7 } from "./phase7";
 import { runPhase10 } from "./phase10";
 import { runPhase20 } from "./phase20";
+import { runPhase25 } from "./phase25";
 import { runPhase30 } from "./phase30";
 import { runFinale } from "./finale";
 
@@ -71,6 +72,7 @@ export interface ScenarioContext {
  *   by the way.") before returning to the chain for Phase 10.
  * - `phase10.ts` — personalize the value chain via a 5-step form.
  * - `phase20.ts` — turn the value chain into a Wardley Map by placing every node on the evolution axis.
+ * - `phase25.ts` — a brief pause explaining why the map itself isn't the point, before Phase 30's Q&A.
  * - `phase30.ts` — think with the map: one doctrine question per capability, each answer anchored to the map.
  * - `finale.ts` — recap and an external call-to-action link.
  *
@@ -82,6 +84,7 @@ export async function runValueChainScenario(options: ValueChainScenarioOptions):
   await runPhase7(ctx);
   await runPhase10(ctx);
   await runPhase20(ctx);
+  await runPhase25(ctx);
   await runPhase30(ctx);
   await runFinale(ctx);
   return ctx.demo;

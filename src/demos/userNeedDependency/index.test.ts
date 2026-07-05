@@ -387,7 +387,16 @@ describe("runValueChainScenario", () => {
     expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("You made a Wardley Map!");
     expect(resolved).toBe(false);
 
-    // the placement finale's confirm link starts Phase 30's Q&A rather than resolving the scenario
+    // the placement finale's confirm link lands on Phase 25's explanation rather than resolving the scenario
+    clickNext(mascotHost);
+    await flush();
+
+    expect(resolved).toBe(false);
+    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe(
+      "Thinking strategically with a Wardley Map",
+    );
+
+    // Phase 25's own confirm link starts Phase 30's Q&A
     clickNext(mascotHost);
     await flush();
 
@@ -396,13 +405,15 @@ describe("runValueChainScenario", () => {
     vi.useRealTimers();
   });
 
-  /** walks placement through the Phase 20->30 gate, landing on Capability 1's bias-check question */
+  /** walks placement through the Phase 20->25->30 gates, landing on Capability 1's bias-check question */
   async function reachThinkingStep(canvas: HTMLElement, mascotHost: HTMLElement): Promise<void> {
     await reachEvolutionStep(canvas, mascotHost);
     await confirmEvolutionStep(canvas, mascotHost, "need", 150, 76);
     await confirmEvolutionStep(canvas, mascotHost, "dependency-1", 150, 157);
     await confirmEvolutionStep(canvas, mascotHost, "dependency-2", 150, 157);
     await confirmEvolutionStep(canvas, mascotHost, "dependency-3", 150, 157);
+    clickNext(mascotHost);
+    await flush();
     clickNext(mascotHost);
     await flush();
   }
