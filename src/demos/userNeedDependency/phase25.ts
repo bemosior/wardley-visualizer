@@ -3,7 +3,7 @@ import type { ScenarioContext } from "./index";
 const MASCOT_THINKING_STRATEGICALLY = {
   heading: "Thinking strategically with a Wardley Map",
   subheading:
-    "Strategy must create action. But first, we need to think strategically about what we see on the map. Thankfully, we have hundreds of questions to help us do exactly that.",
+    "Strategy must lead to action. But first, we need to think about what we see on the map. Thankfully, we have plenty of good questions to help us do exactly that.",
 };
 
 /**
