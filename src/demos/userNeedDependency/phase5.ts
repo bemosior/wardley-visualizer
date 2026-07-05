@@ -73,19 +73,19 @@ export async function runPhase5(ctx: ScenarioContext): Promise<void> {
   await mascot.confirmPlacement("Next");
 
   const userPos = demo.getNodePixelPosition(ctx.chain.user.id);
-  if (userPos) mascot.moveTo(ctx.chain.user.id, userPos);
+  if (userPos) mascot.moveTo(ctx.chain.user.id, userPos, "northeast");
   mascot.showPlaceholder(MASCOT_USER.heading, MASCOT_USER.subheading);
   await mascot.confirmPlacement("Next");
 
   const needPos = demo.getNodePixelPosition(ctx.chain.need.id);
-  if (needPos) mascot.moveTo(ctx.chain.need.id, needPos);
+  if (needPos) mascot.moveTo(ctx.chain.need.id, needPos, "northeast");
   mascot.showPlaceholder(MASCOT_USER_NEED.heading, MASCOT_USER_NEED.subheading);
   await mascot.confirmPlacement("Next");
 
   const capabilities = ctx.chain.capabilities;
   const anchor = capabilities.find((capability) => demo.hasNode(capability.id))!;
   const anchorPixelPos = demo.getNodePixelPosition(anchor.id);
-  if (anchorPixelPos) mascot.moveTo(anchor.id, anchorPixelPos);
+  if (anchorPixelPos) mascot.moveTo(anchor.id, anchorPixelPos, "northeast");
   mascot.showPlaceholder(MASCOT_CAPABILITY.heading, MASCOT_CAPABILITY.subheading);
   await mascot.confirmPlacement("Next");
 
