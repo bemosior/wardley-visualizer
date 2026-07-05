@@ -55,9 +55,10 @@ function fillAndSubmit(form: HTMLFormElement): void {
  * the-more-of-the-peaceful-sky plan for why this exists instead of a resumable step machine.
  */
 export function attachAutopilot({ mascotHost, target }: AutopilotOptions): Autopilot {
-  // counts only the plain "Next" links -- Phase 5's two gates ("Need placed" and the Part A/B/C
-  // explanation) and the Phase 10->20 gate all share identical link text, so they can't be told
-  // apart by content the way every other gate below is (by its own distinct label).
+  // counts only the plain "Next" links -- Phase 5's five gates ("Need placed", the User/Need/
+  // Capability walkthrough, and the Part A/B/C explanation) and the Phase 10->20 gate all share
+  // identical link text, so they can't be told apart by content the way every other gate below is
+  // (by its own distinct label).
   let plainNextCount = 0;
 
   function disconnect(): void {
@@ -77,15 +78,16 @@ export function attachAutopilot({ mascotHost, target }: AutopilotOptions): Autop
 
     if (linkText === "Next") {
       plainNextCount++;
-      if (plainNextCount === 1) {
-        // Phase 5's "Need placed" gate -- always skip past it, no target stops here
+      if (plainNextCount <= 4) {
+        // Phase 5's "Need placed" gate, then the User/Need/Capability walkthrough gates --
+        // always skip past them, no target stops here
         link!.click();
-      } else if (plainNextCount === 2) {
+      } else if (plainNextCount === 5) {
         // Phase 5's Part A/B/C explanation gate -- always skip past it too; `phase10` lands right
         // after, at the start of Phase 10's form
         link!.click();
         if (target === "phase10") disconnect();
-      } else if (plainNextCount === 3) {
+      } else if (plainNextCount === 6) {
         if (target === "phase20" || target === "finale" || target === "thinking") link!.click();
         if (target !== "finale" && target !== "thinking") disconnect();
       }

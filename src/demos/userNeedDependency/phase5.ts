@@ -2,13 +2,29 @@ import { relabelCapability } from "../../domain/valueChain";
 import { DEFAULT_CAPABILITY_GAP } from "../../application/valueChainLayout";
 import type { ScenarioContext } from "./index";
 
-/** the mascot's Phase 0 -> Phase 5 "waiting for Next" pause. Doubles as the "what's a Value
- * Chain?" payoff that used to live in the host page's separate `.wd-explanation` column
- * (`#vc-answer`) — now the bubble is the only place that copy lives. Moved here from
- * `phase10.ts` so it gates into the Part A/B/C beat below instead of straight into the form. */
+/** the mascot's Phase 0 -> Phase 5 "waiting for Next" pause. Used to also carry the "what's a
+ * Value Chain?" payoff (a one-shot "it's a recipe" summary) that used to live in the host page's
+ * separate `.wd-explanation` column (`#vc-answer`); that explanation is now given piece-by-piece
+ * by the User/Need/Capability walkthrough below instead, so this beat is just the acknowledgment
+ * that kicks the walkthrough off. */
 const MASCOT_NEED_PLACED = {
   heading: "Nice! You made a Value Chain!",
-  subheading: "A value chain is a recipe:\nWho needs what, and how they get it.",
+  subheading: "Let's walk through it together.",
+};
+
+const MASCOT_USER = {
+  heading: "This is a user.",
+  subheading: "It's someone we care about.",
+};
+
+const MASCOT_USER_NEED = {
+  heading: "This is a user need.",
+  subheading: "It's something they value or expect.",
+};
+
+const MASCOT_CAPABILITY = {
+  heading: "This is a capability.",
+  subheading: "It's a part that helps us meet the user need.",
 };
 
 /** placeholder labels for the three Capability nodes while this phase explains their number,
@@ -23,26 +39,30 @@ const MASCOT_MULTIPLE_PARTS = {
 
 /**
  * Phase 5: between Phase 0 (drag the Need into place) and Phase 10 (personalize via the form).
- * Shows the "You just made a Value Chain!" placeholder and waits for the Phase 0 -> Phase 5 "Next"
- * gate (moved here from `phase10.ts`).
+ * Shows the "You just made a Value Chain!" placeholder, waits for the Phase 0 -> Phase 5 "Next"
+ * gate (moved here from `phase10.ts`), then walks the visitor through the chain node by node
+ * instead of summarizing it all in one placeholder: re-anchoring the mascot to the User node
+ * ("This is a user."), then the Need ("This is a user need."), then a single Capability node
+ * ("This is a capability."), each gated behind its own "Next" — before the Part A/B/C beat below
+ * generalizes from that one capability to "the recipe often calls for many parts."
  *
- * Phase 0's config is allowed to render only *one* Capability node (e.g. `preview.html`'s
- * hand-tuned host-embed config, which deliberately shows a single "How their need gets met" node
- * to keep the opening puzzle simple) — but Phase 5 must show all three, since its whole point is
- * demonstrating that a need is sometimes met by multiple parts. So this phase first adds whichever
- * of the three Capability nodes aren't already registered (`demo.hasNode`), spreading any missing
- * ones into the empty slots on either side of whichever one *is* already there (that node becomes
- * the row's visual center — `DEFAULT_CAPABILITY_GAP` on either side, same spacing
- * `valueChainLayout.ts` uses when it renders all three from the start), and connects each new node
- * to the Need (nothing to do here for `index.html`'s default layout, which already renders all
- * three from Phase 0 — the "missing" list is just empty).
+ * For the Capability stop, Phase 0's config is allowed to render only *one* Capability node (e.g.
+ * `preview.html`'s hand-tuned host-embed config, which deliberately shows a single "How their need
+ * gets met" node to keep the opening puzzle simple) — so this phase anchors to whichever Capability
+ * node is already registered (`demo.hasNode`) for that single-capability beat, then reuses the same
+ * node's position afterward to add whichever of the three Capability nodes aren't already there,
+ * spreading any missing ones into the empty slots on either side (that node becomes the row's
+ * visual center — `DEFAULT_CAPABILITY_GAP` on either side, same spacing `valueChainLayout.ts` uses
+ * when it renders all three from the start), and connects each new node to the Need (nothing to do
+ * here for `index.html`'s default layout, which already renders all three from Phase 0 — the
+ * "missing" list is just empty).
  *
  * Once all three exist, relabels them "Part A"/"Part B"/"Part C" *by final left-to-right screen
  * position* (not by domain id order, since a host config's pre-existing node isn't necessarily
  * `dependency-1`), re-anchors the mascot below the visually-centered one (the middle of the sorted
  * row — see `[[project_wardley_demo_mascot_bubble_geometry]]` memory on why the mascot anchors
  * *below the whole row* here rather than beside one node), and explains that a need is sometimes
- * met by multiple parts adding up together. Waits for a second "Next" gate before returning, so the
+ * met by multiple parts adding up together. Waits for a final "Next" gate before returning, so the
  * caller (`phase10.ts`) can start directly with "What does the user need?" instead of also showing
  * the "Need placed" placeholder itself.
  */
@@ -52,10 +72,25 @@ export async function runPhase5(ctx: ScenarioContext): Promise<void> {
   mascot.showPlaceholder(MASCOT_NEED_PLACED.heading, MASCOT_NEED_PLACED.subheading);
   await mascot.confirmPlacement("Next");
 
+  const userPos = demo.getNodePixelPosition(ctx.chain.user.id);
+  if (userPos) mascot.moveTo(ctx.chain.user.id, userPos);
+  mascot.showPlaceholder(MASCOT_USER.heading, MASCOT_USER.subheading);
+  await mascot.confirmPlacement("Next");
+
+  const needPos = demo.getNodePixelPosition(ctx.chain.need.id);
+  if (needPos) mascot.moveTo(ctx.chain.need.id, needPos);
+  mascot.showPlaceholder(MASCOT_USER_NEED.heading, MASCOT_USER_NEED.subheading);
+  await mascot.confirmPlacement("Next");
+
   const capabilities = ctx.chain.capabilities;
+  const anchor = capabilities.find((capability) => demo.hasNode(capability.id))!;
+  const anchorPixelPos = demo.getNodePixelPosition(anchor.id);
+  if (anchorPixelPos) mascot.moveTo(anchor.id, anchorPixelPos);
+  mascot.showPlaceholder(MASCOT_CAPABILITY.heading, MASCOT_CAPABILITY.subheading);
+  await mascot.confirmPlacement("Next");
+
   const missing = capabilities.filter((capability) => !demo.hasNode(capability.id));
   if (missing.length > 0) {
-    const anchor = capabilities.find((capability) => demo.hasNode(capability.id))!;
     const anchorPos = demo.getNodePosition(anchor.id)!;
     const sideOffsets = [-1, 1]; // left/right slots around the already-rendered node
     missing.forEach((capability, i) => {

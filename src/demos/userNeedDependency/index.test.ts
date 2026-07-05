@@ -39,15 +39,15 @@ async function flush(): Promise<void> {
   await Promise.resolve();
 }
 
-/** drags the Need into place (default layout's target is centerX=200, needY=76 for the default 400x300 viewBox), then clicks past Phase 5's two "Next" gates ("Need placed" and the Part A/B/C explanation) into the form */
+/** drags the Need into place (default layout's target is centerX=200, needY=76 for the default 400x300 viewBox), then clicks past Phase 5's five "Next" gates ("Need placed", the User/Need/Capability walkthrough, and the Part A/B/C explanation) into the form */
 async function completeDragStep(canvas: HTMLElement, mascotHost: HTMLElement): Promise<void> {
   const needNode = canvas.querySelector('[data-node-id="need"]')!;
   drag(needNode, { x: 200, y: 76 });
   await flush();
-  clickNext(mascotHost);
-  await flush();
-  clickNext(mascotHost);
-  await flush();
+  for (let i = 0; i < 5; i++) {
+    clickNext(mascotHost);
+    await flush();
+  }
 }
 
 describe("runValueChainScenario", () => {
@@ -77,7 +77,7 @@ describe("runValueChainScenario", () => {
     expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Nice! You made a Value Chain!");
   });
 
-  it("relabels the three Capability nodes to Part A/B/C and explains multi-part needs between the 'Value Chain' placeholder and the form", async () => {
+  it("walks the user through User/Need/Capability, then relabels the three Capability nodes to Part A/B/C and explains multi-part needs, before the form", async () => {
     const { canvas, mascotHost } = buildScenario(vi.fn());
     const needNode = canvas.querySelector('[data-node-id="need"]')!;
     drag(needNode, { x: 200, y: 76 });
@@ -85,9 +85,22 @@ describe("runValueChainScenario", () => {
     clickNext(mascotHost);
     await flush();
 
+    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("This is a user.");
+
+    clickNext(mascotHost);
+    await flush();
+    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("This is a user need.");
+
+    clickNext(mascotHost);
+    await flush();
+    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("This is a capability.");
+
+    clickNext(mascotHost);
+    await flush();
+
     expect(mascotHost.querySelector("form")).toBeNull();
     expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe(
-      "The recipe often calls for multiple parts.",
+      "The recipe often calls for many parts.",
     );
     expect(canvas.querySelector('[data-node-id="dependency-1"] .wd-node-label')!.textContent).toBe("Part A");
     expect(canvas.querySelector('[data-node-id="dependency-2"] .wd-node-label')!.textContent).toBe("Part B");

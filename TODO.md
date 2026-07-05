@@ -44,11 +44,13 @@ Four layers, strict one-way dependency (lower layers know nothing about higher o
     - `index.ts` — `ValueChainScenarioOptions`, `ScenarioContext`, and `runValueChainScenario(options)`, a thin sequencer that awaits each phase in turn and returns the final `WardleyDemo`. This is the file `src/index.ts` imports (module resolution finds `userNeedDependency/index.ts` from the same `"./demos/userNeedDependency"` specifier as before — no caller changes needed).
     - `phase0.ts` — seed the `ValueChain`, lay it out, mount the `Mascot` + `WardleyDemo`, drag the Need into place. Returns the initial `ScenarioContext`.
     - `phase5.ts` — between Phase 0 and Phase 10: shows the "You just made a Value Chain!"
-      placeholder (moved here from `phase10.ts`), then ensures all three Capability nodes exist
-      (Phase 0's config is allowed to render only one, e.g. `preview.html`'s host-embed config —
-      this phase adds whichever are missing, spread left/right of whichever one is already there,
-      connected to the Need), relabels all three "Part A"/"Part B"/"Part C" by final left-to-right
-      screen position, and explains that a need is sometimes met by several parts adding up
+      placeholder (moved here from `phase10.ts`), then walks the visitor through the chain node by
+      node — User ("This is a user."), Need ("This is a user need."), a single Capability ("This is
+      a capability.") — each gated behind its own "Next", before ensuring all three Capability nodes
+      exist (Phase 0's config is allowed to render only one, e.g. `preview.html`'s host-embed config
+      — this phase adds whichever are missing, spread left/right of whichever one is already there,
+      connected to the Need), relabeling all three "Part A"/"Part B"/"Part C" by final left-to-right
+      screen position, and explaining that a need is sometimes met by several parts adding up
       together, before handing off to Phase 10's form.
     - `phase10.ts` — the 5-step personalization form (need → user → 3 capabilities), relabeling both the domain chain and the rendered nodes as each answer comes in.
     - `phase20.ts` — the map backdrop and the evolution-axis drag/confirm loop (Need, then Capability-1/2/3); owns the private `awaitEvolutionConfirm` helper shared by that loop.
