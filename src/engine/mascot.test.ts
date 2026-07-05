@@ -289,7 +289,7 @@ describe("Mascot.moveTo", () => {
     mascot.moveTo("need", { x: 200, y: 100, radius: 48 }, "pinned");
 
     expect(root.style.left).toBe("416px"); // topRightPoint: (500 - CORNER_MARGIN(64)) - AVATAR_WIDTH/2(20)
-    expect(root.style.top).toBe("76px"); // topRightPoint's y(64) + NODE_CLEARANCE(12): plenty of room below it
+    expect(root.style.top).toBe("26px"); // topRightPoint's y(CORNER_MARGIN_TOP=14) + NODE_CLEARANCE(12): plenty of room below it
   });
 
   it("stops tracking resizes after unmount", () => {
