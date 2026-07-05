@@ -150,8 +150,16 @@ export class Mascot {
     const clearAbove = y - radius - NODE_CLEARANCE; // bottom edge of the safe zone above the node
     const groupHeight = Math.max(AVATAR_HEIGHT, bubbleHeight);
 
+    // "northeast" exists specifically to escape a node whose "below" spot would land on another
+    // row underneath it -- growing the group back "below" the already-shifted anchor would grow
+    // it right back toward that same row (and, for a horizontally-draggable node, back into the
+    // node's own path as it drags through the anchor's x). Always growing "above" keeps the whole
+    // group's y-range moving further away from the node instead, the same invariant "auto" gets
+    // from picking whichever side clears the node's row.
     let side: "below" | "above" = "below";
-    if (hostRect.height) {
+    if (this.placement === "northeast") {
+      side = "above";
+    } else if (hostRect.height) {
       const belowOverflow = Math.max(0, clearBelow + groupHeight - hostRect.height);
       const aboveOverflow = Math.max(0, groupHeight - clearAbove);
       if (aboveOverflow < belowOverflow) side = "above";
