@@ -39,12 +39,12 @@ async function flush(): Promise<void> {
   await Promise.resolve();
 }
 
-/** drags the Need into place (default layout's target is centerX=200, needY=76 for the default 400x300 viewBox), then clicks past Phase 5's five "Next" gates ("Need placed", the User/Need/Capability walkthrough, and the Part A/B/C explanation) into the form */
+/** drags the Need into place (default layout's target is centerX=200, needY=76 for the default 400x300 viewBox), then clicks past Phase 5's five "Next" gates ("Need placed", the User/Need/Capability walkthrough, and the Part A/B/C explanation) and Phase 7's single "I'm Ben" introduction gate into the form */
 async function completeDragStep(canvas: HTMLElement, mascotHost: HTMLElement): Promise<void> {
   const needNode = canvas.querySelector('[data-node-id="need"]')!;
   drag(needNode, { x: 200, y: 76 });
   await flush();
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 6; i++) {
     clickNext(mascotHost);
     await flush();
   }
@@ -77,7 +77,7 @@ describe("runValueChainScenario", () => {
     expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("You made a Value Chain!");
   });
 
-  it("walks the user through User/Need/Capability, then relabels the three Capability nodes to Part A/B/C and explains multi-part needs, before the form", async () => {
+  it("walks the user through User/Need/Capability, relabels the three Capability nodes to Part A/B/C, explains multi-part needs, then has the mascot introduce itself before the form", async () => {
     const { canvas, mascotHost } = buildScenario(vi.fn());
     const needNode = canvas.querySelector('[data-node-id="need"]')!;
     drag(needNode, { x: 200, y: 76 });
@@ -105,6 +105,14 @@ describe("runValueChainScenario", () => {
     expect(canvas.querySelector('[data-node-id="dependency-1"] .wd-node-label')!.textContent).toBe("Part A");
     expect(canvas.querySelector('[data-node-id="dependency-2"] .wd-node-label')!.textContent).toBe("Part B");
     expect(canvas.querySelector('[data-node-id="dependency-3"] .wd-node-label')!.textContent).toBe("Part C");
+
+    clickNext(mascotHost);
+    await flush();
+    expect(mascotHost.querySelector("form")).toBeNull();
+    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("I'm Ben, by the way.");
+    expect(mascotHost.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe(
+      "I'm here to help you learn Wardley Mapping. Use the contact form at the bottom of this page anytime to say hello or ask a question!",
+    );
 
     clickNext(mascotHost);
     await flush();

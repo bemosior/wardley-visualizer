@@ -3,7 +3,8 @@ import type { WardleyDemo, EvolutionDragHandle } from "../engine/WardleyDemo";
 /**
  * named moments in the demo's current (built-so-far) flow that `index.html?skipTo=` can land on.
  * `phase10`: skip the Phase 0 drag and click past both of Phase 5's "Next" gates ("Need placed"
- * then the Part A/B/C explanation), land at the start of Phase 10's form.
+ * then the Part A/B/C explanation) and Phase 7's "I'm Ben" introduction gate, land at the start of
+ * Phase 10's form.
  * `celebrate`: also auto-fill all 5 form fields, land right after the Phase 10 celebration.
  * `phase20`: also click past the Phase 10->20 gate, land at today's frontier.
  * `finale`: also auto-click every Phase 20 confirm-placement link, land at the placement celebration.
@@ -56,9 +57,9 @@ function fillAndSubmit(form: HTMLFormElement): void {
  */
 export function attachAutopilot({ mascotHost, target }: AutopilotOptions): Autopilot {
   // counts only the plain "Next" links -- Phase 5's five gates ("Need placed", the User/Need/
-  // Capability walkthrough, and the Part A/B/C explanation) and the Phase 10->20 gate all share
-  // identical link text, so they can't be told apart by content the way every other gate below is
-  // (by its own distinct label).
+  // Capability walkthrough, and the Part A/B/C explanation), Phase 7's single "I'm Ben"
+  // introduction gate, and the Phase 10->20 gate all share identical link text, so they can't be
+  // told apart by content the way every other gate below is (by its own distinct label).
   let plainNextCount = 0;
 
   function disconnect(): void {
@@ -83,11 +84,15 @@ export function attachAutopilot({ mascotHost, target }: AutopilotOptions): Autop
         // always skip past them, no target stops here
         link!.click();
       } else if (plainNextCount === 5) {
-        // Phase 5's Part A/B/C explanation gate -- always skip past it too; `phase10` lands right
+        // Phase 5's Part A/B/C explanation gate -- always skip past it too, into Phase 7's
+        // introduction gate
+        link!.click();
+      } else if (plainNextCount === 6) {
+        // Phase 7's "I'm Ben" introduction gate -- always skip past it too; `phase10` lands right
         // after, at the start of Phase 10's form
         link!.click();
         if (target === "phase10") disconnect();
-      } else if (plainNextCount === 6) {
+      } else if (plainNextCount === 7) {
         if (target === "phase20" || target === "finale" || target === "thinking") link!.click();
         if (target !== "finale" && target !== "thinking") disconnect();
       }
