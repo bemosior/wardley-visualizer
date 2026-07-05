@@ -637,6 +637,15 @@ const CSS = `
   gap: 0.5rem;
   pointer-events: none;
   transition: left 0.4s ease, top 0.4s ease;
+  /* an absolutely-positioned box with only 'left' set (no 'width'/'right') shrink-to-fits against
+     containing-block-width-minus-left -- fine when 'left' sits well inside the canvas, but once
+     it's near the host's right edge (mascot.ts's moveToTopRight) that leaves almost no room,
+     forcing the bubble to wrap its text into a narrow column before its own flip/left offset
+     (which doesn't feed back into this box's size) shifts it back out, stranding the tail on that
+     now-narrow box far from the avatar. An explicit max-content width instead sizes this row off
+     its children's own natural widths, independent of where 'left' puts it -- the bubble's own
+     280px max-width still caps how wide it can grow. */
+  width: max-content;
 }
 
 /* higher specificity than ".wardley-demo-root svg" above, which would otherwise stretch this
