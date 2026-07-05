@@ -1,4 +1,3 @@
-import { NODE_RADIUS } from "../../engine/render";
 import type { ScenarioContext } from "./index";
 
 const MASCOT_INTRO = {
@@ -6,12 +5,6 @@ const MASCOT_INTRO = {
   subheading:
     "I'm here to help you learn Wardley Mapping. Use the contact form at the bottom of this page anytime to say hello or ask a question!",
 };
-
-/** vertical clearance kept below the value chain's lowest node before the mascot's introduction spot, so the bubble never overlaps a Capability */
-const STEP_BACK_MARGIN = 40;
-
-/** clearance kept above the viewBox's own bottom edge, so the spot stays on-canvas even on a tall custom config */
-const CANVAS_BOTTOM_MARGIN = 20;
 
 /**
  * an open patch of canvas whitespace below the whole value chain, in viewBox coordinates — not
@@ -23,9 +16,8 @@ const CANVAS_BOTTOM_MARGIN = 20;
 function stepBackPoint(ctx: ScenarioContext): { x: number; y: number } {
   const { demo, chain } = ctx;
   const viewBox = demo.getViewBoxSize();
-  const ids = [chain.user.id, chain.need.id, ...chain.capabilities.map((capability) => capability.id)];
-  const lowestY = Math.max(...ids.map((id) => demo.getNodePosition(id)!.y));
-  const y = Math.min(lowestY + NODE_RADIUS + STEP_BACK_MARGIN, viewBox.height - CANVAS_BOTTOM_MARGIN);
+  const needPos = demo.getNodePosition(chain.need.id)!;
+  const y = needPos.y;
   return { x: viewBox.width / 2, y };
 }
 
