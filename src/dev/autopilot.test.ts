@@ -48,8 +48,8 @@ describe("attachAutopilot", () => {
 
     expect(onNeedPlaced).toHaveBeenCalledOnce();
     expect(mascotHost.querySelector(".wd-next-link")).toBeNull();
-    expect(mascotHost.querySelector(".wd-panel-form-prompt")!.textContent).toBe("What does the user need?");
-    expect(canvas.querySelector('[data-node-id="need"] .wd-node-label')!.textContent).toBe("Need");
+    expect(mascotHost.querySelector(".wd-panel-form-prompt")!.textContent).toBe("Who are we designing for?");
+    expect(canvas.querySelector('[data-node-id="user"] .wd-node-label')!.textContent).toBe("User");
   });
 
   it("celebrate: auto-fills all 5 fields and stops right after celebrating, before the second Next link is clicked", async () => {
