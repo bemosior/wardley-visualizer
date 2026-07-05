@@ -14,16 +14,16 @@ export type EvolutionStage = (typeof EVOLUTION_STAGES)[number];
  */
 const CHARACTERISTICS: Record<Exclude<ComponentKind, "user">, Record<EvolutionStage, string>> = {
   need: {
-    Genesis: "If it's in Genesis, it's rare, poorly understood, still being discovered — people don't yet know they want this.",
-    "Custom-Built": "If it's in Custom-Built, it's recognized by early adopters, but still bespoke — no two people expect it the same way.",
-    Product: "If it's in Product, it's increasingly familiar — most people recognize the need and expect it to be met well.",
-    Commodity: "If it's in Commodity, it's universally expected, assumed by default — its absence would be surprising.",
+    Genesis: "If so, it's rare, poorly understood, still being discovered — people don't yet know they want this.",
+    "Custom-Built": "If so, it's recognized by early adopters, but still bespoke — no two people expect it the same way.",
+    Product: "If so, it's increasingly familiar — most people recognize the need and expect it to be met well.",
+    Commodity: "If so, it's universally expected, assumed by default — its absence would be surprising.",
   },
   capability: {
-    Genesis: "If it's in Genesis, it's uncertain, experimental, high failure rate — best built in-house by whoever is closest to the unknown.",
-    "Custom-Built": "If it's in Custom-Built, it's emerging best practice, still one-off per organization, seen as a competitive advantage — have to build, can't buy off the shelf.",
-    Product: "If it's in Product, it's increasingly common, differentiated by features — advantage is in implementation.",
-    Commodity: "If it's in Commodity, it's standardized, well understood, widespread in its market, important but invisible — high volume, reducing margin.",
+    Genesis: "If so, it's uncertain, experimental, high failure rate — best built in-house by whoever is closest to the unknown.",
+    "Custom-Built": "If so, it's emerging best practice, still one-off per organization, seen as a competitive advantage — have to build, can't buy off the shelf.",
+    Product: "If so, it's increasingly common, differentiated by features — advantage is in implementation.",
+    Commodity: "If so, it's standardized, well understood, widespread in its market, important but invisible — high volume, reducing margin.",
   },
 };
 
