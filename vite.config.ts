@@ -2,6 +2,9 @@ import { defineConfig } from "vitest/config";
 import { resolve } from "path";
 
 export default defineConfig({
+  server: {
+    port: Number(process.env.PORT) || 5199,
+  },
   test: {
     environment: "happy-dom",
     setupFiles: ["./src/test/setup.ts"],
