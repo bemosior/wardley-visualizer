@@ -4,57 +4,156 @@
     <meta charset="UTF-8" />
     <title>Wardley Demo — Dev</title>
     <style>
-      * {
-        box-sizing: border-box;
+      /* mirrors lwm-html src/static/style.css tokens — keep in sync manually.
+         Kept identical to preview.html's so this page exercises the same geometry that's
+         actually deployed (see preview.html's own comment) -- this is that same config, just
+         wired to live source instead of the built dist bundle, so local edits show up without
+         running `npm run build` first. */
+      :root {
+        --color-ink: #1a1a1a;
+        --color-link: #005f99;
+        --color-link-hover: #003d6b;
+        --color-border: #e5e5e5;
+        --color-bg-soft: #f5f5f5;
+        --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       }
       body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         margin: 0;
-        min-height: 100vh;
-        position: relative;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 18px;
+        line-height: 1.7;
+        color: var(--color-ink);
+      }
+      .hero {
+        padding: 5rem 1.5rem 2rem;
+        text-align: center;
+        background: #fff;
+      }
+      .hero-inner {
+        max-width: 740px;
+        margin: 0 auto;
+      }
+      .hero h2 {
+        font-family: var(--font-ui);
+        font-size: 2.5rem;
+        font-weight: 800;
+        line-height: 1.2;
+        color: var(--color-ink);
+        margin: 0 0 1rem;
+      }
+      .hero-sub {
+        font-size: 1.1rem;
+        color: #444;
+        margin: 0 0 1.5rem;
+        font-family: var(--font-ui);
+      }
+      .demo-row {
         display: flex;
-        align-items: flex-start;
+        align-items: center;
+        gap: 2rem;
+        justify-content: flex-start;
+        flex-wrap: wrap;
       }
 
       .wd-instance {
         display: flex;
         align-items: flex-start;
+        gap: 0.75rem;
+        flex: 1;
+        min-width: 280px;
+      }
+
+      .wd-instance .wd-canvas {
         flex: 1;
       }
 
-      /*
-       * No horizontal auto-centering: an auto-centered canvas would re-center (jump) if its width
-       * ever changed, dragging every node with it.
-       */
-      .wd-canvas {
-        flex: 1;
-        margin: 4rem 0;
+      /* dev-only chrome, not part of the simulated host embed */
+      .wd-dev-skip {
+        position: fixed;
+        top: 0.5rem;
+        right: 0.5rem;
+        font-family: var(--font-ui);
+        font-size: 0.75rem;
+        color: #888;
+        background: #fff;
+        border: 1px solid var(--color-border);
+        border-radius: 6px;
+        padding: 0.35rem 0.5rem;
+        z-index: 10;
       }
-
+      .wd-dev-skip select {
+        font-size: 0.75rem;
+        margin-left: 0.35rem;
+      }
     </style>
   </head>
   <body>
-    <div id="demo-section" class="wd-instance">
-      <div id="demo" class="wd-canvas">
-        <div id="mascot-host" class="wd-mascot-host"></div>
-      </div>
+    <div class="wd-dev-skip">
+      <label>Dev: skip to
+        <select id="dev-skip-select">
+          <option value="">(none)</option>
+          <option value="phase10">Phase 10 form</option>
+          <option value="celebrate">Celebration</option>
+          <option value="phase20">Phase 20 gate</option>
+          <option value="finale">Placement finale</option>
+          <option value="thinking">Thinking finale</option>
+        </select>
+      </label>
     </div>
+
+    <section class="hero">
+      <div class="hero-inner">
+        <div class="demo-row">
+          <div class="wd-instance">
+            <div id="demo-a" class="wd-canvas">
+              <div id="mascot-host-a" class="wd-mascot-host"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <script type="module">
       import WardleyDemo from "/src/index.ts";
-      import { attachAutopilot, parseSkipTarget } from "/src/dev/autopilot.ts";
-      const mascotHost = document.getElementById("mascot-host");
+      const mascotHost = document.getElementById("mascot-host-a");
 
-      // Dev-only test shortcut: reload with ?skipTo=phase10 | celebrate | phase20 | finale | thinking
-      // to jump straight past earlier phases instead of replaying drag + 5 form fields by hand.
-      const skipTarget = parseSkipTarget(location.search);
-      const autopilot = skipTarget ? attachAutopilot({ mascotHost, target: skipTarget }) : undefined;
+      // Dev-only test shortcut: pick a moment from the dropdown (or load with
+      // ?skipTo=phase10|celebrate|phase20|finale|thinking) to jump straight past earlier phases
+      // instead of replaying drag + 5 form fields + two "Next" clicks by hand.
+      const skipSelect = document.getElementById("dev-skip-select");
+      const skipTarget = WardleyDemo.dev.parseSkipTarget(location.search);
+      if (skipTarget) skipSelect.value = skipTarget;
+      skipSelect.addEventListener("change", () => {
+        const url = new URL(location.href);
+        if (skipSelect.value) {
+          url.searchParams.set("skipTo", skipSelect.value);
+        } else {
+          url.searchParams.delete("skipTo");
+        }
+        location.href = url.toString();
+      });
+      const autopilot = skipTarget
+        ? WardleyDemo.dev.attachAutopilot({ mascotHost, target: skipTarget })
+        : undefined;
 
       WardleyDemo.demos.userNeedDependency({
-        canvas: document.getElementById("demo"),
+        canvas: document.getElementById("demo-a"),
         mascotHost,
         onMount: autopilot?.onMount,
         onEvolutionStep: autopilot?.onEvolutionStep,
+        config: {
+          viewBox: { width: 400, height: 520 },
+          snapThreshold: 30,
+          nodes: [
+            { id: "user", label: "Someone we care about", x: 200, y: 100, draggable: false },
+            { id: "need", label: "Something they need", x: 200, y: 284, draggable: true, start: { x: 25, y: 237 } },
+            { id: "dependency-1", label: "Something that satisfies their need", x: 200, y: 468, draggable: false },
+          ],
+          connections: [
+            { from: "user", to: "need" },
+            { from: "need", to: "dependency-1" },
+          ],
+        },
       });
     </script>
   </body>

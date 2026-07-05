@@ -45,18 +45,21 @@ const CORNER_MARGIN = 64;
  * or the last of several capabilities once the whole row is already laid out (nothing further
  * right to walk into).
  *
- * `"northeast"`: shifts the anchor up-and-right first, *then* the same measured pick -- for
- * anchoring beside a node that has *other rows* stacked close above or below it (this demo stacks
+ * `"northeast"`: shifts the anchor up-and-right first, then *forces* "below" that shifted point --
+ * for anchoring beside a node that has *other rows* stacked close above it (this demo stacks
  * several close together), so the mascot reads as "pointing at" the node rather than sitting on
- * top of whichever row is closest. Wrong for a node with side-by-side siblings in its *own* row
- * (e.g. one of several Capability nodes) -- the rightward shift has nowhere to go but into the
- * next sibling, regardless of which vertical side gets picked.
+ * top of whichever row is closest. Forcing "below" here (not measuring) matters most for whichever
+ * node anchors last/lowest on the canvas: the up-and-right shift already eats into that row's own
+ * "below" room, so a merely-tall bubble can make a measured pick misread "below" as the worse
+ * overflow and flip to "above" -- which for that row reads as the mascot leaping back up past
+ * every row it just walked the visitor through. Wrong for a node with side-by-side siblings in its
+ * *own* row (e.g. one of several Capability nodes rendered together from the start) -- the
+ * rightward shift has nowhere to go but into the next sibling, regardless of which vertical side
+ * gets picked.
  *
  * `"south"`: no shift, but *forces* "below" -- for anchoring beside one of several side-by-side
  * siblings that has another row directly above it and nothing below (a Capability node, with its
- * Need above): the measured pick can occasionally still choose "above" here (a tall canvas can
- * make "below" *look* like the worse overflow even though nothing is actually there), so this
- * removes that measurement entirely rather than let it gamble on the one row that's never safe.
+ * Need above). Same forced-"below" reasoning as `"northeast"` above, without the shift.
  *
  * `"pinned"`: `"northeast"`'s stricter sibling, for a node that will itself be dragged *along* its
  * own row afterward while the mascot stays put (the evolution axis, `WardleyDemo.
@@ -298,15 +301,20 @@ export class Mascot {
     const clearBelow = y + radius + NODE_CLEARANCE; // top edge of the safe zone below the node
     const clearAbove = y - radius - NODE_CLEARANCE; // bottom edge of the safe zone above the node
 
-    // "auto" and "northeast" pick whichever side actually has less overflow, measured against the
-    // host's real bounds, rather than a per-call-site guess. "south" forces "below" instead --
-    // for a node with side-by-side siblings and only a row *above* it to avoid, the measured pick
-    // can occasionally still gamble on "above" (a tall canvas can make "below" look like the
-    // worse overflow even with nothing actually there), which this removes entirely.
+    // only "auto" measures which side actually has less overflow against the host's real bounds --
+    // right for a node that could plausibly need either side (moveToTopRight's corner, a settled
+    // lone node). "south" and "northeast" both force "below" instead: both are used exactly where
+    // "below" is the side that's *always* structurally safe (nothing ever renders under that row),
+    // so the measurement is never protecting against a real collision there -- it can only ever
+    // misfire, gambling on "above" once a tall enough bubble makes "below" *look* like the worse
+    // overflow even though nothing is actually there. That misfire is exactly what "south" was
+    // already written to avoid; "northeast" needs the same guard for the same reason, since its own
+    // up-and-right shift eats into the row's remaining "below" room before this pick ever runs,
+    // making the false-overflow trigger even easier to hit for whichever node anchors last.
     let side: "below" | "above" = "below";
     if (forcePinnedAbove) {
       side = "above";
-    } else if (this.placement !== "south" && hostRect.height) {
+    } else if (this.placement !== "south" && this.placement !== "northeast" && hostRect.height) {
       const belowOverflow = Math.max(0, clearBelow + groupHeight - hostRect.height);
       const aboveOverflow = Math.max(0, groupHeight - clearAbove);
       if (aboveOverflow < belowOverflow) side = "above";

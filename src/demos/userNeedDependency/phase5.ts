@@ -85,10 +85,7 @@ export async function runPhase5(ctx: ScenarioContext): Promise<void> {
   const capabilities = ctx.chain.capabilities;
   const anchor = capabilities.find((capability) => demo.hasNode(capability.id))!;
   const anchorPixelPos = demo.getNodePixelPosition(anchor.id);
-  // "south", not "northeast": this capability sits beside its side-by-side siblings, so
-  // "northeast"'s rightward shift would walk the bubble straight into the next one over -- see
-  // `MascotPlacement`'s doc comment.
-  if (anchorPixelPos) mascot.moveTo(anchor.id, anchorPixelPos, "south");
+  if (anchorPixelPos) mascot.moveTo(anchor.id, anchorPixelPos, "northeast");
   mascot.showPlaceholder(MASCOT_CAPABILITY.heading, MASCOT_CAPABILITY.subheading);
   await mascot.confirmPlacement("Next");
 
