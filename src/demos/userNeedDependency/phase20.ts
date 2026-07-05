@@ -61,11 +61,7 @@ export async function runPhase20(ctx: ScenarioContext): Promise<void> {
   demo.stopCharging([chain.user.id, chain.need.id, ...chain.capabilities.map((c) => c.id)]);
   demo.markPending(chain.capabilities.map((c) => c.id));
   mascot.showInstrumentPanel(chain.need.label, "need", "Genesis", MAP_CAPTION_FADE_MS);
-  demo.showMapBackdrop(
-    scale,
-    PANEL_CONTENT_MIN_HEIGHT,
-    "Now let's turn your *Value Chain*\r\ninto a *Wardley Map*!",
-  );
+  demo.showMapBackdrop(scale, PANEL_CONTENT_MIN_HEIGHT);
   // guards every delayed mascot.moveTo below (the Need's slide, and each capability's, further
   // down): a real visitor always takes longer than these animations' own delay/duration to place
   // all four nodes, so those callbacks naturally fire long before `allPlaced` flips -- but the dev
