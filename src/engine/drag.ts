@@ -72,7 +72,20 @@ function clearRevealOverride(revealTargets: RevealTarget[]): void {
   }
 }
 
-export function attachDrag(options: DragOptions, snapThreshold: number): void {
+export interface DragHandle {
+  /**
+   * marks this drag as completed and detaches its own pointerdown listener, without a real
+   * pointer gesture — for a completion driven some other way (`WardleyDemo.skipDrag()`). Without
+   * this, the listener this function attached stays live forever (its internal `completed` flag
+   * never flips true on its own), so a later real drag on the same element -- e.g. Phase 20's
+   * evolution-axis drag reusing the Need's node group -- still triggers *this* handler's own
+   * pointerup too, sees the drop as "missed the snap target", and animates the node back to its
+   * pre-drag `start` position using this call's own (by-then stale) `connectedLines` snapshot.
+   */
+  skipDrag: () => void;
+}
+
+export function attachDrag(options: DragOptions, snapThreshold: number): DragHandle {
   const { svg, nodeGroup, node, connectedLines, revealTargets, onSnapSuccess, externalHandle } = options;
   const startPos: Point = node.start ?? { x: node.x, y: node.y };
   const targetPos: Point = { x: node.x, y: node.y };
@@ -119,7 +132,7 @@ export function attachDrag(options: DragOptions, snapThreshold: number): void {
     );
   }
 
-  triggerElement.addEventListener("pointerdown", ((event: PointerEvent) => {
+  const onPointerDown = ((event: PointerEvent) => {
     if (completed) return;
     nodeGroup.classList.remove("wd-node--beckon");
     triggerElement.setPointerCapture(event.pointerId);
@@ -133,7 +146,15 @@ export function attachDrag(options: DragOptions, snapThreshold: number): void {
     triggerElement.addEventListener("pointermove", onPointerMove as EventListener);
     triggerElement.addEventListener("pointerup", onPointerUp as EventListener);
     triggerElement.addEventListener("pointercancel", onPointerUp as EventListener);
-  }) as EventListener);
+  }) as EventListener;
+  triggerElement.addEventListener("pointerdown", onPointerDown);
+
+  return {
+    skipDrag() {
+      completed = true;
+      triggerElement.removeEventListener("pointerdown", onPointerDown);
+    },
+  };
 }
 
 export interface AxisDragOptions {
