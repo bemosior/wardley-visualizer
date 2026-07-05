@@ -28,6 +28,10 @@ const BUBBLE_GAP = 8;
  * for its own hand-rolled beside-the-node anchor */
 const NORTHEAST_GAP = 32;
 
+/** clearance from the host's own top/right edges for `moveToTopRight` -- keeps the avatar off the
+ * canvas border while still reading as "the corner" */
+const CORNER_MARGIN = 24;
+
 /**
  * `"auto"` is `reposition`'s default below/above-the-node behavior. `"northeast"` instead anchors
  * up and to the right of the node -- for anchors whose "below" spot would land on another row of
@@ -65,6 +69,7 @@ export class Mascot {
   private avatar = createMascotAvatar();
   private avatarState: MascotState = "idle";
   private currentAnchorNodeId: string | null = null;
+  private anchoredToCorner = false;
   private lastPos: { x: number; y: number; radius?: number } | null = null;
   private placement: MascotPlacement = "auto";
   private resizeHandler = (): void => this.trackAnchor();
@@ -108,9 +113,31 @@ export class Mascot {
    */
   moveTo(nodeId: string, pos: { x: number; y: number; radius?: number }, placement: MascotPlacement = "auto"): void {
     this.currentAnchorNodeId = nodeId;
+    this.anchoredToCorner = false;
     this.lastPos = pos;
     this.placement = placement;
     this.reposition();
+  }
+
+  /**
+   * plants the mascot in the host's top-right corner, clear of any node -- used once the map is
+   * fully placed (see `phase20.ts`'s closing "All placed!" beat) so the mascot stops anchoring
+   * beside whichever node it last visited and steps out of the way of the finished map instead.
+   * Unlike `moveTo`, tracked on resize independent of any node id (there is none here), via
+   * `anchoredToCorner`.
+   */
+  moveToTopRight(): void {
+    this.currentAnchorNodeId = null;
+    this.anchoredToCorner = true;
+    this.lastPos = this.topRightPoint();
+    this.placement = "auto";
+    this.reposition();
+  }
+
+  /** the host's top-right corner, inset by `CORNER_MARGIN` on both axes, in container-pixel space -- `radius: 0` since there's no node to clear */
+  private topRightPoint(): { x: number; y: number; radius: number } {
+    const hostRect = this.host.getBoundingClientRect();
+    return { x: Math.max(hostRect.width - CORNER_MARGIN, 0), y: CORNER_MARGIN, radius: 0 };
   }
 
   /**
@@ -247,6 +274,10 @@ export class Mascot {
   }
 
   private trackAnchor(): void {
+    if (this.anchoredToCorner) {
+      this.moveToTopRight();
+      return;
+    }
     if (!this.demo || !this.currentAnchorNodeId) return;
     const pos = this.demo.getNodePixelPosition(this.currentAnchorNodeId);
     if (pos) this.moveTo(this.currentAnchorNodeId, pos, this.placement);

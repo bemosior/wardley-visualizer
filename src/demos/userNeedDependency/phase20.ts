@@ -91,6 +91,7 @@ export async function runPhase20(ctx: ScenarioContext): Promise<void> {
     await awaitEvolutionConfirm(demo, mascot, capability.id, options.onEvolutionStep);
   }
 
+  mascot.moveToTopRight();
   mascot.showPlaceholder("Wardley Map", "All placed!");
   mascot.setState("celebrating");
   demo.celebrateAll(2);
