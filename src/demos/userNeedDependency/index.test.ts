@@ -109,7 +109,7 @@ describe("runValueChainScenario", () => {
     clickNext(mascotHost);
     await flush();
     expect(mascotHost.querySelector("form")).not.toBeNull();
-    expect(mascotHost.querySelector(".wd-panel-form-prompt")!.textContent).toBe("Who are we designing for?");
+    expect(mascotHost.querySelector(".wd-panel-form-prompt")!.textContent).toBe("Who should we help today?");
   });
 
   it("does not advance to the form sequence if the Need is dropped away from its target", async () => {

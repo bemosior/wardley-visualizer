@@ -228,6 +228,68 @@ describe("Mascot.moveTo", () => {
     expect(bubbleBottom).toBeLessThanOrEqual(152); // clear of the node's own top edge
   });
 
+  it("falls back off a northeast-placed node with no room above it instead of pushing the mascot off-screen", () => {
+    const host = makeHost();
+    vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 500, height: 500 } as DOMRect);
+    const mascot = new Mascot(host);
+    const root = (mascot as any).root as HTMLElement;
+    const bubble = (mascot as any).bubbleEl as HTMLElement;
+    vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 200, height: 130 } as DOMRect);
+
+    // the value chain's User node is rendered tangent to the canvas's own top edge (y = -radius),
+    // so a northeast shift (up and to the right) has no real room to move into -- forcing "above"
+    // regardless used to plant the avatar well above y=0 (off-screen). It should fall back to
+    // "below" (a mostly-horizontal shift) instead, same as `northeastPoint`'s own doc comment
+    // always promised for this case.
+    mascot.moveTo("user", { x: 200, y: -20, radius: 20 }, "northeast");
+
+    expect(parseFloat(root.style.top)).toBeGreaterThanOrEqual(0);
+    const bubbleTop = parseFloat(bubble.style.top) + parseFloat(root.style.top);
+    expect(bubbleTop).toBeGreaterThanOrEqual(0);
+  });
+
+  it("floors a northeast-placed bubble at the page's own top edge when the node has some room above it but not enough", () => {
+    const host = makeHost();
+    // the host sits only 20px into the real document (e.g. a host page with little headroom above
+    // its canvas) -- mocking a real `top` (unlike every other test here) is what turns on the
+    // page-aware floor at all.
+    vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 500, height: 500, top: 20 } as DOMRect);
+    vi.spyOn(window, "scrollY", "get").mockReturnValue(0);
+    const mascot = new Mascot(host);
+    const root = (mascot as any).root as HTMLElement;
+    const bubble = (mascot as any).bubbleEl as HTMLElement;
+    vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 200, height: 130 } as DOMRect);
+
+    // node at y=100, radius=48 has *some* room above it (unlike the tangent User node above), so
+    // `northeastPoint` isn't `clamped` and "above" is still forced -- but the raw math would still
+    // plant the group at avatarTop -12 (host-local), 8px past the real document's top (20-12=8
+    // short). The floor below should pull it back down to the document's edge instead.
+    mascot.moveTo("user", { x: 200, y: 100, radius: 48 }, "northeast");
+
+    const hostDocTop = 20; // hostRect.top + scrollY
+    expect(parseFloat(root.style.top) + hostDocTop).toBeGreaterThanOrEqual(0);
+    const bubbleTop = parseFloat(bubble.style.top) + parseFloat(root.style.top);
+    expect(bubbleTop + hostDocTop).toBeGreaterThanOrEqual(0);
+  });
+
+  it("shifts an east-placed bubble beside the node without lifting it, unlike northeast", () => {
+    const host = makeHost();
+    vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 500, height: 500 } as DOMRect);
+    const mascot = new Mascot(host);
+    const root = (mascot as any).root as HTMLElement;
+    const bubble = (mascot as any).bubbleEl as HTMLElement;
+    vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 200, height: 60 } as DOMRect);
+
+    // same anchor as the "northeast" tests above (x: 100, y: 200, radius: 48), but "east" only
+    // shifts horizontally -- the avatar should land close to the node's own y (only the small
+    // NODE_CLEARANCE gap away, via the normal below/above pick), not lifted well above it the way
+    // "northeast" forces.
+    mascot.moveTo("need", { x: 100, y: 200, radius: 48 }, "east");
+
+    expect(parseFloat(root.style.left)).toBeCloseTo(100 + 48 + 32 - 20); // x + radius + SIDE_GAP - AVATAR_WIDTH/2
+    expect(parseFloat(root.style.top)).toBeCloseTo(200 + 12); // clearBelow: y + NODE_CLEARANCE (radius already zeroed by eastPoint)
+  });
+
   it("stops tracking resizes after unmount", () => {
     const demo = buildDemo();
     const spy = vi.spyOn(demo, "getNodePixelPosition");

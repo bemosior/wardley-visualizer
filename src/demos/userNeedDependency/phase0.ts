@@ -5,10 +5,6 @@ import { layoutValueChain } from "../../application/valueChainLayout";
 import { PANEL_CONTENT_MIN_HEIGHT } from "../../engine/styles";
 import type { ValueChainScenarioOptions, ScenarioContext } from "./index";
 
-/** horizontal clearance (container px) between the Need's destination marker and the mascot
- * avatar when it anchors beside (not under) that marker, before the demo starts */
-const MASCOT_BESIDE_GAP = 32;
-
 const seedValueChain = createValueChain({
   user: { id: "user", label: "User" },
   need: { id: "need", label: "Need" },
@@ -29,12 +25,13 @@ const MASCOT_INTRO = { heading: "Solve the puzzle.", subheading: "Drag the missi
  * to pick up from. Mounts the sole `Mascot` guide (`engine/mascot.ts`) before `WardleyDemo` itself,
  * since the mascot renders from the very start of the scenario. The mascot anchors beside the
  * Need's *destination* marker instead — the dashed target circle at its final `layoutValueChain`
- * position (`WardleyDemo.getNodePixelPosition`), offset to the right by `MASCOT_BESIDE_GAP` — so
- * it points at where the Need is headed rather than sitting on top of the node the visitor is
- * about to pick up. It greets the visitor (`MASCOT_INTRO`, via `Mascot.showPlaceholder`), then
- * waits for the Need to be dragged into place. Once it snaps, the mascot re-anchors to the Need's
- * settled position and fires `onNeedPlaced` (Phase 0 done) — the caller then shows the "That's a
- * Value Chain!" placeholder and a "Next" link (see `phase10.ts`).
+ * position (`WardleyDemo.getNodePixelPosition`), via `Mascot`'s `"east"` placement — so it points
+ * at where the Need is headed rather than sitting on top of the node the visitor is about to pick
+ * up. It greets the visitor (`MASCOT_INTRO`, via `Mascot.showPlaceholder`), then waits for the
+ * Need to be dragged into place. Once it snaps, the mascot re-anchors to the Need's settled
+ * position (`"northeast"`, clear of the Capability row underneath) and fires `onNeedPlaced`
+ * (Phase 0 done) — the caller then shows the "That's a Value Chain!" placeholder and a "Next" link
+ * (see `phase10.ts`).
  */
 export async function runPhase0(options: ValueChainScenarioOptions): Promise<ScenarioContext> {
   const chain = seedValueChain;
@@ -55,23 +52,13 @@ export async function runPhase0(options: ValueChainScenarioOptions): Promise<Sce
     // anchors beside the Need's *destination* marker (the dashed target circle), not its
     // out-of-place `start` position -- keeps the mascot clear of the node the visitor is about
     // to pick up and drag, and points at where it's headed instead.
-    if (needDestination) {
-      mascot.moveTo(chain.need.id, {
-        x: needDestination.x + needDestination.radius + MASCOT_BESIDE_GAP,
-        y: needDestination.y,
-        radius: 0,
-      });
-    }
+    if (needDestination) mascot.moveTo(chain.need.id, needDestination, "east");
     options.onMount?.(demo);
   });
 
   mascot.attachDemo(demo);
   const needPlacedPos = demo.getNodePixelPosition(chain.need.id);
-  if (needPlacedPos) mascot.moveTo(chain.need.id, {
-        x: needPlacedPos.x + needPlacedPos.radius + MASCOT_BESIDE_GAP,
-        y: needPlacedPos.y - needPlacedPos.radius - MASCOT_BESIDE_GAP,
-        radius: 0,
-  });
+  if (needPlacedPos) mascot.moveTo(chain.need.id, needPlacedPos, "northeast");
 
   options.onNeedPlaced?.();
 

@@ -24,9 +24,10 @@ const NODE_CLEARANCE = 12;
 /** matches `.wd-mascot`'s `gap: 0.5rem` in styles.ts (at the browser's 16px default root font size) */
 const BUBBLE_GAP = 8;
 
-/** clearance on both axes for a `"northeast"` placement -- matches the gap phase0.ts already uses
- * for its own hand-rolled beside-the-node anchor */
-const NORTHEAST_GAP = 32;
+/** clearance from the node's own circle for a `"northeast"` or `"east"` placement -- the one
+ * source of truth for "how far beside a node the mascot sits", so callers never need their own
+ * copy of this gap */
+const SIDE_GAP = 32;
 
 /** clearance from the host's own top/right edges for `moveToTopRight` -- keeps the avatar off the
  * canvas border while still reading as "the corner" */
@@ -36,14 +37,16 @@ const CORNER_MARGIN = 64;
  * `"auto"` is `reposition`'s default below/above-the-node behavior. `"northeast"` instead anchors
  * up and to the right of the node -- for anchors whose "below" spot would land on another row of
  * nodes underneath (this demo stacks several rows close together), NE clears it instead of
- * covering it. `"south"` forces the below side even when `reposition`'s overflow math would
- * otherwise flip to "above" -- for anchors with another row directly *above* them (e.g. a
- * Capability, sitting right under its Need), flipping up would plant the bubble on that row
- * instead of clearing it. Below-the-node is a safe floor for these since nothing else renders
- * underneath the bottom row; spilling past the canvas's bottom edge is an acceptable, secondary
- * trade-off (see `reposition`'s doc comment).
+ * covering it. `"east"` is the same rightward shift without the vertical lift -- for anchors with
+ * nothing below them to avoid, where lifting up would just walk the bubble into a row sitting
+ * *above* instead (e.g. the value chain's Capability row, sitting right under its Need). `"south"`
+ * forces the below side even when `reposition`'s overflow math would otherwise flip to "above" --
+ * for anchors with another row directly *above* them (e.g. a Capability, sitting right under its
+ * Need), flipping up would plant the bubble on that row instead of clearing it. Below-the-node is
+ * a safe floor for these since nothing else renders underneath the bottom row; spilling past the
+ * canvas's bottom edge is an acceptable, secondary trade-off (see `reposition`'s doc comment).
  */
-export type MascotPlacement = "auto" | "northeast" | "south";
+export type MascotPlacement = "auto" | "northeast" | "east" | "south";
 
 /**
  * the mascot's speech-bubble guide — the sole guide for the whole scenario, from the moment
@@ -117,6 +120,7 @@ export class Mascot {
     this.lastPos = pos;
     this.placement = placement;
     this.reposition();
+    this.scrollIntoViewIfNeeded();
   }
 
   /**
@@ -132,6 +136,39 @@ export class Mascot {
     this.lastPos = this.topRightPoint();
     this.placement = "auto";
     this.reposition();
+    this.scrollIntoViewIfNeeded();
+  }
+
+  /**
+   * brings the mascot into the current viewport whenever it re-anchors to a (possibly distant)
+   * node -- e.g. jumping back up to the User node after the visitor scrolled down to drag the Need
+   * or inspect the Capability row. `reposition`'s own math keeps the group on the *page*, but
+   * nothing scrolls the page itself, so a re-anchor to a spot above wherever the visitor happens to
+   * be scrolled to would otherwise just look like the mascot vanished off-screen.
+   *
+   * Scrolls by the union of the avatar's and bubble's own rects, not `this.root.scrollIntoView()`
+   * -- `.wd-mascot-bubble` is `position: relative` with a `top` offset that plants it along
+   * `reposition`'s `clearAbove`/`clearBelow` line, which can shift it well above or below `.wd-
+   * mascot`'s own flex-box (the `<img>` avatar plus the bubble's *unshifted* flow position); a
+   * relative offset doesn't grow its parent's `getBoundingClientRect()` to match, so scrolling
+   * `.wd-mascot` into view left the actual (shifted) bubble still cropped. A no-op when already
+   * fully on-screen, so this never yanks the scroll position during the common case of anchoring
+   * to a node already in view. Instant (not smooth) -- verified against a real headless run that
+   * `behavior: "smooth"` silently never completes the scroll here.
+   */
+  private scrollIntoViewIfNeeded(): void {
+    const avatarRect = this.avatar.element.getBoundingClientRect();
+    const bubbleRect = this.bubbleEl.getBoundingClientRect();
+    const top = Math.min(avatarRect.top, bubbleRect.top);
+    const bottom = Math.max(avatarRect.bottom, bubbleRect.bottom);
+    const viewportHeight = window.innerHeight;
+    if (!viewportHeight) return;
+
+    if (top < 0) {
+      window.scrollBy({ top, behavior: "auto" });
+    } else if (bottom > viewportHeight) {
+      window.scrollBy({ top: Math.min(bottom - viewportHeight, top), behavior: "auto" });
+    }
   }
 
   /** the host's top-right corner, inset by `CORNER_MARGIN` on both axes, in container-pixel space -- `radius: 0` since there's no node to clear */
@@ -160,21 +197,37 @@ export class Mascot {
    * let a tall bubble creep back up into the node's row when the canvas was short.
    */
   /**
-   * a point `NORTHEAST_GAP` clear of the node's circle on both axes, clamped so the vertical
-   * shift never lifts the point above the host's own top edge -- keeps nodes already near the
-   * canvas top (e.g. the value chain's User row, which has no room above it) from being pushed
-   * off-canvas; they degrade gracefully to a mostly-horizontal shift instead. Returns `radius: 0`
-   * since the shift already bakes the node's own radius into the gap.
+   * a point `SIDE_GAP` clear of the node's circle on both axes, clamped so the vertical shift
+   * never lifts the point above the host's own top edge -- keeps nodes already near the canvas
+   * top (e.g. the value chain's User row, which has no room above it) from being pushed
+   * off-canvas; they degrade gracefully to a mostly-horizontal shift instead (see `reposition`'s
+   * `clamped` handling below). Returns `radius: 0` since the shift already bakes the node's own
+   * radius into the gap, and `clamped: true` when the vertical shift hit that floor -- i.e. there
+   * was no real room above the node to begin with.
    */
-  private northeastPoint(pos: { x: number; y: number; radius?: number }): { x: number; y: number; radius: number } {
+  private northeastPoint(pos: { x: number; y: number; radius?: number }): { x: number; y: number; radius: number; clamped: boolean } {
     const radius = pos.radius ?? 0;
-    return { x: pos.x + radius + NORTHEAST_GAP, y: Math.max(pos.y - radius - NORTHEAST_GAP, 0), radius: 0 };
+    const rawY = pos.y - radius - SIDE_GAP;
+    return { x: pos.x + radius + SIDE_GAP, y: Math.max(rawY, 0), radius: 0, clamped: rawY < 0 };
+  }
+
+  /**
+   * a point `SIDE_GAP` clear of the node's circle horizontally, at the node's own vertical
+   * center -- unlike `northeastPoint`, never lifted, so `reposition`'s below/above pick still
+   * applies to this (already-shifted, zero-radius) point afterward and only has to cover the
+   * small `NODE_CLEARANCE` gap, not the node's own radius again. That's what keeps this reading
+   * as "beside" rather than "below/above" for anchors with nothing on one side to avoid.
+   */
+  private eastPoint(pos: { x: number; y: number; radius?: number }): { x: number; y: number; radius: number } {
+    const radius = pos.radius ?? 0;
+    return { x: pos.x + radius + SIDE_GAP, y: pos.y, radius: 0 };
   }
 
   private reposition(): void {
     if (!this.lastPos) return;
-    const { x, y, radius } =
-      this.placement === "northeast" ? this.northeastPoint(this.lastPos) : { x: this.lastPos.x, y: this.lastPos.y, radius: this.lastPos.radius ?? 0 };
+    const northeast = this.placement === "northeast" ? this.northeastPoint(this.lastPos) : null;
+    const east = this.placement === "east" ? this.eastPoint(this.lastPos) : null;
+    const { x, y, radius } = northeast ?? east ?? { x: this.lastPos.x, y: this.lastPos.y, radius: this.lastPos.radius ?? 0 };
     const hostRect = this.host.getBoundingClientRect();
     const bubbleHeight = this.bubbleEl.getBoundingClientRect().height;
 
@@ -187,9 +240,13 @@ export class Mascot {
     // it right back toward that same row (and, for a horizontally-draggable node, back into the
     // node's own path as it drags through the anchor's x). Always growing "above" keeps the whole
     // group's y-range moving further away from the node instead, the same invariant "auto" gets
-    // from picking whichever side clears the node's row.
+    // from picking whichever side clears the node's row. But when `northeastPoint` had no real
+    // room above the node to shift into (`clamped` -- e.g. the User node, rendered tangent to the
+    // canvas's own top edge), forcing "above" anyway pushes the whole group off-screen instead of
+    // just failing to clear the row -- fall through to the same overflow-based pick "auto" uses,
+    // which degrades to "below" for these (a mostly-horizontal shift, off to the node's side).
     let side: "below" | "above" = "below";
-    if (this.placement === "northeast") {
+    if (this.placement === "northeast" && !northeast!.clamped) {
       side = "above";
     } else if (this.placement !== "south" && hostRect.height) {
       const belowOverflow = Math.max(0, clearBelow + groupHeight - hostRect.height);
@@ -197,12 +254,30 @@ export class Mascot {
       if (aboveOverflow < belowOverflow) side = "above";
     }
 
-    const avatarTop = side === "below" ? clearBelow : clearAbove - AVATAR_HEIGHT;
+    // even when a node genuinely has *some* clearance above it (so the checks above chose or
+    // forced "above" without `northeastPoint` ever hitting its own floor), that clearance can
+    // still be shorter than `groupHeight` -- e.g. a node just far enough from the canvas top to
+    // look "clear", paired with a tall multi-line bubble. Host-local overflow past *its own*
+    // origin is normally fine (a host embedded with headroom above it -- `.wd-canvas`'s margin in
+    // index.html, a hero section's padding in preview.html -- can absorb it harmlessly), but past
+    // the actual *page's* top edge there's nothing left to scroll to. Floor `clearAbove` at
+    // whatever keeps the group's top on the page, using the host's real document-relative
+    // position -- skipped when that isn't measurable (unit tests mock the host's rect without a
+    // real `top`), same as the rest of this method already no-ops without real layout.
+    let effectiveClearAbove = clearAbove;
+    if (side === "above") {
+      const hostDocTop = hostRect.top + window.scrollY;
+      if (Number.isFinite(hostDocTop)) {
+        effectiveClearAbove = Math.max(clearAbove, groupHeight - hostDocTop);
+      }
+    }
+
+    const avatarTop = side === "below" ? clearBelow : effectiveClearAbove - AVATAR_HEIGHT;
 
     this.root.style.left = `${x - AVATAR_WIDTH / 2}px`;
     this.root.style.top = `${avatarTop}px`;
     this.clampBubbleHorizontally(radius);
-    this.positionBubbleVertically(side, avatarTop, clearBelow, clearAbove, bubbleHeight);
+    this.positionBubbleVertically(side, avatarTop, clearBelow, effectiveClearAbove, bubbleHeight);
   }
 
   /**
