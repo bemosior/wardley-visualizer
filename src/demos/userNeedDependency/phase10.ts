@@ -51,10 +51,19 @@ export async function runPhase10(ctx: ScenarioContext): Promise<void> {
   const needOption =
     NEED_CATALOG.find((need) => need.label.toLowerCase() === needLabel.trim().toLowerCase()) ?? NEED_CATALOG[0];
 
-  const capabilityCount = ctx.chain.capabilities.length;
+  // walk capabilities left-to-right by their rendered screen position, not by domain id order --
+  // a host config (e.g. `preview.html`) can pre-render one capability off-center, and Phase 5
+  // fills the remaining slots around it (`phase5.ts`), so array order doesn't always match
+  // screen order.
+  const capabilitiesByScreenX = ctx.chain.capabilities
+    .map((capability) => ({ capability, pos: demo.getNodePosition(capability.id) }))
+    .sort((a, b) => (a.pos?.x ?? 0) - (b.pos?.x ?? 0))
+    .map(({ capability }) => capability);
+
+  const capabilityCount = capabilitiesByScreenX.length;
   const usedCapabilityLabels = new Set<string>();
   for (let i = 0; i < capabilityCount; i++) {
-    const capability = ctx.chain.capabilities[i];
+    const capability = capabilitiesByScreenX[i];
     const capabilityPos = demo.getNodePixelPosition(capability.id);
     if (capabilityPos) mascot.moveTo(capability.id, capabilityPos, "south");
     // offer all three of the need's capabilities as pills (not just the one at this index),
