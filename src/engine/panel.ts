@@ -48,6 +48,8 @@ export class Panel {
   private container: HTMLElement;
   /** the kind currently rendered by `showInstrumentPanel`, so `updateInstrumentPanel` knows which characteristics table to read from */
   private instrumentKind: EvolutionKind | null = null;
+  /** the node label currently rendered by `showInstrumentPanel`, so `updateInstrumentPanel` can rebuild the "Is X in Y?" heading */
+  private instrumentLabel = "";
 
   constructor(container: HTMLElement) {
     injectStylesOnce();
@@ -231,42 +233,39 @@ export class Panel {
   }
 
   /**
-   * live-updating readout for Phase 20's evolution drag: heading (the node's label) + current
-   * stage name + real characteristics text (`domain/evolution.ts`'s `characteristicsFor`) for
-   * that stage/kind. Reuses `showPlaceholder`'s layout/fade-in so it stays visually consistent
-   * with the rest of Phase 20; `updateInstrumentPanel` then swaps stage + characteristics as the
-   * visitor drags, without a full re-render.
+   * live-updating readout for Phase 20's evolution drag: heading asks "Is [node] in [stage]?" +
+   * real characteristics text (`domain/evolution.ts`'s `characteristicsFor`) for that stage/kind
+   * in the subheading slot. Reuses `showPlaceholder`'s layout/fade-in so it stays visually
+   * consistent with the rest of Phase 20; `updateInstrumentPanel` then swaps stage + characteristics
+   * as the visitor drags, without a full re-render.
    */
   showInstrumentPanel(heading: string, kind: EvolutionKind, initialStage: EvolutionStage, delayMs = 0): void {
     this.clear();
     this.instrumentKind = kind;
+    this.instrumentLabel = heading;
     const content = document.createElement("div");
     content.classList.add("wd-panel-content", "wd-panel-content--top", "wd-panel-placeholder");
 
     const headingEl = document.createElement("div");
     headingEl.classList.add("wd-panel-placeholder-heading");
-    headingEl.textContent = heading;
-
-    const stageEl = document.createElement("div");
-    stageEl.classList.add("wd-panel-placeholder-subheading");
-    stageEl.textContent = `Is it ${initialStage}?`;
+    headingEl.textContent = `Is ${heading} in ${initialStage}?`;
 
     const characteristicsEl = document.createElement("div");
     characteristicsEl.classList.add("wd-panel-instrument-characteristics");
     characteristicsEl.textContent = characteristicsFor(kind, initialStage);
 
-    content.append(headingEl, stageEl, characteristicsEl);
+    content.append(headingEl, characteristicsEl);
     this.container.appendChild(content);
 
     setTimeout(() => content.classList.add("wd-panel-placeholder--visible"), delayMs);
   }
 
-  /** updates the stage name + characteristics text of an already-rendered `showInstrumentPanel`; a no-op if the panel isn't currently in that mode */
+  /** updates the "Is X in Y?" heading + characteristics text of an already-rendered `showInstrumentPanel`; a no-op if the panel isn't currently in that mode */
   updateInstrumentPanel(stage: EvolutionStage): void {
     if (!this.instrumentKind) return;
-    const stageEl = this.container.querySelector<HTMLElement>(".wd-panel-placeholder-subheading");
+    const headingEl = this.container.querySelector<HTMLElement>(".wd-panel-placeholder-heading");
     const characteristicsEl = this.container.querySelector<HTMLElement>(".wd-panel-instrument-characteristics");
-    if (stageEl) stageEl.textContent = `Is it ${stage}?`;
+    if (headingEl) headingEl.textContent = `Is ${this.instrumentLabel} in ${stage}?`;
     if (characteristicsEl) characteristicsEl.textContent = characteristicsFor(this.instrumentKind, stage);
   }
 
