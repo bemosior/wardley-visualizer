@@ -586,6 +586,41 @@ describe("WardleyDemo.skipDrag", () => {
     expect(() => demo.skipDrag()).not.toThrow();
     expect(onComplete).not.toHaveBeenCalled();
   });
+
+  it("deactivates the original drag-to-snap listener, so it can't resurrect on a later real drag of the same node (e.g. Phase 20's evolution-axis step reusing the Need)", () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const demo = WardleyDemo.mount(container, {
+      viewBox: { width: 400, height: 300 },
+      nodes: [
+        { id: "user", label: "User", x: 200, y: 50, draggable: false },
+        { id: "need", label: "Need", x: 200, y: 150, draggable: true, start: { x: 20, y: 150 } },
+      ],
+      connections: [{ from: "user", to: "need" }],
+      snapThreshold: 30,
+    });
+    // a connection added after Phase 0's drag step is already wired (e.g. Phase 5 wiring a
+    // Capability to the already-dragged Need) -- the original drag-to-snap step's own
+    // `connectedLines` snapshot predates this line, so a resurrected version of it wouldn't know
+    // to keep this one in sync with the others
+    demo.addNode({ id: "capability", label: "Capability", x: 300, y: 250, draggable: false });
+    demo.addConnection({ from: "need", to: "capability" });
+
+    demo.skipDrag();
+    demo.runEvolutionDragStep("need");
+
+    const nodeGroup = container.querySelector('[data-node-id="need"]')!;
+    // drops far enough from the Need's original drag-to-snap target that a still-live listener
+    // for that step would treat it as "missed" and animate back toward `start` ({ x: 20, y: 150 })
+    nodeGroup.dispatchEvent(new PointerEvent("pointerdown", { clientX: 200, clientY: 150, pointerId: 1 }));
+    nodeGroup.dispatchEvent(new PointerEvent("pointermove", { clientX: 350, clientY: 150, pointerId: 1 }));
+    nodeGroup.dispatchEvent(new PointerEvent("pointerup", { clientX: 350, clientY: 150, pointerId: 1 }));
+
+    const lines = container.querySelectorAll(".wd-line");
+    expect(nodeGroup.getAttribute("transform")).toBe("translate(350, 150)");
+    expect(lines[0].getAttribute("x2")).toBe("350"); // user -> need
+    expect(lines[1].getAttribute("x1")).toBe("350"); // need -> capability
+  });
 });
 
 describe("WardleyDemo.runEvolutionDragStep", () => {

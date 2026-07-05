@@ -22,7 +22,7 @@ import {
   type AnnotationRect,
 } from "./render";
 import { injectStylesOnce } from "./styles";
-import { attachAxisDrag, attachDrag, setNodePosition, type ConnectedLine, type RevealTarget } from "./drag";
+import { attachAxisDrag, attachDrag, setNodePosition, type ConnectedLine, type DragHandle, type RevealTarget } from "./drag";
 import { animateTo, type Point } from "./animate";
 
 export interface MountOptions {
@@ -105,6 +105,7 @@ export class WardleyDemo {
     connectedLines: ConnectedLine[];
     targetMarker: SVGGElement;
     options: DragStepOptions;
+    handle: DragHandle;
   };
 
   static mount(container: HTMLElement, config: DemoConfig, options?: MountOptions): WardleyDemo {
@@ -348,9 +349,7 @@ export class WardleyDemo {
       baseOpacity: 0.5,
     }));
 
-    this.pendingDrag = { node, nodeGroup, connectedLines, targetMarker, options };
-
-    attachDrag(
+    const handle = attachDrag(
       {
         svg: this.svg,
         nodeGroup,
@@ -362,6 +361,7 @@ export class WardleyDemo {
       },
       options.snapThreshold,
     );
+    this.pendingDrag = { node, nodeGroup, connectedLines, targetMarker, options, handle };
   }
 
   /** post-snap reveal: activates every line, charges the node and its root, plays flow particles and a firework burst */
@@ -416,7 +416,8 @@ export class WardleyDemo {
   skipDrag(): void {
     const pending = this.pendingDrag;
     if (!pending) return;
-    const { node, nodeGroup, connectedLines, targetMarker, options } = pending;
+    const { node, nodeGroup, connectedLines, targetMarker, options, handle } = pending;
+    handle.skipDrag();
     nodeGroup.classList.remove("wd-node--beckon");
     if (options.dragHandle) {
       nodeGroup.style.opacity = "1";
