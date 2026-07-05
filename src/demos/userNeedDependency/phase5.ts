@@ -17,8 +17,8 @@ const MASCOT_NEED_PLACED = {
 const PART_LABELS = ["Part A", "Part B", "Part C"];
 
 const MASCOT_MULTIPLE_PARTS = {
-  heading: "The recipe often calls for multiple parts.",
-  subheading: "Together, they add up to a solution that meets the need.",
+  heading: "The recipe often calls for many parts.",
+  subheading: "These parts come together to meet the need(s) of someone we care about.",
 };
 
 /**
