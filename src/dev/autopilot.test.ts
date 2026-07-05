@@ -78,10 +78,10 @@ describe("attachAutopilot", () => {
     const { mascotHost } = buildScenario("finale");
     await flushAll();
 
-    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Wardley Map");
+    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("You made a Wardley Map!");
     const gateLink = mascotHost.querySelector<HTMLButtonElement>(".wd-next-link");
     expect(gateLink).not.toBeNull();
-    expect(gateLink!.textContent).toBe("Let's think about it →");
+    expect(gateLink!.textContent).toBe("Let's get strategic →");
   });
 
   it("thinking: also clicks into Phase 30 and auto-picks an option for every question, stopping before the finale's own Next link", async () => {

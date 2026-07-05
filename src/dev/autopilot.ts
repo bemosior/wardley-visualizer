@@ -57,9 +57,9 @@ function fillAndSubmit(form: HTMLFormElement): void {
  */
 export function attachAutopilot({ mascotHost, target }: AutopilotOptions): Autopilot {
   // counts only the plain "Next" links -- Phase 5's five gates ("Need placed", the User/Need/
-  // Capability walkthrough, and the Part A/B/C explanation), Phase 7's single "I'm Ben"
-  // introduction gate, and the Phase 10->20 gate all share identical link text, so they can't be
-  // told apart by content the way every other gate below is (by its own distinct label).
+  // Capability walkthrough, and the Part A/B/C explanation) and the Phase 10->20 gate all share
+  // identical link text, so they can't be told apart by content the way every other gate below is
+  // (by its own distinct label).
   let plainNextCount = 0;
 
   function disconnect(): void {
@@ -88,19 +88,19 @@ export function attachAutopilot({ mascotHost, target }: AutopilotOptions): Autop
         // introduction gate
         link!.click();
       } else if (plainNextCount === 6) {
-        // Phase 7's "I'm Ben" introduction gate -- always skip past it too; `phase10` lands right
-        // after, at the start of Phase 10's form
-        link!.click();
-        if (target === "phase10") disconnect();
-      } else if (plainNextCount === 7) {
         if (target === "phase20" || target === "finale" || target === "thinking") link!.click();
         if (target !== "finale" && target !== "thinking") disconnect();
       }
+    } else if (linkText === "Nice to meet you!") {
+      // Phase 7's "I'm Ben" introduction gate -- always skip past it too; `phase10` lands right
+      // after, at the start of Phase 10's form
+      link!.click();
+      if (target === "phase10") disconnect();
     } else if (linkText === "Confirm placement" && (target === "finale" || target === "thinking")) {
       // auto-click "Confirm placement" links that appear during Phase 20,
       // but not the finale's "What's next →" which should be left for the visitor
       link!.click();
-    } else if (linkText === "Let's think about it →" && target === "thinking") {
+    } else if (linkText === "Let's get strategic →" && target === "thinking") {
       // auto-click the Phase 20->30 gate, but leave Phase 30's own "What's next →" for the visitor,
       // same as `finale` leaves Phase 20's
       link!.click();
