@@ -2,6 +2,9 @@ import type { WardleyDemo, EvolutionDragHandle } from "../engine/WardleyDemo";
 
 /**
  * named moments in the demo's current (built-so-far) flow that `index.html?skipTo=` can land on.
+ * `intro`: skip only the Phase 0 drag, landing right after it — every later gate (Phase 5's
+ * node-by-node walkthrough, the Part A/B/C explanation, Phase 7's "I'm Ben" introduction, and
+ * beyond) is left for a real click, same as a first-time visitor would see it.
  * `phase10`: skip the Phase 0 drag and click past both of Phase 5's "Next" gates ("Need placed"
  * then the Part A/B/C explanation) and Phase 7's "I'm Ben" introduction gate, land at the start of
  * Phase 10's form.
@@ -12,9 +15,9 @@ import type { WardleyDemo, EvolutionDragHandle } from "../engine/WardleyDemo";
  * the Phase 30 celebration (its own final "What's next →" is still left for a real click).
  * `recap`: also click that final "What's next →" gate, land on the closing recap + CTA link.
  */
-export type SkipTarget = "phase10" | "celebrate" | "phase20" | "finale" | "thinking" | "recap";
+export type SkipTarget = "intro" | "phase10" | "celebrate" | "phase20" | "finale" | "thinking" | "recap";
 
-const SKIP_TARGETS: SkipTarget[] = ["phase10", "celebrate", "phase20", "finale", "thinking", "recap"];
+const SKIP_TARGETS: SkipTarget[] = ["intro", "phase10", "celebrate", "phase20", "finale", "thinking", "recap"];
 
 /** reads `?skipTo=` from a query string (e.g. `location.search`); null if absent/unrecognized */
 export function parseSkipTarget(search: string): SkipTarget | null {
@@ -57,6 +60,12 @@ function fillAndSubmit(form: HTMLFormElement): void {
  * the-more-of-the-peaceful-sky plan for why this exists instead of a resumable step machine.
  */
 export function attachAutopilot({ mascotHost, target }: AutopilotOptions): Autopilot {
+  if (target === "intro") {
+    // nothing past the drag to automate -- no observer needed, and none of the later targets'
+    // auto-fill/auto-click behavior should kick in once the visitor reaches Phase 10 by hand
+    return { onMount: (demo) => demo.skipDrag() };
+  }
+
   // counts only the plain "Next" links -- Phase 5's five gates ("Need placed", the User/Need/
   // Capability walkthrough, and the Part A/B/C explanation) and the Phase 10->20 gate all share
   // identical link text, so they can't be told apart by content the way every other gate below is

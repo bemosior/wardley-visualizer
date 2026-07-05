@@ -92,6 +92,7 @@
       <label>Dev: skip to
         <select id="dev-skip-select">
           <option value="">(none)</option>
+          <option value="intro">Intro (post-drag)</option>
           <option value="phase10">Phase 10 form</option>
           <option value="celebrate">Celebration</option>
           <option value="phase20">Phase 20 gate</option>
@@ -119,7 +120,7 @@
       const mascotHost = document.getElementById("mascot-host-a");
 
       // Dev-only test shortcut: pick a moment from the dropdown (or load with
-      // ?skipTo=phase10|celebrate|phase20|finale|thinking|recap) to jump straight past earlier phases
+      // ?skipTo=intro|phase10|celebrate|phase20|finale|thinking|recap) to jump straight past earlier phases
       // instead of replaying drag + 5 form fields + two "Next" clicks by hand.
       const skipSelect = document.getElementById("dev-skip-select");
       const skipTarget = WardleyDemo.dev.parseSkipTarget(location.search);

@@ -41,6 +41,18 @@ function buildScenario(target: Parameters<typeof attachAutopilot>[0]["target"], 
 }
 
 describe("attachAutopilot", () => {
+  it("intro: skips only the drag, leaving Phase 5's first gate for a real click", async () => {
+    const onNeedPlaced = vi.fn();
+    const { mascotHost } = buildScenario("intro", { onNeedPlaced });
+    await flushAll();
+
+    expect(onNeedPlaced).toHaveBeenCalledOnce();
+    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("You made a Value Chain!");
+    const gateLink = mascotHost.querySelector<HTMLButtonElement>(".wd-next-link");
+    expect(gateLink).not.toBeNull();
+    expect(gateLink!.textContent).toBe("Next");
+  });
+
   it("phase10: skips the drag and stops at the first form field, without auto-submitting it", async () => {
     const onNeedPlaced = vi.fn();
     const { canvas, mascotHost } = buildScenario("phase10", { onNeedPlaced });
