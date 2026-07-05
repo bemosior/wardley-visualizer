@@ -174,7 +174,7 @@ describe("runValueChainScenario", () => {
     }
   });
 
-  it("shows an 'All done!' placeholder and fires onCelebrate once the last capability is answered", async () => {
+  it("shows an 'Value Chain done!' placeholder and fires onCelebrate once the last capability is answered", async () => {
     const onCelebrate = vi.fn();
     const { canvas, mascotHost } = buildScenario(onCelebrate);
     await completeDragStep(canvas, mascotHost);
@@ -195,7 +195,7 @@ describe("runValueChainScenario", () => {
 
     expect(mascotHost.querySelector(".wd-panel-content")).not.toBeNull();
     expect(mascotHost.querySelector("form")).toBeNull();
-    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("All done!");
+    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Value Chain done!");
     expect(onCelebrate).toHaveBeenCalledOnce();
   });
 

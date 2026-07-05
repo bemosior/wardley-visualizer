@@ -2,7 +2,7 @@ import { relabelCapability, relabelNeed, relabelUser } from "../../domain/valueC
 import { NEED_CATALOG } from "../../domain/needCatalog";
 import type { ScenarioContext } from "./index";
 
-const MASCOT_CHAIN_COMPLETE = { heading: "All done!", subheading: "Now let's turn this into a Wardley Map." };
+const MASCOT_CHAIN_COMPLETE = { heading: "Value Chain done!", subheading: "Now let's turn this into a Wardley Map." };
 
 /**
  * Phase 10: personalize the value chain. Starts right after Phase 5's own "Next" gate
