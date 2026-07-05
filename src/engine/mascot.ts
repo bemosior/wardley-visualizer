@@ -29,9 +29,14 @@ const BUBBLE_GAP = 8;
  * copy of this gap */
 const SIDE_GAP = 32;
 
-/** clearance from the host's own top/right edges for `moveToTopRight` -- keeps the avatar off the
+/** clearance from the host's own right edge for `moveToTopRight` -- keeps the avatar off the
  * canvas border while still reading as "the corner" */
 const CORNER_MARGIN = 64;
+
+/** clearance from the host's own top edge for `moveToTopRight` -- shorter than `CORNER_MARGIN`
+ * since the corner should tuck in close to the top rather than float as far down as it sits in
+ * from the right */
+const CORNER_MARGIN_TOP = 14;
 
 /**
  * Two independent axes, not four hand-picked directions: *does the anchor shift before the
@@ -179,7 +184,6 @@ export class Mascot {
     this.anchoredToCorner = true;
     this.viewBoxAnchor = null;
     this.lastPos = this.topRightPoint();
-    this.lastPos.y = this.lastPos.y - 50;
     this.placement = "auto";
     this.reposition();
     this.scrollIntoViewIfNeeded();
@@ -217,10 +221,11 @@ export class Mascot {
     }
   }
 
-  /** the host's top-right corner, inset by `CORNER_MARGIN` on both axes, in container-pixel space -- `radius: 0` since there's no node to clear */
+  /** the host's top-right corner, inset by `CORNER_MARGIN` from the right edge and `CORNER_MARGIN_TOP`
+   * from the top, in container-pixel space -- `radius: 0` since there's no node to clear */
   private topRightPoint(): { x: number; y: number; radius: number } {
     const hostRect = this.host.getBoundingClientRect();
-    return { x: Math.max(hostRect.width - CORNER_MARGIN, 0), y: CORNER_MARGIN, radius: 0 };
+    return { x: Math.max(hostRect.width - CORNER_MARGIN, 0), y: CORNER_MARGIN_TOP, radius: 0 };
   }
 
   /**
