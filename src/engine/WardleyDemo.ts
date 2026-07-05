@@ -446,11 +446,13 @@ export class WardleyDemo {
 
   /**
    * wires Phase 20's evolution-axis interaction for an already-registered node: free horizontal
-   * drag (no snap, no auto-commit) with live `onPositionChange(stageLabel)` callbacks, and a
-   * returned `confirm()` the caller invokes once the visitor has committed to where they dropped
-   * it — that stops the beckon pulse, respawns flow particles on its lines, and fires a firework
-   * at its final position as the "placement confirmed" cue. Doesn't re-add the "charged" glow
-   * `stopCharging` cleared going into Phase 20 — it'd compete with the evolution-drag interaction.
+   * drag (no snap, no auto-commit) with live `onPositionChange(stageLabel)` callbacks. Flow
+   * particles on the node's lines respawn to the new stage's look the instant the drag crosses a
+   * stage boundary (see `setNodeStage` in the `onPositionChange` handler below), not just at
+   * confirm. A returned `confirm()` the caller invokes once the visitor has committed to where
+   * they dropped it — that stops the beckon pulse and fires a firework at its final position as
+   * the "placement confirmed" cue. Doesn't re-add the "charged" glow `stopCharging` cleared going
+   * into Phase 20 — it'd compete with the evolution-drag interaction.
    */
   runEvolutionDragStep(nodeId: string, options: EvolutionDragStepOptions = {}): EvolutionDragHandle {
     const node = this.nodesById.get(nodeId)!;
@@ -484,7 +486,13 @@ export class WardleyDemo {
       minX,
       maxX,
       onPositionChange: (x) => {
-        options.onPositionChange?.(stageLabelAt(x, this.viewBox.width));
+        const stage = stageLabelAt(x, this.viewBox.width);
+        options.onPositionChange?.(stage);
+        // respawns flow particles the instant the node crosses a stage boundary mid-drag
+        // (setNodeStage no-ops if the stage hasn't actually changed) instead of waiting for
+        // confirm() — updateFlowParticlePaths below immediately re-paths any freshly spawned
+        // particles to this in-flight x, since respawn draws from the node's stale stored position
+        this.setNodeStage(nodeId, stage);
         this.updateFlowParticlePaths(nodeId, { x, y: node.y });
         updateChevrons(x);
       },
