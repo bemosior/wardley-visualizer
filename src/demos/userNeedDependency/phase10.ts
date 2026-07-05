@@ -20,7 +20,7 @@ export async function runPhase10(ctx: ScenarioContext): Promise<void> {
   if (userPos) mascot.moveTo(ctx.chain.user.id, userPos, "northeast");
   const userLabel = await mascot.showField({
     type: "text",
-    prompt: "Who are we designing for?",
+    prompt: "Who should we help today?",
     placeholder: NEED_CATALOG[0].userPlaceholder,
     examples: NEED_CATALOG.map((need) => need.userPlaceholder),
   });

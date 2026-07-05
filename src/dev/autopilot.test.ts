@@ -48,7 +48,7 @@ describe("attachAutopilot", () => {
 
     expect(onNeedPlaced).toHaveBeenCalledOnce();
     expect(mascotHost.querySelector(".wd-next-link")).toBeNull();
-    expect(mascotHost.querySelector(".wd-panel-form-prompt")!.textContent).toBe("Who are we designing for?");
+    expect(mascotHost.querySelector(".wd-panel-form-prompt")!.textContent).toBe("Who should we help today?");
     expect(canvas.querySelector('[data-node-id="user"] .wd-node-label')!.textContent).toBe("User");
   });
 
