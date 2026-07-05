@@ -21,12 +21,6 @@ function submitText(mascotHost: HTMLElement, value: string): void {
   submitForm(mascotHost);
 }
 
-function submitSelect(mascotHost: HTMLElement, value: string): void {
-  const select = mascotHost.querySelector<HTMLSelectElement>(".wd-panel-form-input")!;
-  select.value = value;
-  submitForm(mascotHost);
-}
-
 /** every gate/confirm link (every "Next" click point in the scenario) renders inside the mascot's own speech bubble */
 function clickNext(mascotHost: HTMLElement): void {
   mascotHost.querySelector<HTMLButtonElement>(".wd-next-link")!.click();
@@ -120,7 +114,7 @@ describe("runValueChainScenario", () => {
     await completeDragStep(canvas, mascotHost);
 
     const need = NEED_CATALOG[0];
-    submitSelect(mascotHost, need.id);
+    submitText(mascotHost, need.label);
     await flush();
     expect(canvas.querySelector('[data-node-id="need"] .wd-node-label')!.textContent).toBe(need.label);
 
@@ -146,7 +140,7 @@ describe("runValueChainScenario", () => {
     await completeDragStep(canvas, mascotHost);
 
     const grocery = NEED_CATALOG.find((need) => need.id === "fresh-grocery-delivery")!;
-    submitSelect(mascotHost, grocery.id);
+    submitText(mascotHost, grocery.label);
     await flush();
 
     expect(mascotHost.querySelector<HTMLInputElement>(".wd-panel-form-input")!.placeholder).toBe(
@@ -168,7 +162,7 @@ describe("runValueChainScenario", () => {
     await completeDragStep(canvas, mascotHost);
     expect(onCelebrate).not.toHaveBeenCalled();
 
-    submitSelect(mascotHost, NEED_CATALOG[0].id);
+    submitText(mascotHost, NEED_CATALOG[0].label);
     await flush();
     submitText(mascotHost, "A commuter");
     await flush();
@@ -195,7 +189,7 @@ describe("runValueChainScenario", () => {
     runValueChainScenario({ canvas, mascotHost, onEvolutionReady });
     await completeDragStep(canvas, mascotHost);
 
-    submitSelect(mascotHost, NEED_CATALOG[0].id);
+    submitText(mascotHost, NEED_CATALOG[0].label);
     await flush();
     submitText(mascotHost, "A commuter");
     await flush();
@@ -242,7 +236,7 @@ describe("runValueChainScenario", () => {
     await completeDragStep(canvas, mascotHost);
 
     const need = NEED_CATALOG[0];
-    submitSelect(mascotHost, need.id);
+    submitText(mascotHost, need.label);
     await flush();
     submitText(mascotHost, "A commuter");
     await flush();
@@ -263,7 +257,7 @@ describe("runValueChainScenario", () => {
   /** walks the Phase 10 form and clicks past the Phase 10->20 gate, landing right where the Need starts beckoning on the map (default layout's Genesis x is 50, at the Need's unchanged y of 76) */
   async function reachEvolutionStep(canvas: HTMLElement, mascotHost: HTMLElement): Promise<void> {
     await completeDragStep(canvas, mascotHost);
-    submitSelect(mascotHost, NEED_CATALOG[0].id);
+    submitText(mascotHost, NEED_CATALOG[0].label);
     await flush();
     submitText(mascotHost, "A commuter");
     await flush();
@@ -484,7 +478,7 @@ describe("runValueChainScenario", () => {
   it("does not advance on a whitespace-only capability answer", async () => {
     const { canvas, mascotHost } = buildScenario(vi.fn());
     await completeDragStep(canvas, mascotHost);
-    submitSelect(mascotHost, NEED_CATALOG[0].id);
+    submitText(mascotHost, NEED_CATALOG[0].label);
     await flush();
     submitText(mascotHost, "A commuter");
     await flush();

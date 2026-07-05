@@ -571,6 +571,30 @@ const CSS = `
   border-radius: 6px;
 }
 
+.wd-panel-form-examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.wd-panel-form-example {
+  font-family: var(--wd-font-ui);
+  font-size: 0.75rem;
+  line-height: 1.3;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid var(--wd-color-border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--wd-color-ink);
+  cursor: pointer;
+}
+
+.wd-panel-form-example:hover {
+  border-color: var(--wd-color-link);
+  background: #f0f7ff;
+  color: var(--wd-color-link);
+}
+
 .wd-panel-form-submit {
   font-family: var(--wd-font-ui);
   font-size: 0.85rem;

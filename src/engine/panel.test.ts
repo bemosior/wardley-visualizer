@@ -110,24 +110,32 @@ describe("Panel.showField", () => {
     expect(await result).toBe("Ben");
   });
 
-  it("renders select options and resolves with the chosen value", async () => {
+  it("renders one example chip per option, and clicking one fills the input without resolving", async () => {
     const container = makeContainer();
     const panel = new Panel(container);
     const result = panel.showField({
-      type: "select",
+      type: "text",
       prompt: "Pick a need",
-      options: [
-        { value: "tea", label: "Hot, drinkable tea" },
-        { value: "taxi", label: "A taxi to the airport" },
-      ],
+      examples: ["Hot, drinkable tea", "A taxi to the airport"],
     });
 
-    const select = container.querySelector<HTMLSelectElement>(".wd-panel-form-input")!;
-    expect(select.options.length).toBe(2);
-    select.value = "taxi";
-    submitForm(container);
+    const chips = container.querySelectorAll<HTMLButtonElement>(".wd-panel-form-example");
+    expect(chips.length).toBe(2);
 
-    expect(await result).toBe("taxi");
+    let resolved = false;
+    result.then(() => {
+      resolved = true;
+    });
+
+    chips[1].click();
+    await Promise.resolve();
+    expect(resolved).toBe(false);
+
+    const input = container.querySelector<HTMLInputElement>(".wd-panel-form-input")!;
+    expect(input.value).toBe("A taxi to the airport");
+
+    submitForm(container);
+    expect(await result).toBe("A taxi to the airport");
   });
 });
 

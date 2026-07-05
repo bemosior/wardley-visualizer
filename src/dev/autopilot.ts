@@ -1,5 +1,4 @@
 import type { WardleyDemo, EvolutionDragHandle } from "../engine/WardleyDemo";
-import { NEED_CATALOG } from "../domain/needCatalog";
 
 /**
  * named moments in the demo's current (built-so-far) flow that `index.html?skipTo=` can land on.
@@ -43,13 +42,9 @@ const DEFAULT_TEXT_ANSWER = "Test";
 
 /** fills a Phase 10 form field with a default answer and submits it, same as a visitor confirming */
 function fillAndSubmit(form: HTMLFormElement): void {
-  const input = form.querySelector<HTMLInputElement | HTMLSelectElement>(".wd-panel-form-input");
+  const input = form.querySelector<HTMLInputElement>(".wd-panel-form-input");
   if (!input) return;
-  if (input instanceof HTMLSelectElement) {
-    input.value = NEED_CATALOG[0].id;
-  } else {
-    input.value = input.placeholder || DEFAULT_TEXT_ANSWER;
-  }
+  input.value = input.placeholder || DEFAULT_TEXT_ANSWER;
   form.dispatchEvent(new Event("submit", { cancelable: true }));
 }
 

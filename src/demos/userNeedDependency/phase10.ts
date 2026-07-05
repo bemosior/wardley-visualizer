@@ -18,21 +18,28 @@ export async function runPhase10(ctx: ScenarioContext): Promise<void> {
 
   const needPos = demo.getNodePixelPosition(ctx.chain.need.id);
   if (needPos) mascot.moveTo(ctx.chain.need.id, needPos);
-  const needId = await mascot.showField({
-    type: "select",
+  const needLabel = await mascot.showField({
+    type: "text",
     prompt: "What does the user need?",
-    options: NEED_CATALOG.map((need) => ({ value: need.id, label: need.label })),
+    placeholder: NEED_CATALOG[0].label,
+    examples: NEED_CATALOG.map((need) => need.label),
   });
-  const needOption = NEED_CATALOG.find((need) => need.id === needId)!;
-  ctx.chain = relabelNeed(ctx.chain, needOption.label);
+  ctx.chain = relabelNeed(ctx.chain, needLabel);
   demo.relabelNode(ctx.chain.need.id, ctx.chain.need.label);
+
+  // best-effort match against the catalog, purely to pick a fitting single-item ghost
+  // placeholder for the steps below; falls back to the first catalog need if the visitor
+  // typed something custom, so the placeholder is never empty
+  const needOption =
+    NEED_CATALOG.find((need) => need.label.toLowerCase() === needLabel.trim().toLowerCase()) ?? NEED_CATALOG[0];
 
   const userPos = demo.getNodePixelPosition(ctx.chain.user.id);
   if (userPos) mascot.moveTo(ctx.chain.user.id, userPos);
   const userLabel = await mascot.showField({
     type: "text",
-    prompt: "Who needs " + needOption.label + "?",
+    prompt: "Who needs " + needLabel + "?",
     placeholder: needOption.userPlaceholder,
+    examples: NEED_CATALOG.map((need) => need.userPlaceholder),
   });
   ctx.chain = relabelUser(ctx.chain, userLabel);
   demo.relabelNode(ctx.chain.user.id, ctx.chain.user.label);
@@ -46,6 +53,7 @@ export async function runPhase10(ctx: ScenarioContext): Promise<void> {
       type: "text",
       prompt: `What's something they depend on to get this need met? \r\n(${i + 1} of ${capabilityCount})`,
       placeholder: needOption.capabilityPlaceholders[i],
+      examples: NEED_CATALOG.map((need) => need.capabilityPlaceholders[i]),
     });
     ctx.chain = relabelCapability(ctx.chain, capability.id, capabilityLabel);
     demo.relabelNode(capability.id, capabilityLabel);
