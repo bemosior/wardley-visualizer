@@ -398,12 +398,24 @@ const CSS = `
   font-size: 0.85rem;
   color: var(--wd-color-ink);
   line-height: 1.5;
+  text-align: left;
+  list-style: none;
   margin: 0.75rem 0 0;
-  padding-left: 1.1rem;
+  padding-left: 0;
 }
 
 .wd-panel-recap-list li + li {
   margin-top: 0.5rem;
+}
+
+.wd-panel-recap-list li {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.wd-panel-recap-list li::before {
+  content: "🎉";
+  flex: none;
 }
 
 .wd-panel-recap-cta {
