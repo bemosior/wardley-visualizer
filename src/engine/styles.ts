@@ -371,14 +371,14 @@ const CSS = `
   font-size: 1.1rem;
   font-weight: 700;
   color: var(--wd-color-ink);
-  text-align: center;
+  text-align: left;
 }
 
 .wd-panel-placeholder-subheading {
   font-family: var(--wd-font-ui);
   font-size: 0.85rem;
   color: #999;
-  text-align: center;
+  text-align: left;
   margin-top: 0.25rem;
   white-space: pre-line;
 }
@@ -387,7 +387,7 @@ const CSS = `
   font-family: var(--wd-font-ui);
   font-size: 0.8rem;
   color: var(--wd-color-ink);
-  text-align: center;
+  text-align: left;
   line-height: 1.35;
   margin-top: 0.75rem;
   padding: 0 0.5rem;
@@ -518,7 +518,7 @@ const CSS = `
   font-family: var(--wd-font-ui);
   font-size: 0.85rem;
   color: var(--wd-color-ink);
-  text-align: center;
+  text-align: left;
   margin-top: 0.5rem;
 }
 
