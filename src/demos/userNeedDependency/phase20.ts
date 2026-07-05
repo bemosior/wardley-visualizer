@@ -48,8 +48,8 @@ function awaitEvolutionConfirm(
  * Capability-1/2/3 in turn (each slides into the Genesis column, beckons, and gets its own bubble
  * heading/subheading, the mascot re-anchoring to each in turn), and once all four nodes are placed
  * the scenario fires `demo.celebrateAll()` (with the mascot celebrating alongside it) for the
- * placement finale — the caller then waits on a "Confirm placement"-style link that gates the move
- * into Phase 30 (`phase30.ts`).
+ * placement finale — the caller then waits on a "Next" link that gates the move into Phase 25
+ * (`phase25.ts`).
  */
 export async function runPhase20(ctx: ScenarioContext): Promise<void> {
   const { demo, mascot, chain, options } = ctx;

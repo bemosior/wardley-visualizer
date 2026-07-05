@@ -3,8 +3,8 @@ import { BIAS_CHECK_QUESTION, BUILD_BUY_OUTSOURCE_QUESTION, pickRandomQuestion, 
 import type { ScenarioContext } from "./index";
 
 /**
- * Phase 30: think with the map. Waits for the visitor to click "Let's think about it →" (the
- * Phase 20 -> Phase 30 gate). The mascot becomes a Q&A guide (`Mascot.showQuestion`), re-anchoring
+ * Phase 30: think with the map. Waits for the visitor to click "Let's get strategic →" (the
+ * Phase 25 -> Phase 30 gate). The mascot becomes a Q&A guide (`Mascot.showQuestion`), re-anchoring
  * to each capability in turn and asking one multiple-choice doctrine question per capability — a
  * fixed bias-check question for Capability 1, a fixed build/buy/outsource question for
  * Capability 2, and a random pick (rerollable) from `domain/questionBank.ts`'s `QUESTION_POOL`
