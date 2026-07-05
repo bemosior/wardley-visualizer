@@ -2,11 +2,10 @@ import type { WardleyDemo, EvolutionDragHandle } from "../engine/WardleyDemo";
 
 /**
  * named moments in the demo's current (built-so-far) flow that `index.html?skipTo=` can land on.
- * `intro`: skip only the Phase 0 drag, landing right after it — every later gate (Phase 5's
- * node-by-node walkthrough, the Part A/B/C explanation, Phase 7's "I'm Ben" introduction, and
- * beyond) is left for a real click, same as a first-time visitor would see it.
- * `phase10`: skip the Phase 0 drag and click past both of Phase 5's "Next" gates ("Need placed"
- * then the Part A/B/C explanation) and Phase 7's "I'm Ben" introduction gate, land at the start of
+ * `intro`: skip the Phase 0 drag and click past all five of Phase 5's "Next" gates ("Need placed"
+ * through the Part A/B/C explanation), land at Phase 7's "I'm Ben, by the way" introduction (its
+ * own "Nice to meet you!" gate is left for a real click).
+ * `phase10`: also click past Phase 7's "I'm Ben" introduction gate, land at the start of
  * Phase 10's form.
  * `celebrate`: also auto-fill all 5 form fields, land right after the Phase 10 celebration.
  * `phase20`: also click past the Phase 10->20 gate, land at today's frontier.
@@ -60,12 +59,6 @@ function fillAndSubmit(form: HTMLFormElement): void {
  * the-more-of-the-peaceful-sky plan for why this exists instead of a resumable step machine.
  */
 export function attachAutopilot({ mascotHost, target }: AutopilotOptions): Autopilot {
-  if (target === "intro") {
-    // nothing past the drag to automate -- no observer needed, and none of the later targets'
-    // auto-fill/auto-click behavior should kick in once the visitor reaches Phase 10 by hand
-    return { onMount: (demo) => demo.skipDrag() };
-  }
-
   // counts only the plain "Next" links -- Phase 5's five gates ("Need placed", the User/Need/
   // Capability walkthrough, and the Part A/B/C explanation) and the Phase 10->20 gate all share
   // identical link text, so they can't be told apart by content the way every other gate below is
@@ -102,10 +95,14 @@ export function attachAutopilot({ mascotHost, target }: AutopilotOptions): Autop
         if (target !== "finale" && target !== "thinking" && target !== "recap") disconnect();
       }
     } else if (linkText === "Nice to meet you!") {
-      // Phase 7's "I'm Ben" introduction gate -- always skip past it too; `phase10` lands right
-      // after, at the start of Phase 10's form
-      link!.click();
-      if (target === "phase10") disconnect();
+      // Phase 7's "I'm Ben" introduction gate -- `intro` lands right here, unclicked; every other
+      // target skips past it too, `phase10` landing right after at the start of Phase 10's form
+      if (target === "intro") {
+        disconnect();
+      } else {
+        link!.click();
+        if (target === "phase10") disconnect();
+      }
     } else if (linkText === "Confirm placement" && (target === "finale" || target === "thinking" || target === "recap")) {
       // auto-click "Confirm placement" links that appear during Phase 20,
       // but not the finale's "What's next →" which should be left for the visitor
