@@ -297,7 +297,9 @@ export class WardleyDemo {
    * celebration — e.g. Phase 5 wiring a newly-added Capability to the Need), the new line skips
    * `createConnectionLine`'s initial `opacity:0` and gets its flow particles immediately, matching
    * every other already-active line instead of sitting invisible forever (nothing else ever
-   * re-activates a line added after the fact).
+   * re-activates a line added after the fact) — and both endpoints get the idle "charged" glow
+   * too, matching whatever every other already-active connection's nodes already show (see
+   * `celebrateSnap`; Phase 20's `stopCharging` expects every Capability to have it).
    */
   addConnection(conn: DemoConnection): SVGLineElement {
     const el = createConnectionLine(conn, this.nodesById);
@@ -307,6 +309,8 @@ export class WardleyDemo {
       el.classList.add("wd-line--active");
       el.style.opacity = "";
       this.spawnParticlesForLine(this.lines.length - 1);
+      this.nodeGroups.get(conn.from)?.classList.add("wd-node--charged");
+      this.nodeGroups.get(conn.to)?.classList.add("wd-node--charged");
     }
     return el;
   }
@@ -386,6 +390,15 @@ export class WardleyDemo {
       if (rootNodeShape) {
         rootNodeShape.style.animationDelay = CHARGED_STAGGER_DELAY;
       }
+    }
+    // every other node hanging off the snapped node (e.g. Phase 0's Capability row) charges too,
+    // in sync with the snapped node itself rather than staggered like the root — same "lead"
+    // grouping the flow particles use (see FLOW_STAGGER_DELAY). Without this, Phase 20's
+    // `stopCharging` call (which clears every Capability's glow) has nothing to clear.
+    for (const { conn } of this.lines) {
+      const otherId = conn.from === node.id ? conn.to : conn.to === node.id ? conn.from : undefined;
+      if (!otherId || otherId === options.rootNodeId) continue;
+      this.nodeGroups.get(otherId)?.classList.add("wd-node--charged");
     }
 
     this.spawnFlowParticles();
