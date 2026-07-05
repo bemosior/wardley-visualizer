@@ -8,7 +8,7 @@ import type { ScenarioContext } from "./index";
  * `phase10.ts` so it gates into the Part A/B/C beat below instead of straight into the form. */
 const MASCOT_NEED_PLACED = {
   heading: "Nice! You made a Value Chain!",
-  subheading: "A value chain is a recipe: Who needs what, and how they get it.",
+  subheading: "A value chain is a recipe:\nWho needs what, and how they get it.",
 };
 
 /** placeholder labels for the three Capability nodes while this phase explains their number,

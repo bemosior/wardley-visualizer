@@ -380,6 +380,7 @@ const CSS = `
   color: #999;
   text-align: center;
   margin-top: 0.25rem;
+  white-space: pre-line;
 }
 
 .wd-panel-instrument-characteristics {
