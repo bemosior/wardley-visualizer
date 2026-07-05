@@ -50,7 +50,7 @@ Four layers, strict one-way dependency (lower layers know nothing about higher o
       connected to the Need), relabels all three "Part A"/"Part B"/"Part C" by final left-to-right
       screen position, and explains that a need is sometimes met by several parts adding up
       together, before handing off to Phase 10's form.
-    - `phase10.ts` — the 5-step personalization form (need → user → 3 capabilities), relabeling both the domain chain and the rendered nodes as each answer comes in.
+    - `phase10.ts` — the 5-step personalization form (user → need → 3 capabilities), relabeling both the domain chain and the rendered nodes as each answer comes in.
     - `phase20.ts` — the map backdrop and the evolution-axis drag/confirm loop (Need, then Capability-1/2/3); owns the private `awaitEvolutionConfirm` helper shared by that loop.
     - `phase30.ts` — the Q&A loop (bias-check, build/buy/outsource, one pool question), annotating each capability on the map.
     - `finale.ts` — the closing recap + CTA link.
@@ -67,11 +67,11 @@ Four layers, strict one-way dependency (lower layers know nothing about higher o
 
 - [x] Phase 0 — Value Chain: generic User → User Need → Capability x3, drag Need into place, celebration.
 - [x] Phase 0.5 — Refactor prep: mutable domain labels, decomposed `WardleyDemo` engine ops, swappable-mode `Panel`, `needCatalog.ts`, removed host-page toolbox duplication.
-- [x] Phase 10 — Personalize the value chain: drag-then-form flow (need dropdown → User/Capability text fields), live relabeling of domain + rendered nodes, `celebrate(nodeId)` finale.
+- [x] Phase 10 — Personalize the value chain: drag-then-form flow (User dropdown → Need/Capability text fields), live relabeling of domain + rendered nodes, `celebrate(nodeId)` finale.
 - [x] Phase 20 — Evolution: map backdrop, per-node evolution-axis drag + confirm (Need then Capability-1/2/3), live characteristics instrument-panel readout, stage-dependent flow-particle animation.
 - [x] Finale — big celebration + `Panel.showRecap` with CTA link to LearnWardleyMapping.com.
 - [x] Mascot as sole guide — the mascot now renders Phase 0's drag affordance and Phase 10's
-      form (walking Need → User → Capability-1/2/3 between questions) instead of a sidebar
+      form (walking User → Need → Capability-1/2/3 between questions) instead of a sidebar
       Toolbox, which has been removed entirely. See the unresolved hand-holding tension noted
 - [x] Phase 0 opening reframed — the Need node itself now renders on the canvas from the
       start, out of place at its `start` position and pulsing (`wd-node--beckon`) to invite a

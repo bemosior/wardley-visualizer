@@ -7,7 +7,7 @@ const MASCOT_CHAIN_COMPLETE = { heading: "All done!", subheading: "Click Next to
 /**
  * Phase 10: personalize the value chain. Starts right after Phase 5's own "Next" gate
  * (`phase5.ts`, the Part A/B/C explanation), walking the visitor through a 5-step form
- * (`Mascot.showField`: need -> user -> 3 capabilities), re-anchoring to whichever node each
+ * (`Mascot.showField`: user -> need -> 3 capabilities), re-anchoring to whichever node each
  * question is about before asking it, relabeling each placeholder node (both the domain
  * `ValueChain` in `ctx.chain` and the rendered canvas node) as its answer comes in. Once
  * personalized, shows an "All done!" placeholder and the chain celebrates, firing `onCelebrate` —
@@ -16,33 +16,33 @@ const MASCOT_CHAIN_COMPLETE = { heading: "All done!", subheading: "Click Next to
 export async function runPhase10(ctx: ScenarioContext): Promise<void> {
   const { demo, mascot, options } = ctx;
 
+  const userPos = demo.getNodePixelPosition(ctx.chain.user.id);
+  if (userPos) mascot.moveTo(ctx.chain.user.id, userPos, "northeast");
+  const userLabel = await mascot.showField({
+    type: "text",
+    prompt: "Who are we designing for?",
+    placeholder: NEED_CATALOG[0].userPlaceholder,
+    examples: NEED_CATALOG.map((need) => need.userPlaceholder),
+  });
+  ctx.chain = relabelUser(ctx.chain, userLabel);
+  demo.relabelNode(ctx.chain.user.id, ctx.chain.user.label);
+
   const needPos = demo.getNodePixelPosition(ctx.chain.need.id);
   if (needPos) mascot.moveTo(ctx.chain.need.id, needPos, "northeast");
   const needLabel = await mascot.showField({
     type: "text",
-    prompt: "What does the user need?",
+    prompt: "What does " + userLabel + " need?",
     placeholder: NEED_CATALOG[0].label,
     examples: NEED_CATALOG.map((need) => need.label),
   });
   ctx.chain = relabelNeed(ctx.chain, needLabel);
   demo.relabelNode(ctx.chain.need.id, ctx.chain.need.label);
 
-  // best-effort match against the catalog, purely to pick a fitting single-item ghost
-  // placeholder for the steps below; falls back to the first catalog need if the visitor
-  // typed something custom, so the placeholder is never empty
+  // best-effort match against the catalog, purely to pick fitting single-item ghost
+  // placeholders for the capability steps below; falls back to the first catalog need if
+  // the visitor typed something custom, so the placeholder is never empty
   const needOption =
     NEED_CATALOG.find((need) => need.label.toLowerCase() === needLabel.trim().toLowerCase()) ?? NEED_CATALOG[0];
-
-  const userPos = demo.getNodePixelPosition(ctx.chain.user.id);
-  if (userPos) mascot.moveTo(ctx.chain.user.id, userPos, "northeast");
-  const userLabel = await mascot.showField({
-    type: "text",
-    prompt: "Who needs " + needLabel + "?",
-    placeholder: needOption.userPlaceholder,
-    examples: NEED_CATALOG.map((need) => need.userPlaceholder),
-  });
-  ctx.chain = relabelUser(ctx.chain, userLabel);
-  demo.relabelNode(ctx.chain.user.id, ctx.chain.user.label);
 
   const capabilityCount = ctx.chain.capabilities.length;
   for (let i = 0; i < capabilityCount; i++) {

@@ -96,7 +96,7 @@ describe("runValueChainScenario", () => {
     clickNext(mascotHost);
     await flush();
     expect(mascotHost.querySelector("form")).not.toBeNull();
-    expect(mascotHost.querySelector(".wd-panel-form-prompt")!.textContent).toBe("What does the user need?");
+    expect(mascotHost.querySelector(".wd-panel-form-prompt")!.textContent).toBe("Who are we designing for?");
   });
 
   it("does not advance to the form sequence if the Need is dropped away from its target", async () => {
@@ -109,18 +109,18 @@ describe("runValueChainScenario", () => {
     expect(mascotHost.querySelector("form")).toBeNull();
   });
 
-  it("walks need -> user -> 3 capabilities after the drag step, relabeling each node as it's answered", async () => {
+  it("walks user -> need -> 3 capabilities after the drag step, relabeling each node as it's answered", async () => {
     const { canvas, mascotHost } = buildScenario(vi.fn());
     await completeDragStep(canvas, mascotHost);
+
+    submitText(mascotHost, "A commuter");
+    await flush();
+    expect(canvas.querySelector('[data-node-id="user"] .wd-node-label')!.textContent).toBe("A commuter");
 
     const need = NEED_CATALOG[0];
     submitText(mascotHost, need.label);
     await flush();
     expect(canvas.querySelector('[data-node-id="need"] .wd-node-label')!.textContent).toBe(need.label);
-
-    submitText(mascotHost, "A commuter");
-    await flush();
-    expect(canvas.querySelector('[data-node-id="user"] .wd-node-label')!.textContent).toBe("A commuter");
 
     submitText(mascotHost, "A kettle");
     await flush();
@@ -139,14 +139,11 @@ describe("runValueChainScenario", () => {
     const { canvas, mascotHost } = buildScenario(vi.fn());
     await completeDragStep(canvas, mascotHost);
 
-    const grocery = NEED_CATALOG.find((need) => need.id === "fresh-grocery-delivery")!;
-    submitText(mascotHost, grocery.label);
+    submitText(mascotHost, "A home cook");
     await flush();
 
-    expect(mascotHost.querySelector<HTMLInputElement>(".wd-panel-form-input")!.placeholder).toBe(
-      grocery.userPlaceholder,
-    );
-    submitText(mascotHost, "A home cook");
+    const grocery = NEED_CATALOG.find((need) => need.id === "fresh-grocery-delivery")!;
+    submitText(mascotHost, grocery.label);
     await flush();
 
     for (const placeholder of grocery.capabilityPlaceholders) {
@@ -162,9 +159,9 @@ describe("runValueChainScenario", () => {
     await completeDragStep(canvas, mascotHost);
     expect(onCelebrate).not.toHaveBeenCalled();
 
-    submitText(mascotHost, NEED_CATALOG[0].label);
-    await flush();
     submitText(mascotHost, "A commuter");
+    await flush();
+    submitText(mascotHost, NEED_CATALOG[0].label);
     await flush();
     submitText(mascotHost, "A kettle");
     await flush();
@@ -189,9 +186,9 @@ describe("runValueChainScenario", () => {
     runValueChainScenario({ canvas, mascotHost, onEvolutionReady });
     await completeDragStep(canvas, mascotHost);
 
-    submitText(mascotHost, NEED_CATALOG[0].label);
-    await flush();
     submitText(mascotHost, "A commuter");
+    await flush();
+    submitText(mascotHost, NEED_CATALOG[0].label);
     await flush();
     submitText(mascotHost, "A kettle");
     await flush();
@@ -236,9 +233,9 @@ describe("runValueChainScenario", () => {
     await completeDragStep(canvas, mascotHost);
 
     const need = NEED_CATALOG[0];
-    submitText(mascotHost, need.label);
-    await flush();
     submitText(mascotHost, "A commuter");
+    await flush();
+    submitText(mascotHost, need.label);
     await flush();
     submitText(mascotHost, "A kettle");
     await flush();
@@ -257,9 +254,9 @@ describe("runValueChainScenario", () => {
   /** walks the Phase 10 form and clicks past the Phase 10->20 gate, landing right where the Need starts beckoning on the map (default layout's Genesis x is 50, at the Need's unchanged y of 76) */
   async function reachEvolutionStep(canvas: HTMLElement, mascotHost: HTMLElement): Promise<void> {
     await completeDragStep(canvas, mascotHost);
-    submitText(mascotHost, NEED_CATALOG[0].label);
-    await flush();
     submitText(mascotHost, "A commuter");
+    await flush();
+    submitText(mascotHost, NEED_CATALOG[0].label);
     await flush();
     submitText(mascotHost, "A kettle");
     await flush();
@@ -478,9 +475,9 @@ describe("runValueChainScenario", () => {
   it("does not advance on a whitespace-only capability answer", async () => {
     const { canvas, mascotHost } = buildScenario(vi.fn());
     await completeDragStep(canvas, mascotHost);
-    submitText(mascotHost, NEED_CATALOG[0].label);
-    await flush();
     submitText(mascotHost, "A commuter");
+    await flush();
+    submitText(mascotHost, NEED_CATALOG[0].label);
     await flush();
 
     submitText(mascotHost, "   ");
