@@ -88,6 +88,8 @@ export class WardleyDemo {
   private nodesById = new Map<string, DemoNode>();
   private nodeGroups = new Map<string, SVGGElement>();
   private lines: { conn: DemoConnection; el: SVGLineElement }[] = [];
+  /** true once `activateLines()` has fired (Phase 0's snap celebration) — lets `addConnection` activate any line added afterward immediately instead of leaving it stuck at its initial `opacity:0` */
+  private linesActive = false;
   /** a node's confirmed evolution stage, driving how the flow particles on its lines look (see `spawnParticlesForLine`); unset until it's actually placed on the evolution axis, which falls back to Phase 0/10's fixed pre-evolution look */
   private nodeStage = new Map<string, EvolutionStage>();
   /** every callout box placed so far (Phase 30), so a new one can pick a tier that doesn't collide with it — see `createAnnotation` */
@@ -248,11 +250,23 @@ export class WardleyDemo {
     return group;
   }
 
-  /** renders a connection's line into the line layer; both endpoints must already be registered via addNode */
+  /**
+   * renders a connection's line into the line layer; both endpoints must already be registered
+   * via addNode. If lines have already been activated (i.e. this is called after Phase 0's snap
+   * celebration — e.g. Phase 5 wiring a newly-added Capability to the Need), the new line skips
+   * `createConnectionLine`'s initial `opacity:0` and gets its flow particles immediately, matching
+   * every other already-active line instead of sitting invisible forever (nothing else ever
+   * re-activates a line added after the fact).
+   */
   addConnection(conn: DemoConnection): SVGLineElement {
     const el = createConnectionLine(conn, this.nodesById);
     this.lines.push({ conn, el });
     this.lineLayer.appendChild(el);
+    if (this.linesActive) {
+      el.classList.add("wd-line--active");
+      el.style.opacity = "";
+      this.spawnParticlesForLine(this.lines.length - 1);
+    }
     return el;
   }
 
@@ -526,6 +540,7 @@ export class WardleyDemo {
   }
 
   private activateLines(): void {
+    this.linesActive = true;
     for (const { el } of this.lines) {
       el.classList.add("wd-line--active");
       // clears createConnectionLine's initial opacity:0 (normally lifted by clearRevealOverride

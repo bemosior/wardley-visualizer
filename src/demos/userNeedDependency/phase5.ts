@@ -79,9 +79,9 @@ export async function runPhase5(ctx: ScenarioContext): Promise<void> {
     demo.relabelNode(capability.id, PART_LABELS[i]);
   });
 
-  const middle = byScreenX[1].capability;
-  const middlePos = demo.getNodePixelPosition(middle.id);
-  if (middlePos) mascot.moveTo(middle.id, middlePos);
+  const right = byScreenX[2].capability;
+  const rightPos = demo.getNodePixelPosition(right.id);
+  if (rightPos) mascot.moveTo(right.id, rightPos);
 
   mascot.showPlaceholder(MASCOT_MULTIPLE_PARTS.heading, MASCOT_MULTIPLE_PARTS.subheading);
   await mascot.confirmPlacement("Next");
