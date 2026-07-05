@@ -64,6 +64,8 @@ const CSS = `
 }
 
 .wd-backdrop-pattern-mark {
+  fill: var(--wd-color-ink, #1a1a1a);
+  fill-opacity: 0.2;
   stroke: var(--wd-color-ink, #1a1a1a);
   stroke-opacity: 0.2;
   stroke-width: 1;
@@ -76,7 +78,7 @@ const CSS = `
 }
 
 .wd-backdrop-label-chip {
-  fill: rgba(255, 255, 255, 0.9);
+  fill: #fff;
   stroke-width: 2;
   pointer-events: none;
 }
