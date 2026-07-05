@@ -17,8 +17,8 @@ const MASCOT_NEED_PLACED = {
 const PART_LABELS = ["Part A", "Part B", "Part C"];
 
 const MASCOT_MULTIPLE_PARTS = {
-  heading: "It's not always just one thing.",
-  subheading: "Sometimes a need is only met when several parts add up together.",
+  heading: "It's usually not just one thing.",
+  subheading: "To meet a need, it often takes several parts, adding up together.",
 };
 
 /**
