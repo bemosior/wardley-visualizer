@@ -8,7 +8,7 @@ import type { ScenarioContext } from "./index";
 const MASCOT_NEED_PLACED = {
   heading: "You just made a Value Chain!",
   subheading:
-    "It tells us who needs what, and how they get it.",
+    "A value chain is a picture that tells us who needs what, and how they get it.",
 };
 const MASCOT_CHAIN_COMPLETE = { heading: "All done!", subheading: "Click Next to turn this into a Wardley Map." };
 

@@ -60,7 +60,7 @@ describe("runValueChainScenario", () => {
     const needNode = canvas.querySelector('[data-node-id="need"]')!;
     expect(needNode.classList.contains("wd-node--beckon")).toBe(true);
     expect(needNode.getAttribute("transform")).not.toBe("translate(200, 76)");
-    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Finish the Value Chain.");
+    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Solve the puzzle.");
     expect(mascotHost.querySelector("form")).toBeNull();
   });
 
@@ -78,7 +78,7 @@ describe("runValueChainScenario", () => {
     expect(onNeedPlaced).toHaveBeenCalledOnce();
     expect(mascotHost.querySelector("form")).toBeNull();
     expect(mascotHost.querySelector(".wd-next-link")).not.toBeNull();
-    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("That's a Value Chain!");
+    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("You just made a Value Chain!");
 
     clickNext(mascotHost);
     await flush();
