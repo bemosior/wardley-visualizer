@@ -384,7 +384,7 @@ describe("runValueChainScenario", () => {
 
     await confirmEvolutionStep(canvas, mascotHost, "dependency-3", 150, 157);
 
-    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Wardley Map");
+    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("You made a Wardley Map!");
     expect(resolved).toBe(false);
 
     // the placement finale's confirm link starts Phase 30's Q&A rather than resolving the scenario
