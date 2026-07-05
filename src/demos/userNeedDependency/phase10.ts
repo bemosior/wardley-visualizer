@@ -27,20 +27,27 @@ export async function runPhase10(ctx: ScenarioContext): Promise<void> {
   ctx.chain = relabelUser(ctx.chain, userLabel);
   demo.relabelNode(ctx.chain.user.id, ctx.chain.user.label);
 
+  // narrow the "what does X need?" pills to needs catalogued for that user; falls back to
+  // the full catalog when the visitor typed a custom user we don't recognize
+  const matchingUserNeeds = NEED_CATALOG.filter(
+    (need) => need.userPlaceholder.toLowerCase() === userLabel.trim().toLowerCase(),
+  );
+  const relevantNeeds = matchingUserNeeds.length ? matchingUserNeeds : NEED_CATALOG;
+
   const needPos = demo.getNodePixelPosition(ctx.chain.need.id);
   if (needPos) mascot.moveTo(ctx.chain.need.id, needPos, "northeast");
   const needLabel = await mascot.showField({
     type: "text",
     prompt: "What does " + userLabel + " need?",
-    placeholder: NEED_CATALOG[0].label,
-    examples: NEED_CATALOG.map((need) => need.label),
+    placeholder: relevantNeeds[0].label,
+    examples: relevantNeeds.map((need) => need.label),
   });
   ctx.chain = relabelNeed(ctx.chain, needLabel);
   demo.relabelNode(ctx.chain.need.id, ctx.chain.need.label);
 
-  // best-effort match against the catalog, purely to pick fitting single-item ghost
-  // placeholders for the capability steps below; falls back to the first catalog need if
-  // the visitor typed something custom, so the placeholder is never empty
+  // best-effort match against the catalog, used to pick fitting placeholders and pills for
+  // the capability steps below; falls back to the first catalog need if the visitor typed
+  // something custom, so the placeholder is never empty
   const needOption =
     NEED_CATALOG.find((need) => need.label.toLowerCase() === needLabel.trim().toLowerCase()) ?? NEED_CATALOG[0];
 
@@ -53,7 +60,7 @@ export async function runPhase10(ctx: ScenarioContext): Promise<void> {
       type: "text",
       prompt: `What's something they depend on to get this need met? \r\n(${i + 1} of ${capabilityCount})`,
       placeholder: needOption.capabilityPlaceholders[i],
-      examples: NEED_CATALOG.map((need) => need.capabilityPlaceholders[i]),
+      examples: [needOption.capabilityPlaceholders[i]],
     });
     ctx.chain = relabelCapability(ctx.chain, capability.id, capabilityLabel);
     demo.relabelNode(capability.id, capabilityLabel);
