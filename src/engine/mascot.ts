@@ -93,6 +93,7 @@ export class Mascot {
   private avatarState: MascotState = "idle";
   private currentAnchorNodeId: string | null = null;
   private anchoredToCorner = false;
+  private viewBoxAnchor: { x: number; y: number } | null = null;
   private lastPos: { x: number; y: number; radius?: number } | null = null;
   private placement: MascotPlacement = "auto";
   private resizeHandler = (): void => this.trackAnchor();
@@ -137,7 +138,27 @@ export class Mascot {
   moveTo(nodeId: string, pos: { x: number; y: number; radius?: number }, placement: MascotPlacement = "auto"): void {
     this.currentAnchorNodeId = nodeId;
     this.anchoredToCorner = false;
+    this.viewBoxAnchor = null;
     this.lastPos = pos;
+    this.placement = placement;
+    this.reposition();
+    this.scrollIntoViewIfNeeded();
+  }
+
+  /**
+   * plants the mascot at an arbitrary point in the canvas's open whitespace, not anchored to any
+   * node — e.g. Phase 7's "stepping back" beat, where the mascot introduces itself away from the
+   * value chain rather than beside one of its nodes. `x`/`y` are viewBox coordinates (the same
+   * space `WardleyDemo.addNode` takes), converted via `demo.getViewBoxPixelPosition` and re-derived
+   * from those same coordinates on resize (`trackAnchor`), unlike `moveToTopRight`'s host-relative
+   * corner or `moveTo`'s node-id tracking. A no-op if `attachDemo` hasn't run yet.
+   */
+  moveToViewBoxPoint(x: number, y: number, placement: MascotPlacement = "auto"): void {
+    if (!this.demo) return;
+    this.currentAnchorNodeId = null;
+    this.anchoredToCorner = false;
+    this.viewBoxAnchor = { x, y };
+    this.lastPos = this.demo.getViewBoxPixelPosition(x, y);
     this.placement = placement;
     this.reposition();
     this.scrollIntoViewIfNeeded();
@@ -153,6 +174,7 @@ export class Mascot {
   moveToTopRight(): void {
     this.currentAnchorNodeId = null;
     this.anchoredToCorner = true;
+    this.viewBoxAnchor = null;
     this.lastPos = this.topRightPoint();
     this.placement = "auto";
     this.reposition();
@@ -394,6 +416,12 @@ export class Mascot {
   private trackAnchor(): void {
     if (this.anchoredToCorner) {
       this.moveToTopRight();
+      return;
+    }
+    if (this.viewBoxAnchor) {
+      if (!this.demo) return;
+      this.lastPos = this.demo.getViewBoxPixelPosition(this.viewBoxAnchor.x, this.viewBoxAnchor.y);
+      this.reposition();
       return;
     }
     if (!this.demo || !this.currentAnchorNodeId) return;

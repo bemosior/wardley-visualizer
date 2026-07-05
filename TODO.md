@@ -51,7 +51,11 @@ Four layers, strict one-way dependency (lower layers know nothing about higher o
       — this phase adds whichever are missing, spread left/right of whichever one is already there,
       connected to the Need), relabeling all three "Part A"/"Part B"/"Part C" by final left-to-right
       screen position, and explaining that a need is sometimes met by several parts adding up
-      together, before handing off to Phase 10's form.
+      together, before handing off to Phase 7.
+    - `phase7.ts` — a brief pause between Phase 5 and Phase 10 where the mascot steps back from
+      the value chain into open canvas whitespace (`Mascot.moveToViewBoxPoint`, not anchored to any
+      node) to introduce itself ("I'm Ben, by the way."), gated behind its own "Next", before
+      handing off to Phase 10's form.
     - `phase10.ts` — the 5-step personalization form (user → need → 3 capabilities), relabeling both the domain chain and the rendered nodes as each answer comes in.
     - `phase20.ts` — the map backdrop and the evolution-axis drag/confirm loop (Need, then Capability-1/2/3); owns the private `awaitEvolutionConfirm` helper shared by that loop.
     - `phase30.ts` — the Q&A loop (bias-check, build/buy/outsource, one pool question), annotating each capability on the map.
@@ -69,6 +73,7 @@ Four layers, strict one-way dependency (lower layers know nothing about higher o
 
 - [x] Phase 0 — Value Chain: generic User → User Need → Capability x3, drag Need into place, celebration.
 - [x] Phase 0.5 — Refactor prep: mutable domain labels, decomposed `WardleyDemo` engine ops, swappable-mode `Panel`, `needCatalog.ts`, removed host-page toolbox duplication.
+- [x] Phase 7 — Meet Ben: the mascot steps back from the value chain into open canvas whitespace to introduce itself, gated behind a "Next".
 - [x] Phase 10 — Personalize the value chain: drag-then-form flow (User dropdown → Need/Capability text fields), live relabeling of domain + rendered nodes, `celebrate(nodeId)` finale.
 - [x] Phase 20 — Evolution: map backdrop, per-node evolution-axis drag + confirm (Need then Capability-1/2/3), live characteristics instrument-panel readout, stage-dependent flow-particle animation.
 - [x] Finale — big celebration + `Panel.showRecap` with CTA link to LearnWardleyMapping.com.

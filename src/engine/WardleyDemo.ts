@@ -732,6 +732,11 @@ export class WardleyDemo {
     return this.nodesById.has(nodeId);
   }
 
+  /** current viewBox dimensions, in viewBox units — for a caller (e.g. a phase choosing a node-independent whitespace spot for the mascot) that needs to reason about the canvas's own bounds rather than any node's position */
+  getViewBoxSize(): { width: number; height: number } {
+    return { width: this.viewBox.width, height: this.viewBox.height };
+  }
+
   /**
    * a registered node's raw viewBox-space position — unlike `getNodePixelPosition`, not converted
    * to container pixels. For a caller computing *new* node positions relative to an already-placed
