@@ -30,7 +30,7 @@ const NORTHEAST_GAP = 32;
 
 /** clearance from the host's own top/right edges for `moveToTopRight` -- keeps the avatar off the
  * canvas border while still reading as "the corner" */
-const CORNER_MARGIN = 24;
+const CORNER_MARGIN = 64;
 
 /**
  * `"auto"` is `reposition`'s default below/above-the-node behavior. `"northeast"` instead anchors
