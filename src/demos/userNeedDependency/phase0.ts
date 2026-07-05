@@ -7,7 +7,7 @@ import type { ValueChainScenarioOptions, ScenarioContext } from "./index";
 
 /** horizontal clearance (container px) between the Need's destination marker and the mascot
  * avatar when it anchors beside (not under) that marker, before the demo starts */
-const MASCOT_BESIDE_GAP = 24;
+const MASCOT_BESIDE_GAP = 32;
 
 const seedValueChain = createValueChain({
   user: { id: "user", label: "User" },
@@ -20,7 +20,7 @@ const seedValueChain = createValueChain({
 });
 
 /** the mascot's Phase 0 bubble copy, shown before the first drag */
-const MASCOT_INTRO = { heading: "Finish the Value Chain.", subheading: "Drag the User Need to begin." };
+const MASCOT_INTRO = { heading: "Solve the puzzle.", subheading: "Drag the missing piece into place." };
 
 /**
  * Phase 0: drag the Need into place. The Need node itself renders already on the canvas, out of
@@ -67,7 +67,11 @@ export async function runPhase0(options: ValueChainScenarioOptions): Promise<Sce
 
   mascot.attachDemo(demo);
   const needPlacedPos = demo.getNodePixelPosition(chain.need.id);
-  if (needPlacedPos) mascot.moveTo(chain.need.id, needPlacedPos);
+  if (needPlacedPos) mascot.moveTo(chain.need.id, {
+        x: needPlacedPos.x + needPlacedPos.radius + MASCOT_BESIDE_GAP,
+        y: needPlacedPos.y - needPlacedPos.radius - MASCOT_BESIDE_GAP,
+        radius: 0,
+  });
 
   options.onNeedPlaced?.();
 

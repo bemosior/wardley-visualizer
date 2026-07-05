@@ -6,9 +6,9 @@ import type { ScenarioContext } from "./index";
  * Doubles as the "what's a Value Chain?" payoff that used to live in the host page's separate
  * `.wd-explanation` column (`#vc-answer`) — now the bubble is the only place that copy lives. */
 const MASCOT_NEED_PLACED = {
-  heading: "That's a Value Chain!",
+  heading: "You just made a Value Chain!",
   subheading:
-    "It shows how a User gets a User Need met, through the Capabilities they depend on. Click Next to personalize it.",
+    "It tells us what people depend on to get their needs met.",
 };
 const MASCOT_CHAIN_COMPLETE = { heading: "All done!", subheading: "Click Next to turn this into a Wardley Map." };
 
