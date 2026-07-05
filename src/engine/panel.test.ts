@@ -110,7 +110,7 @@ describe("Panel.showField", () => {
     expect(await result).toBe("Ben");
   });
 
-  it("renders one example chip per option, and clicking one fills the input without resolving", async () => {
+  it("renders one example chip per option, and clicking one resolves immediately", async () => {
     const container = makeContainer();
     const panel = new Panel(container);
     const result = panel.showField({
@@ -122,19 +122,8 @@ describe("Panel.showField", () => {
     const chips = container.querySelectorAll<HTMLButtonElement>(".wd-panel-form-example");
     expect(chips.length).toBe(2);
 
-    let resolved = false;
-    result.then(() => {
-      resolved = true;
-    });
-
     chips[1].click();
-    await Promise.resolve();
-    expect(resolved).toBe(false);
 
-    const input = container.querySelector<HTMLInputElement>(".wd-panel-form-input")!;
-    expect(input.value).toBe("A taxi to the airport");
-
-    submitForm(container);
     expect(await result).toBe("A taxi to the airport");
   });
 });
