@@ -14,7 +14,7 @@ const MASCOT_NEED_PLACED = {
 
 const MASCOT_USER = {
   heading: "This is a user.",
-  subheading: "It's someone we care about.",
+  subheading: "They're someone we care about.",
 };
 
 const MASCOT_USER_NEED = {
@@ -24,7 +24,7 @@ const MASCOT_USER_NEED = {
 
 const MASCOT_CAPABILITY = {
   heading: "This is a capability.",
-  subheading: "It's a part that helps us meet the user need.",
+  subheading: "It's a part of our solution to meet the user need.",
 };
 
 /** horizontal clearance (container px) between the anchor Capability node and the mascot avatar
