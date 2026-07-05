@@ -32,9 +32,14 @@ const NORTHEAST_GAP = 32;
  * `"auto"` is `reposition`'s default below/above-the-node behavior. `"northeast"` instead anchors
  * up and to the right of the node -- for anchors whose "below" spot would land on another row of
  * nodes underneath (this demo stacks several rows close together), NE clears it instead of
- * covering it.
+ * covering it. `"south"` forces the below side even when `reposition`'s overflow math would
+ * otherwise flip to "above" -- for anchors with another row directly *above* them (e.g. a
+ * Capability, sitting right under its Need), flipping up would plant the bubble on that row
+ * instead of clearing it. Below-the-node is a safe floor for these since nothing else renders
+ * underneath the bottom row; spilling past the canvas's bottom edge is an acceptable, secondary
+ * trade-off (see `reposition`'s doc comment).
  */
-export type MascotPlacement = "auto" | "northeast";
+export type MascotPlacement = "auto" | "northeast" | "south";
 
 /**
  * the mascot's speech-bubble guide — the sole guide for the whole scenario, from the moment
@@ -151,7 +156,7 @@ export class Mascot {
     const groupHeight = Math.max(AVATAR_HEIGHT, bubbleHeight);
 
     let side: "below" | "above" = "below";
-    if (hostRect.height) {
+    if (this.placement !== "south" && hostRect.height) {
       const belowOverflow = Math.max(0, clearBelow + groupHeight - hostRect.height);
       const aboveOverflow = Math.max(0, groupHeight - clearAbove);
       if (aboveOverflow < belowOverflow) side = "above";
