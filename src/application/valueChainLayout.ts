@@ -26,7 +26,9 @@ export interface ValueChainLayoutOptions {
 const DEFAULT_VIEW_BOX = { width: 400, height: 300 };
 const DEFAULT_NEED_Y = 76;
 const DEFAULT_CAPABILITY_Y = 157;
-const DEFAULT_CAPABILITY_GAP = 140;
+/** horizontal spacing between adjacent Capability nodes in a row; exported so `phase5.ts` can use
+ * the same spacing when it adds capability nodes a custom config didn't already render */
+export const DEFAULT_CAPABILITY_GAP = 140;
 const DEFAULT_NEED_START_X = 35;
 /** clears both the User and Capability rows (unlike `needY`, which sits close enough to the
  * Capability row to overlap it at `DEFAULT_NEED_START_X`) — now that the Need renders here from

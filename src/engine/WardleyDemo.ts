@@ -316,6 +316,13 @@ export class WardleyDemo {
     this.activateLines();
     targetMarker.classList.add("wd-target-marker--hidden");
 
+    // the node has settled at its target x/y for good now — clears `draggable` so any *later*
+    // `addConnection` touching it (e.g. Phase 5 wiring a newly-added Capability to an
+    // already-dragged Need) renders from that settled position via `createConnectionLine` instead
+    // of stale-reading its pre-drag `start` (which `createConnectionLine` prefers whenever
+    // `draggable` is still true, since that's what lets *this* node's own original connections
+    // track it live during the drag itself, via `connectedLines`)
+    node.draggable = false;
     nodeGroup.classList.add("wd-node--charged");
     const rootNodeGroup = options.rootNodeId ? this.nodeGroups.get(options.rootNodeId) : undefined;
     if (rootNodeGroup) {
@@ -618,6 +625,22 @@ export class WardleyDemo {
     const pos = this.viewBoxToContainerPx(node.x, node.y);
     const scaleX = this.svg.getBoundingClientRect().width / this.viewBox.width;
     return { ...pos, radius: NODE_RADIUS * scaleX };
+  }
+
+  /** true if a node with this id has already been registered (via the initial config or a later `addNode` call) — lets a caller (e.g. a phase that must render a node the current config might already include) avoid adding it twice */
+  hasNode(nodeId: string): boolean {
+    return this.nodesById.has(nodeId);
+  }
+
+  /**
+   * a registered node's raw viewBox-space position — unlike `getNodePixelPosition`, not converted
+   * to container pixels. For a caller computing *new* node positions relative to an already-placed
+   * one (e.g. Phase 5 spreading a row out from whichever capability a host's custom config already
+   * rendered), since `addNode` takes viewBox coordinates, not pixels.
+   */
+  getNodePosition(nodeId: string): Point | null {
+    const node = this.nodesById.get(nodeId);
+    return node ? { x: node.x, y: node.y } : null;
   }
 
   /**

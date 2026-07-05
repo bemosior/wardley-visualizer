@@ -45,10 +45,12 @@ async function flush(): Promise<void> {
   await Promise.resolve();
 }
 
-/** drags the Need into place (default layout's target is centerX=200, needY=76 for the default 400x300 viewBox), then clicks past the "Next" gate into the form */
+/** drags the Need into place (default layout's target is centerX=200, needY=76 for the default 400x300 viewBox), then clicks past Phase 5's two "Next" gates ("Need placed" and the Part A/B/C explanation) into the form */
 async function completeDragStep(canvas: HTMLElement, mascotHost: HTMLElement): Promise<void> {
   const needNode = canvas.querySelector('[data-node-id="need"]')!;
   drag(needNode, { x: 200, y: 76 });
+  await flush();
+  clickNext(mascotHost);
   await flush();
   clickNext(mascotHost);
   await flush();
@@ -64,7 +66,7 @@ describe("runValueChainScenario", () => {
     expect(mascotHost.querySelector("form")).toBeNull();
   });
 
-  it("fires onNeedPlaced as soon as the Need snaps, and waits for a Next click before showing the form", async () => {
+  it("fires onNeedPlaced as soon as the Need snaps, and waits for a Next click before advancing", async () => {
     const onNeedPlaced = vi.fn();
     const canvas = document.createElement("div");
     const mascotHost = document.createElement("div");
@@ -79,10 +81,28 @@ describe("runValueChainScenario", () => {
     expect(mascotHost.querySelector("form")).toBeNull();
     expect(mascotHost.querySelector(".wd-next-link")).not.toBeNull();
     expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("You just made a Value Chain!");
+  });
+
+  it("relabels the three Capability nodes to Part A/B/C and explains multi-part needs between the 'Value Chain' placeholder and the form", async () => {
+    const { canvas, mascotHost } = buildScenario(vi.fn());
+    const needNode = canvas.querySelector('[data-node-id="need"]')!;
+    drag(needNode, { x: 200, y: 76 });
+    await flush();
+    clickNext(mascotHost);
+    await flush();
+
+    expect(mascotHost.querySelector("form")).toBeNull();
+    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe(
+      "It's not always just one thing.",
+    );
+    expect(canvas.querySelector('[data-node-id="dependency-1"] .wd-node-label')!.textContent).toBe("Part A");
+    expect(canvas.querySelector('[data-node-id="dependency-2"] .wd-node-label')!.textContent).toBe("Part B");
+    expect(canvas.querySelector('[data-node-id="dependency-3"] .wd-node-label')!.textContent).toBe("Part C");
 
     clickNext(mascotHost);
     await flush();
     expect(mascotHost.querySelector("form")).not.toBeNull();
+    expect(mascotHost.querySelector(".wd-panel-form-prompt")!.textContent).toBe("What does the user need?");
   });
 
   it("does not advance to the form sequence if the Need is dropped away from its target", async () => {
