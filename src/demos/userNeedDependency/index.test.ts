@@ -74,7 +74,7 @@ describe("runValueChainScenario", () => {
     expect(onNeedPlaced).toHaveBeenCalledOnce();
     expect(mascotHost.querySelector("form")).toBeNull();
     expect(mascotHost.querySelector(".wd-next-link")).not.toBeNull();
-    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Nice! You made a Value Chain!");
+    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("You made a Value Chain!");
   });
 
   it("walks the user through User/Need/Capability, then relabels the three Capability nodes to Part A/B/C and explains multi-part needs, before the form", async () => {
@@ -85,22 +85,22 @@ describe("runValueChainScenario", () => {
     clickNext(mascotHost);
     await flush();
 
-    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("This is a user.");
+    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("This is a User.");
 
     clickNext(mascotHost);
     await flush();
-    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("This is a user need.");
+    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("This is a User Need.");
 
     clickNext(mascotHost);
     await flush();
-    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("This is a capability.");
+    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("This is a Capability.");
 
     clickNext(mascotHost);
     await flush();
 
     expect(mascotHost.querySelector("form")).toBeNull();
     expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe(
-      "Our Value Chain recipe often calls for many parts.",
+      "A Value Chain is like a recipe.",
     );
     expect(canvas.querySelector('[data-node-id="dependency-1"] .wd-node-label')!.textContent).toBe("Part A");
     expect(canvas.querySelector('[data-node-id="dependency-2"] .wd-node-label')!.textContent).toBe("Part B");

@@ -8,23 +8,23 @@ import type { ScenarioContext } from "./index";
  * by the User/Need/Capability walkthrough below instead, so this beat is just the acknowledgment
  * that kicks the walkthrough off. */
 const MASCOT_NEED_PLACED = {
-  heading: "Nice! You made a Value Chain!",
-  subheading: "Let's walk through it together.",
+  heading: "You made a Value Chain!",
+  subheading: "A value chain is a recipe for delivering value.",
 };
 
 const MASCOT_USER = {
-  heading: "This is a user.",
-  subheading: "They're someone we care about.",
+  heading: "This is a User.",
+  subheading: "In a value chain, it's who we choose to help.",
 };
 
 const MASCOT_USER_NEED = {
-  heading: "This is a user need.",
-  subheading: "It's something they value or expect.",
+  heading: "This is a User Need.",
+  subheading: "It's what the user expects to get.",
 };
 
 const MASCOT_CAPABILITY = {
-  heading: "This is a capability.",
-  subheading: "It's a part of our solution to meet the user need.",
+  heading: "This is a Capability.",
+  subheading: "It's how we meet the user need.",
 };
 
 /** placeholder labels for the three Capability nodes while this phase explains their number,
@@ -33,8 +33,8 @@ const MASCOT_CAPABILITY = {
 const PART_LABELS = ["Part A", "Part B", "Part C"];
 
 const MASCOT_MULTIPLE_PARTS = {
-  heading: "Our Value Chain recipe often calls for many parts.",
-  subheading: "These parts come together to meet the need(s) of someone we care about.",
+  heading: "A Value Chain is like a recipe.",
+  subheading: "It often takes multiple capabilities to come together to meet the user need.",
 };
 
 /**
