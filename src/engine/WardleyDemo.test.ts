@@ -688,6 +688,61 @@ describe("WardleyDemo.runEvolutionDragStep", () => {
 
     expect(nodeGroup.getAttribute("transform")).toBe("translate(150, 150)");
   });
+
+  it("cancels a still-running slideToGenesis animation the instant a real drag starts on that node", () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const demo = WardleyDemo.mount(container, {
+      viewBox: { width: 400, height: 300 },
+      nodes: [
+        { id: "user", label: "User", x: 200, y: 50, draggable: false },
+        { id: "need", label: "Need", x: 300, y: 150, draggable: false },
+      ],
+      connections: [{ from: "user", to: "need" }],
+      snapThreshold: 30,
+    });
+    const nodeGroup = container.querySelector('[data-node-id="need"]')!;
+
+    // src/test/setup.ts shims matchMedia to always report reduced motion, forcing slideToGenesis's
+    // instant synchronous path -- disable that here so its animation actually stays in flight,
+    // which is what a visitor grabbing the node mid-slide needs to race against.
+    const originalMatchMedia = window.matchMedia;
+    const originalRaf = window.requestAnimationFrame;
+    window.matchMedia = (() => ({ matches: false })) as unknown as typeof window.matchMedia;
+    const callbacks: FrameRequestCallback[] = [];
+    window.requestAnimationFrame = ((cb: FrameRequestCallback) => {
+      callbacks.push(cb);
+      return callbacks.length;
+    }) as typeof requestAnimationFrame;
+    const flush = (time: number): void => {
+      const pending = callbacks.splice(0, callbacks.length);
+      pending.forEach((cb) => cb(time));
+    };
+    const now = vi.spyOn(performance, "now").mockReturnValue(0);
+
+    demo.slideToGenesis("need", 700); // animates x from 300 toward genesisCenterX(400) = 50
+    now.mockReturnValue(350);
+    flush(350); // halfway through -- the slide has re-queued its next frame via requestAnimationFrame
+
+    const midFlightTransform = nodeGroup.getAttribute("transform")!;
+    expect(midFlightTransform).not.toBe("translate(300, 150)");
+    expect(midFlightTransform).not.toBe("translate(50, 150)");
+
+    demo.runEvolutionDragStep("need");
+    nodeGroup.dispatchEvent(new PointerEvent("pointerdown", { clientX: 0, clientY: 0, pointerId: 1 }));
+
+    // flushing the slide's already-queued frame must not move the node any further now that the
+    // drag has taken over and cancelled it -- before this fix, this frame would keep dragging the
+    // node back toward Genesis regardless of anything the visitor does afterward.
+    now.mockReturnValue(700);
+    flush(700);
+
+    expect(nodeGroup.getAttribute("transform")).toBe(midFlightTransform);
+
+    window.matchMedia = originalMatchMedia;
+    window.requestAnimationFrame = originalRaf;
+    vi.restoreAllMocks();
+  });
 });
 
 describe("WardleyDemo.addAnnotation", () => {

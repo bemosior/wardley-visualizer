@@ -93,6 +93,8 @@ export class WardleyDemo {
   private linesActive = false;
   /** a node's confirmed evolution stage, driving how the flow particles on its lines look (see `spawnParticlesForLine`); unset until it's actually placed on the evolution axis, which falls back to Phase 0/10's fixed pre-evolution look */
   private nodeStage = new Map<string, EvolutionStage>();
+  /** `slideToGenesis`'s in-flight animation for a node, if any -- cancelled the moment a real evolution-axis drag starts on that node (see `runEvolutionDragStep`'s `onDragStart`), so the slide can't keep overwriting the node's position out from under a visitor who grabbed it mid-slide */
+  private pendingSlides = new Map<string, () => void>();
   /** every callout box placed so far (Phase 30), so a new one can pick a tier that doesn't collide with it — see `createAnnotation` */
   private annotationRects: AnnotationRect[] = [];
 
@@ -451,11 +453,19 @@ export class WardleyDemo {
    * placed. Updates the node's stored position and respawns flow particles on lines touching it
    * afterward, so the particle flow keeps tracking the line's new path. A no-op if the node id
    * isn't registered (`onComplete` is not called in that case either).
+   *
+   * Registers its animation handle in `pendingSlides` so `runEvolutionDragStep` can cancel it the
+   * instant a visitor actually grabs the node -- this animation runs on its own rAF loop, entirely
+   * independent of a drag, so without cancellation a visitor who drags and releases quickly (while
+   * this is still in flight) would see it keep overwriting their dropped position afterward,
+   * snapping the node back toward Genesis right as they let go.
    */
   slideToGenesis(nodeId: string, durationMs = 700, onComplete?: () => void): void {
     const node = this.nodesById.get(nodeId);
     const nodeGroup = this.nodeGroups.get(nodeId);
     if (!node || !nodeGroup) return;
+
+    this.pendingSlides.get(nodeId)?.();
 
     const connectedLines: ConnectedLine[] = this.lines
       .filter(({ conn }) => conn.from === nodeId || conn.to === nodeId)
@@ -467,7 +477,7 @@ export class WardleyDemo {
     const from = { x: node.x, y: node.y };
     const to = { x: genesisCenterX(this.viewBox.width), y: node.y };
 
-    animateTo(
+    const handle = animateTo(
       from,
       to,
       durationMs,
@@ -476,11 +486,19 @@ export class WardleyDemo {
         this.updateFlowParticlePaths(nodeId, point);
       },
       () => {
+        this.pendingSlides.delete(nodeId);
         node.x = to.x;
         this.setNodeStage(nodeId, "Genesis");
         onComplete?.();
       },
     );
+    this.pendingSlides.set(nodeId, handle.cancel);
+  }
+
+  /** stops `slideToGenesis`'s in-flight animation for a node, if any, leaving it wherever it currently sits -- see `pendingSlides`' doc comment */
+  private cancelPendingSlide(nodeId: string): void {
+    this.pendingSlides.get(nodeId)?.();
+    this.pendingSlides.delete(nodeId);
   }
 
   /**
@@ -530,6 +548,7 @@ export class WardleyDemo {
       connectedLines,
       minX,
       maxX,
+      onDragStart: () => this.cancelPendingSlide(nodeId),
       onPositionChange: (x) => {
         const stage = stageLabelAt(x, this.viewBox.width);
         options.onPositionChange?.(stage);

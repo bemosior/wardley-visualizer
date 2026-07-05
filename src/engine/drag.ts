@@ -148,6 +148,8 @@ export interface AxisDragOptions {
   onPositionChange?: (x: number) => void;
   /** fires once, the first time the node is dropped (pointer released) — used to reveal a confirm control only after the visitor has actually tried dragging */
   onFirstRelease?: () => void;
+  /** fires on every pointerdown, before anything else -- lets the caller cancel a still-in-flight animation (e.g. `slideToGenesis`) that would otherwise keep fighting this drag for the node's position */
+  onDragStart?: () => void;
 }
 
 export interface AxisDragHandle {
@@ -166,7 +168,7 @@ export interface AxisDragHandle {
  * live feedback, then an explicit confirm action).
  */
 export function attachAxisDrag(options: AxisDragOptions): AxisDragHandle {
-  const { svg, nodeGroup, node, connectedLines, minX, maxX, onPositionChange, onFirstRelease } = options;
+  const { svg, nodeGroup, node, connectedLines, minX, maxX, onPositionChange, onFirstRelease, onDragStart } = options;
 
   let currentX = node.x;
   let hasReleasedOnce = false;
@@ -197,6 +199,7 @@ export function attachAxisDrag(options: AxisDragOptions): AxisDragHandle {
 
   function onPointerDown(event: PointerEvent): void {
     if (confirmed) return;
+    onDragStart?.();
     nodeGroup.classList.remove("wd-node--beckon");
     nodeGroup.setPointerCapture(event.pointerId);
     nodeGroup.addEventListener("pointermove", onPointerMove as EventListener);

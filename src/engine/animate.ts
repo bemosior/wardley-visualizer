@@ -11,22 +11,29 @@ export function prefersReducedMotion(): boolean {
   return window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 }
 
+export interface AnimationHandle {
+  /** stops the animation before it reaches `to` -- no further `onFrame`/`onDone` calls happen */
+  cancel: () => void;
+}
+
 export function animateTo(
   from: Point,
   to: Point,
   durationMs: number,
   onFrame: (point: Point) => void,
   onDone?: () => void,
-): void {
+): AnimationHandle {
   if (durationMs <= 0 || prefersReducedMotion()) {
     onFrame(to);
     onDone?.();
-    return;
+    return { cancel: () => {} };
   }
 
+  let cancelled = false;
   const start = performance.now();
 
   function tick(now: number) {
+    if (cancelled) return;
     const elapsed = now - start;
     const t = Math.min(1, elapsed / durationMs);
     const eased = easeOutCubic(t);
@@ -42,4 +49,9 @@ export function animateTo(
   }
 
   requestAnimationFrame(tick);
+  return {
+    cancel: () => {
+      cancelled = true;
+    },
+  };
 }
