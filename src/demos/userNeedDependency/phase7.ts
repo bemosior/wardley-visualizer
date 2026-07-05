@@ -3,7 +3,7 @@ import type { ScenarioContext } from "./index";
 const MASCOT_INTRO = {
   heading: "I'm Ben, by the way.",
   subheading:
-    "I'm here to help you learn Wardley Mapping. Use the contact form at the bottom of this page anytime to say hello or ask a question!",
+    "I'm here to help you learn Wardley Mapping!",
 };
 
 /**
@@ -16,8 +16,10 @@ const MASCOT_INTRO = {
 function stepBackPoint(ctx: ScenarioContext): { x: number; y: number } {
   const { demo, chain } = ctx;
   const viewBox = demo.getViewBoxSize();
+  const userPos = demo.getNodePosition(chain.user.id)!;
   const needPos = demo.getNodePosition(chain.need.id)!;
-  const y = needPos.y;
+  const posDiffY = needPos.y - userPos.y;
+  const y = needPos.y - posDiffY;
   return { x: viewBox.width / 2, y };
 }
 
@@ -34,5 +36,5 @@ export async function runPhase7(ctx: ScenarioContext): Promise<void> {
   const { x, y } = stepBackPoint(ctx);
   mascot.moveToViewBoxPoint(x, y, "auto");
   mascot.showPlaceholder(MASCOT_INTRO.heading, MASCOT_INTRO.subheading);
-  await mascot.confirmPlacement("Next");
+  await mascot.confirmPlacement("Nice to meet you!");
 }

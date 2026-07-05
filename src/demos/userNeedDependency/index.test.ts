@@ -111,7 +111,7 @@ describe("runValueChainScenario", () => {
     expect(mascotHost.querySelector("form")).toBeNull();
     expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("I'm Ben, by the way.");
     expect(mascotHost.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe(
-      "I'm here to help you learn Wardley Mapping. Use the contact form at the bottom of this page anytime to say hello or ask a question!",
+      "I'm here to help you learn Wardley Mapping!",
     );
 
     clickNext(mascotHost);
