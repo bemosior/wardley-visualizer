@@ -209,6 +209,20 @@ export function stageLabelAt(x: number, viewBoxWidth: number): EvolutionStage {
   return EVOLUTION_STAGES[index];
 }
 
+/** gap (viewBox units) kept clear between a node's bottom edge and the top of the bottom evolution-stage label chips */
+const BACKDROP_LABEL_NODE_GAP = 16;
+
+/**
+ * the lowest y-coordinate (viewBox units) a node's bottom edge (`y + NODE_RADIUS`) can reach
+ * before it starts crowding the bottom evolution-stage label chips `createMapBackdrop` renders —
+ * shared so `WardleyDemo` can lift already-placed value-chain nodes clear of that band once the
+ * map backdrop appears, instead of letting them render on top of (or right against) the labels.
+ */
+export function backdropSafeBottomY(viewBoxHeight: number): number {
+  const chipTop = viewBoxHeight - BACKDROP_LABEL_INSET - BACKDROP_LABEL_CHIP_HEIGHT * 0.7;
+  return chipTop - BACKDROP_LABEL_NODE_GAP;
+}
+
 export function createMapBackdrop(viewBox: { width: number; height: number }): SVGGElement {
   const g = document.createElementNS(SVG_NS, "g") as SVGGElement;
   g.classList.add("wd-backdrop");
