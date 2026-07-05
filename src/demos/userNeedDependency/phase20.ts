@@ -62,24 +62,10 @@ export async function runPhase20(ctx: ScenarioContext): Promise<void> {
   demo.markPending(chain.capabilities.map((c) => c.id));
   mascot.showInstrumentPanel(chain.need.label, "need", "Genesis", MAP_CAPTION_FADE_MS);
   demo.showMapBackdrop(scale, PANEL_CONTENT_MIN_HEIGHT);
-  // guards every delayed mascot.moveTo below (the Need's slide, and each capability's, further
-  // down): a real visitor always takes longer than these animations' own delay/duration to place
-  // all four nodes, so those callbacks naturally fire long before `allPlaced` flips -- but the dev
-  // autopilot (`src/dev/autopilot.ts`) can drive every confirmation through in well under that
-  // time, in which case a stale callback would otherwise fire *after*
-  // `mascot.moveToTopRight()` below and drag the mascot back onto the map instead of leaving it in
-  // the corner.
-  let allPlaced = false;
   // staggered by the same delay as the mascot bubble's fade-in (mascot.showInstrumentPanel
   // above), so the Need visibly settles into Genesis in step with the rest of Phase 20's reveal
   // rather than sliding immediately while the caption/bubble are still fading in.
-  setTimeout(
-    () =>
-      demo.slideToGenesis(chain.need.id, undefined, () => {
-        if (allPlaced) return;
-      }),
-    MAP_CAPTION_FADE_MS,
-  );
+  setTimeout(() => demo.slideToGenesis(chain.need.id), MAP_CAPTION_FADE_MS);
   demo.beckonNode(chain.need.id);
 
   await awaitEvolutionConfirm(demo, mascot, chain.need.id, options.onEvolutionStep);
@@ -87,17 +73,10 @@ export async function runPhase20(ctx: ScenarioContext): Promise<void> {
   for (const capability of chain.capabilities) {
     mascot.showInstrumentPanel(capability.label, "capability", "Genesis");
     demo.beckonNode(capability.id);
-    // `slideToGenesis`'s own 700ms default animation duration means this `onComplete` can fire
-    // well after the drag is confirmed -- guarded by `allPlaced` for the same reason as the Need's
-    // slide above (a real visitor's own placement pace hides this; the autopilot's instant
-    // confirms do not).
-    demo.slideToGenesis(capability.id, undefined, () => {
-      if (allPlaced) return;
-    });
+    demo.slideToGenesis(capability.id);
     await awaitEvolutionConfirm(demo, mascot, capability.id, options.onEvolutionStep);
   }
 
-  allPlaced = true;
   mascot.moveToTopRight();
   mascot.showPlaceholder("You made a Wardley Map!", "");
   mascot.setState("celebrating");
