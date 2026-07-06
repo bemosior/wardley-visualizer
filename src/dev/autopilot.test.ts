@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { attachAutopilot, parseSkipTarget } from "./autopilot";
 import { runValueChainScenario } from "../demos/userNeedDependency";
+import { CELEBRATE_DURATION_MS } from "../demos/userNeedDependency/phase7";
 
 describe("parseSkipTarget", () => {
   it("returns the requested target when valid", () => {
@@ -16,8 +17,18 @@ describe("parseSkipTarget", () => {
   });
 });
 
-/** flushes both pending promise microtasks and queued MutationObserver callbacks */
+/**
+ * flushes both pending promise microtasks and queued MutationObserver callbacks, waiting past
+ * Phase 7's post-"Nice to meet you!" `CELEBRATE_DURATION_MS` pause (a real `setTimeout`) so every
+ * target beyond `intro` (which stops before that gate is clicked) can settle into whatever comes
+ * after it -- with another round of ticks afterward for the mutation-observer reactions (e.g.
+ * `celebrate`'s Phase 10 field auto-fills) that only start once that pause elapses.
+ */
 async function flushAll(): Promise<void> {
+  for (let i = 0; i < 10; i++) {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+  await new Promise((resolve) => setTimeout(resolve, CELEBRATE_DURATION_MS));
   for (let i = 0; i < 10; i++) {
     await new Promise((resolve) => setTimeout(resolve, 0));
   }
