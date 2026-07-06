@@ -93,7 +93,7 @@ export async function runPhase30(ctx: ScenarioContext): Promise<void> {
 
     if (choice === "yes") {
       const answer = await mascot.showQuestion(current.node.label, current.concept.question);
-      demo.addAnnotation(current.node.id, answer.annotation);
+      if (answer.annotation) demo.addAnnotation(current.node.id, answer.annotation);
       remaining = remaining.filter((p) => p.concept.id !== current!.concept.id);
       settled.add(current.concept.id);
       current = remaining[0];
