@@ -552,12 +552,14 @@ describe("runValueChainScenario", () => {
     expect(canvas.querySelectorAll(".wd-annotation").length).toBe(1);
     expect(optionLabels(mascotHost)).not.toContain("Done");
 
+    // "organizational inertia"'s first (auto-picked) option is "No — we are adapting readily.",
+    // an intentionally blank annotation, so the settled count advances but no callout is added
     await settleCurrentConceptWithYes();
-    expect(canvas.querySelectorAll(".wd-annotation").length).toBe(2);
+    expect(canvas.querySelectorAll(".wd-annotation").length).toBe(1);
     expect(optionLabels(mascotHost)).not.toContain("Done");
 
     await settleCurrentConceptWithYes();
-    expect(canvas.querySelectorAll(".wd-annotation").length).toBe(3);
+    expect(canvas.querySelectorAll(".wd-annotation").length).toBe(2);
     expect(optionLabels(mascotHost)).toContain("Done");
 
     clickOption(mascotHost, optionLabels(mascotHost).indexOf("Done"));

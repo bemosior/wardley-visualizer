@@ -112,9 +112,13 @@ describe("attachAutopilot", () => {
     await flushAll();
 
     // "Yes" is always the first `.wd-panel-question-option`, both at each concept's gate and its
-    // deep-dive question, so autopilot says Yes to every one of CONCEPT_BANK's 7 concepts and
-    // drains the whole bank, landing one annotation per concept rather than stopping early
-    expect(canvas.querySelectorAll(".wd-annotation").length).toBe(7);
+    // deep-dive question, so autopilot says Yes to every one of CONCEPT_BANK's 8 concepts and
+    // drains the whole bank. "novelty-bias" never gets a candidate node here (its
+    // `applicableStages` needs Product/Commodity, and these capabilities never leave their
+    // default stage in this flow), leaving 7 gated concepts; of those, "inertia" and
+    // "efficiency-innovation" have an intentionally blank annotation on their first (autopilot-
+    // picked) option, so only 5 of the 7 actually anchor a callout
+    expect(canvas.querySelectorAll(".wd-annotation").length).toBe(5);
     const finalLink = mascotHost.querySelector<HTMLButtonElement>(".wd-next-link");
     expect(finalLink).not.toBeNull();
     expect(finalLink!.textContent).toBe("What's next →");
