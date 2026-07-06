@@ -78,7 +78,7 @@ export const CONCEPT_BANK: Concept[] = [
     id: "build-buy-outsource",
     category: "leadership",
     label: "Build vs. Buy vs. Outsource",
-    definition: "Should we build it? Buy it? Outsource it?",
+    definition: "Should we build it? Buy it? Or outsource it?",
     applicableKinds: ["capability"],
     question: BUILD_BUY_OUTSOURCE_QUESTION,
   },
