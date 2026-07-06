@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { runValueChainScenario } from "./index";
 import { MAP_CAPTION_FADE_MS } from "../../engine/WardleyDemo";
 import { NEED_CATALOG } from "../../domain/needCatalog";
-import { BIAS_CHECK_QUESTION } from "../../domain/questionBank";
+import { METHOD_QUESTION } from "../../domain/questionBank";
 import { CONCEPT_BANK } from "../../domain/conceptBank";
 import { CELEBRATE_DURATION_MS } from "./phase7";
 
@@ -420,7 +420,7 @@ describe("runValueChainScenario", () => {
 
     expect(resolved).toBe(false);
     expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(
-      gatePrompt("novelty-bias", "A kettle"),
+      gatePrompt("right-methods", "A kettle"),
     );
     expect(mascotHost.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe(
       "Choosing is how you learn!",
@@ -428,7 +428,7 @@ describe("runValueChainScenario", () => {
     vi.useRealTimers();
   });
 
-  /** walks placement through the Phase 20->25->30 gates, landing on the first concept/node gate ("novelty bias" x Capability 1) */
+  /** walks placement through the Phase 20->25->30 gates, landing on the first concept/node gate ("using the right methods" x Capability 1) -- "novelty bias" is restricted to Product/Commodity nodes (`applicableStages`), and every node here lands at Custom-Built (each dragged to x=150 in a 400-wide viewBox), so it has no candidates and is skipped entirely */
   async function reachThinkingStep(canvas: HTMLElement, mascotHost: HTMLElement): Promise<void> {
     await reachEvolutionStep(canvas, mascotHost);
     await confirmEvolutionStep(canvas, mascotHost, "need", 150, 76);
@@ -473,7 +473,7 @@ describe("runValueChainScenario", () => {
       "Choosing is how you learn!",
     );
     expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(
-      gatePrompt("novelty-bias", "A kettle"),
+      gatePrompt("right-methods", "A kettle"),
     );
     expect(optionLabels(mascotHost)).toEqual(["Yes", "No", "Try something else"]);
 
@@ -482,7 +482,7 @@ describe("runValueChainScenario", () => {
 
     expect(mascotHost.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe("Keep going!");
     expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(
-      gatePrompt("novelty-bias", "Water"),
+      gatePrompt("right-methods", "Water"),
     );
     vi.useRealTimers();
   });
@@ -499,15 +499,16 @@ describe("runValueChainScenario", () => {
     await flush();
 
     expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("A kettle");
-    expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(BIAS_CHECK_QUESTION.prompt);
+    expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(METHOD_QUESTION.prompt);
 
     clickOption(mascotHost);
     await flush();
 
     expect(canvas.querySelectorAll(".wd-annotation").length).toBe(1);
-    // next concept in the bank ("using the right methods") re-opens on the same first candidate node
+    // next concept in the bank ("organizational inertia") opens on Need, since it's the first candidate
+    // node in valueChainComponents order whose kind (need or capability) inertia applies to
     expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(
-      gatePrompt("right-methods", "A kettle"),
+      gatePrompt("inertia", NEED_CATALOG[0].label),
     );
     vi.useRealTimers();
   });

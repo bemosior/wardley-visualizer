@@ -81,7 +81,7 @@ export const DIFFERENTIATION_QUESTION: Question = {
   options: [
     { id: "differentiates", label: "It genuinely differentiates us.", annotation: "Differentiates" },
     { id: "table-stakes", label: "It's table stakes — everyone needs it, nobody wins because of it.", annotation: "Table stakes" },
-    { id: "neither", label: "It's neither — it's just there.", annotation: "" },
+    { id: "neither", label: "It's neither — it's just there.", annotation: "Neither" },
     { id: "unknown", label: "Unknown — not sure.", annotation: "Commodity vs. Differentiation: Unknown!" },
   ],
 };
@@ -127,7 +127,7 @@ export const EDUCATION_QUESTION: Question = {
   prompt: "Would people make better choices if they understood this part better?",
   options: [
     { id: "yes-education", label: "Yes. Teaching them what it is, how it works, or how to use it would be beneficial to us.", annotation: "Education Play" },
-    { id: "no-education", label: "No. There's no value to education here.", annotation: "" },
+    { id: "no-education", label: "No. There's no value to education here.", annotation: "Education: Not Needed" },
     { id: "unknown", label: "Unknown — not sure.", annotation: "Education: Unknown!" },
   ],
 };
