@@ -16,7 +16,8 @@ function expectValidQuestion(question: Question): void {
   expect(question.options.length).toBeGreaterThan(0);
   for (const option of question.options) {
     expect(option.label.trim().length).toBeGreaterThan(0);
-    expect(option.annotation.trim().length).toBeGreaterThan(0);
+    // empty annotation is valid: it means no callout shown on the map for this answer
+    expect(typeof option.annotation).toBe("string");
   }
   const ids = question.options.map((o) => o.id);
   expect(new Set(ids).size).toBe(ids.length);
