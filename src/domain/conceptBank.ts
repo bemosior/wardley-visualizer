@@ -75,7 +75,7 @@ export const CONCEPT_BANK: Concept[] = [
     category: "climate",
     label: "how needs evolve",
     definition:
-      "needs evolve too — one that feels fixed today can shift as norms and expectations rise over time",
+      "how needs evolve matters too — a need that feels fixed today can shift as norms and expectations rise over time",
     applicableKinds: ["need"],
     question: HOW_NEEDS_EVOLVE_QUESTION,
   },

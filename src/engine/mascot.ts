@@ -505,9 +505,9 @@ export class Mascot {
     return result;
   }
 
-  showGate(prompt: string, subtitle: string, options: GateOption[]): Promise<string> {
+  showGate(prompt: string, subtitle: string, options: GateOption[], emphasize?: string[]): Promise<string> {
     this.talk();
-    const result = this.panel.showGate(prompt, subtitle, options);
+    const result = this.panel.showGate(prompt, subtitle, options, emphasize);
     this.reposition();
     return result;
   }
