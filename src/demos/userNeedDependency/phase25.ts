@@ -1,9 +1,9 @@
 import type { ScenarioContext } from "./index";
 
 const MASCOT_THINKING_STRATEGICALLY = {
-  heading: "Thinking strategically with a Wardley Map",
+  heading: "Use the map to think",
   subheading:
-    "Strategy must lead to action. To get there, we need to think about what we see on the map.",
+    "To make a strategy, we ask the map special questions that help us think strategically. ",
 };
 
 /**
