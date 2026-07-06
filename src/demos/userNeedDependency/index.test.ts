@@ -4,6 +4,7 @@ import { MAP_CAPTION_FADE_MS } from "../../engine/WardleyDemo";
 import { NEED_CATALOG } from "../../domain/needCatalog";
 import { BIAS_CHECK_QUESTION } from "../../domain/questionBank";
 import { CONCEPT_BANK } from "../../domain/conceptBank";
+import { CELEBRATE_DURATION_MS } from "./phase7";
 
 function gatePrompt(conceptId: string, nodeLabel: string): string {
   const concept = CONCEPT_BANK.find((c) => c.id === conceptId)!;
@@ -45,6 +46,15 @@ async function flush(): Promise<void> {
   await Promise.resolve();
 }
 
+/** waits out Phase 7's post-click "celebrating" pose (a real `setTimeout` for `CELEBRATE_DURATION_MS`, held so the bounce is visible before Phase 10 starts) -- via fake-timer advancement if the calling test has `vi.useFakeTimers()` active, or a real wait otherwise */
+async function passCelebrateDelay(): Promise<void> {
+  if (vi.isFakeTimers()) {
+    await vi.advanceTimersByTimeAsync(CELEBRATE_DURATION_MS);
+  } else {
+    await new Promise((resolve) => setTimeout(resolve, CELEBRATE_DURATION_MS));
+  }
+}
+
 /** drags the Need into place (default layout's target is centerX=200, needY=76 for the default 400x300 viewBox), then clicks past Phase 5's five "Next" gates ("Need placed", the User/Need/Capability walkthrough, and the Part A/B/C explanation) and Phase 7's single "I'm Ben" introduction gate into the form */
 async function completeDragStep(canvas: HTMLElement, mascotHost: HTMLElement): Promise<void> {
   const needNode = canvas.querySelector('[data-node-id="need"]')!;
@@ -54,6 +64,7 @@ async function completeDragStep(canvas: HTMLElement, mascotHost: HTMLElement): P
     clickNext(mascotHost);
     await flush();
   }
+  await passCelebrateDelay();
 }
 
 describe("runValueChainScenario", () => {
@@ -122,6 +133,7 @@ describe("runValueChainScenario", () => {
 
     clickNext(mascotHost);
     await flush();
+    await passCelebrateDelay();
     expect(mascotHost.querySelector("form")).not.toBeNull();
     expect(mascotHost.querySelector(".wd-panel-form-prompt")!.textContent).toBe("Who should we help today?");
   });
