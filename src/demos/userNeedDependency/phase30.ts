@@ -34,8 +34,8 @@ const MIN_SETTLED_BEFORE_DONE = 3;
  * confirmed Phase 20 placement (`Concept.applicableStages`, `WardleyDemo.getNodeStage`).
  *
  * For each (concept, candidate node) pairing, in bank order: the mascot re-anchors to that node
- * and asks a gate question (`Mascot.showGate`) — "In Wardley Mapping, {concept.definition}.
- * Could we learn something from exploring this with {node}?" — passing `[concept.label,
+ * and asks a gate question (`Mascot.showGate`) — "{concept.definition} Could we learn something
+ * from exploring this with {node}?" — passing `[concept.label,
  * node.label]` as `showGate`'s `emphasize` list so both names stand out from the surrounding
  * prose (`Panel.renderWithEmphasis`) — with subtitle "Choosing is how you
  * learn!" on the very first gate of the phase,
@@ -83,7 +83,7 @@ export async function runPhase30(ctx: ScenarioContext): Promise<void> {
     if (settled.size >= MIN_SETTLED_BEFORE_DONE) gateOptions.push({ id: "done", label: "Done" });
 
     const choice = await mascot.showGate(
-      `In Wardley Mapping, ${current.concept.definition}.\n\nCould we learn something from exploring this with ${current.node.label}?`,
+      `${current.concept.definition}\n\nCould we learn something from exploring this with ${current.node.label}?`,
       subtitle,
       gateOptions,
       [current.concept.label, current.node.label],

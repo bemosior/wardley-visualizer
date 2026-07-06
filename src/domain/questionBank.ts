@@ -25,12 +25,12 @@ export const BIAS_CHECK_QUESTION: Question = {
     {
       id: "novelty-bias",
       label: "Possibly. We should check that.",
-      annotation: "Danger: Novelty Bias",
+      annotation: "Danger: Bias",
     },
     {
       id: "unknown",
       label: "Unknown — not sure.",
-      annotation: "Novelty Bias: Unknown!",
+      annotation: "Bias: Unknown!",
     },
   ],
 };
