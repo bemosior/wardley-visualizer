@@ -38,8 +38,7 @@ export const CONCEPT_BANK: Concept[] = [
     id: "novelty-bias",
     category: "doctrine",
     label: "Novelty Bias",
-    definition:
-      "Novelty Bias is treating something as more novel or bespoke than its actual position on the map suggests — often because you built it yourselves or have sunk cost in it",
+    definition: "Believing something is more novel or bespoke than it truly is.",
     applicableKinds: ["capability"],
     question: BIAS_CHECK_QUESTION,
   },
@@ -47,8 +46,7 @@ export const CONCEPT_BANK: Concept[] = [
     id: "right-methods",
     category: "doctrine",
     label: "Using the Right Methods",
-    definition:
-      "Using the Right Methods means matching how you build and run something to its evolutionary stage — agile for genesis, lean for the middle, six sigma for commodity",
+    definition: "Agile, Lean, or Six Sigma. Which is best?",
     applicableKinds: ["capability"],
     question: METHOD_QUESTION,
   },
@@ -56,8 +54,7 @@ export const CONCEPT_BANK: Concept[] = [
     id: "inertia",
     category: "climate",
     label: "Organizational Inertia",
-    definition:
-      "Organizational Inertia is habit, contracts, or sunk cost holding you back from adapting even after something's position on the map has moved",
+    definition: "Habits, contracts, or sunk costs holding us back.",
     applicableKinds: ["capability", "need"],
     question: INERTIA_QUESTION,
   },
@@ -65,8 +62,7 @@ export const CONCEPT_BANK: Concept[] = [
     id: "differentiation",
     category: "climate",
     label: "Commodity vs. Differentiation",
-    definition:
-      "Commodity vs. Differentiation is the question of whether something sets you apart from competitors or is simply table stakes everyone needs",
+    definition: "Some things are tablestakes. Some things are differentiating.",
     applicableKinds: ["capability", "need"],
     question: DIFFERENTIATION_QUESTION,
   },
@@ -74,8 +70,7 @@ export const CONCEPT_BANK: Concept[] = [
     id: "needs-evolve",
     category: "climate",
     label: "How Needs Evolve",
-    definition:
-      "How Needs Evolve matters too — a need that feels fixed today can shift as norms and expectations rise over time",
+    definition: "Needs evolve over time, too.",
     applicableKinds: ["need"],
     question: HOW_NEEDS_EVOLVE_QUESTION,
   },
@@ -83,8 +78,7 @@ export const CONCEPT_BANK: Concept[] = [
     id: "build-buy-outsource",
     category: "leadership",
     label: "Build vs. Buy vs. Outsource",
-    definition:
-      "Build vs. Buy vs. Outsource is the choice of how to treat something based on where it sits on the map — build what's uncertain, buy what's becoming common, outsource what's commodity",
+    definition: "Should we build it? Buy it? Outsource it?",
     applicableKinds: ["capability"],
     question: BUILD_BUY_OUTSOURCE_QUESTION,
   },
@@ -92,8 +86,7 @@ export const CONCEPT_BANK: Concept[] = [
     id: "shared-purpose",
     category: "leadership",
     label: "Shared Purpose",
-    definition:
-      "Shared Purpose is everyone acting on the map actually understanding why it matters, not just what to deliver",
+    definition: "Knowing what matters.",
     applicableKinds: ["user", "need"],
     question: SHARED_PURPOSE_QUESTION,
   },
