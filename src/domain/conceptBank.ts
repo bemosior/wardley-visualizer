@@ -37,63 +37,63 @@ export const CONCEPT_BANK: Concept[] = [
   {
     id: "novelty-bias",
     category: "doctrine",
-    label: "novelty bias",
+    label: "Novelty Bias",
     definition:
-      "novelty bias is treating something as more novel or bespoke than its actual position on the map suggests — often because you built it yourselves or have sunk cost in it",
+      "Novelty Bias is treating something as more novel or bespoke than its actual position on the map suggests — often because you built it yourselves or have sunk cost in it",
     applicableKinds: ["capability"],
     question: BIAS_CHECK_QUESTION,
   },
   {
     id: "right-methods",
     category: "doctrine",
-    label: "using the right methods",
+    label: "Using the Right Methods",
     definition:
-      "using the right methods means matching how you build and run something to its evolutionary stage — agile for genesis, lean for the middle, six sigma for commodity",
+      "Using the Right Methods means matching how you build and run something to its evolutionary stage — agile for genesis, lean for the middle, six sigma for commodity",
     applicableKinds: ["capability"],
     question: METHOD_QUESTION,
   },
   {
     id: "inertia",
     category: "climate",
-    label: "organizational inertia",
+    label: "Organizational Inertia",
     definition:
-      "organizational inertia is habit, contracts, or sunk cost holding you back from adapting even after something's position on the map has moved",
+      "Organizational Inertia is habit, contracts, or sunk cost holding you back from adapting even after something's position on the map has moved",
     applicableKinds: ["capability", "need"],
     question: INERTIA_QUESTION,
   },
   {
     id: "differentiation",
     category: "climate",
-    label: "commodity vs. differentiation",
+    label: "Commodity vs. Differentiation",
     definition:
-      "commodity vs. differentiation is the question of whether something sets you apart from competitors or is simply table stakes everyone needs",
+      "Commodity vs. Differentiation is the question of whether something sets you apart from competitors or is simply table stakes everyone needs",
     applicableKinds: ["capability", "need"],
     question: DIFFERENTIATION_QUESTION,
   },
   {
     id: "needs-evolve",
     category: "climate",
-    label: "how needs evolve",
+    label: "How Needs Evolve",
     definition:
-      "how needs evolve matters too — a need that feels fixed today can shift as norms and expectations rise over time",
+      "How Needs Evolve matters too — a need that feels fixed today can shift as norms and expectations rise over time",
     applicableKinds: ["need"],
     question: HOW_NEEDS_EVOLVE_QUESTION,
   },
   {
     id: "build-buy-outsource",
     category: "leadership",
-    label: "build vs. buy vs. outsource",
+    label: "Build vs. Buy vs. Outsource",
     definition:
-      "build vs. buy vs. outsource is the choice of how to treat something based on where it sits on the map — build what's uncertain, buy what's becoming common, outsource what's commodity",
+      "Build vs. Buy vs. Outsource is the choice of how to treat something based on where it sits on the map — build what's uncertain, buy what's becoming common, outsource what's commodity",
     applicableKinds: ["capability"],
     question: BUILD_BUY_OUTSOURCE_QUESTION,
   },
   {
     id: "shared-purpose",
     category: "leadership",
-    label: "shared purpose",
+    label: "Shared Purpose",
     definition:
-      "shared purpose is everyone acting on the map actually understanding why it matters, not just what to deliver",
+      "Shared Purpose is everyone acting on the map actually understanding why it matters, not just what to deliver",
     applicableKinds: ["user", "need"],
     question: SHARED_PURPOSE_QUESTION,
   },
