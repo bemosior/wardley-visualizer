@@ -10,6 +10,38 @@ export type EvolutionKind = "need" | "capability";
 const SVG_NS = "http://www.w3.org/2000/svg";
 const ICON_RADIUS = 26;
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * writes `text` into `el`, wrapping every exact occurrence of any string in `names` in a
+ * `.wd-name` span. Used wherever a node or concept label gets interpolated into a hand-written
+ * sentence (e.g. "Is Customer satisfaction in Genesis?") -- without this, a multi-word label just
+ * reads as more prose and the sentence can get hard to parse. Falls back to plain `textContent`
+ * when `names` is empty.
+ */
+function renderWithEmphasis(el: HTMLElement, text: string, names: string[]): void {
+  el.textContent = "";
+  const uniqueNames = [...new Set(names.filter(Boolean))];
+  if (uniqueNames.length === 0) {
+    el.textContent = text;
+    return;
+  }
+  const pattern = new RegExp(`(${uniqueNames.map(escapeRegExp).join("|")})`, "g");
+  for (const part of text.split(pattern)) {
+    if (!part) continue;
+    if (uniqueNames.includes(part)) {
+      const span = document.createElement("span");
+      span.classList.add("wd-name");
+      span.textContent = part;
+      el.appendChild(span);
+    } else {
+      el.appendChild(document.createTextNode(part));
+    }
+  }
+}
+
 export interface PanelDragSlot {
   id: string;
   /** short label inside the icon circle */
@@ -255,7 +287,7 @@ export class Panel {
 
     const headingEl = document.createElement("div");
     headingEl.classList.add("wd-panel-placeholder-heading");
-    headingEl.textContent = `Is ${heading} in ${initialStage}?`;
+    renderWithEmphasis(headingEl, `Is ${heading} in ${initialStage}?`, [heading, initialStage]);
 
     const characteristicsEl = document.createElement("div");
     characteristicsEl.classList.add("wd-panel-instrument-characteristics");
@@ -272,7 +304,7 @@ export class Panel {
     if (!this.instrumentKind) return;
     const headingEl = this.container.querySelector<HTMLElement>(".wd-panel-placeholder-heading");
     const characteristicsEl = this.container.querySelector<HTMLElement>(".wd-panel-instrument-characteristics");
-    if (headingEl) headingEl.textContent = `Is ${this.instrumentLabel} in ${stage}?`;
+    if (headingEl) renderWithEmphasis(headingEl, `Is ${this.instrumentLabel} in ${stage}?`, [this.instrumentLabel, stage]);
     if (characteristicsEl) characteristicsEl.textContent = characteristicsFor(this.instrumentKind, stage);
   }
 
@@ -327,9 +359,10 @@ export class Panel {
    * `showQuestion`'s `QuestionOption`+`annotation` — a gate's Yes/No/shuffle/Done choices don't
    * carry a map annotation of their own); resolves with the chosen option's `id` once clicked.
    * Used by Phase 30 to ask "Could exploring {concept} with {node} teach us something?" before
-   * committing to a concept's deep-dive `showQuestion`.
+   * committing to a concept's deep-dive `showQuestion`. `emphasize`, if given, is the list of
+   * node/concept names to highlight via `renderWithEmphasis` wherever they appear in `prompt`.
    */
-  showGate(prompt: string, subtitle: string, options: GateOption[]): Promise<string> {
+  showGate(prompt: string, subtitle: string, options: GateOption[], emphasize: string[] = []): Promise<string> {
     this.clear();
     return new Promise((resolve) => {
       const content = document.createElement("div");
@@ -337,7 +370,7 @@ export class Panel {
 
       const promptEl = document.createElement("div");
       promptEl.classList.add("wd-panel-question-prompt");
-      promptEl.textContent = prompt;
+      renderWithEmphasis(promptEl, prompt, emphasize);
       content.appendChild(promptEl);
 
       const subtitleEl = document.createElement("div");

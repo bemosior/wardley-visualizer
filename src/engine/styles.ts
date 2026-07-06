@@ -383,6 +383,11 @@ const CSS = `
   white-space: pre-line;
 }
 
+.wd-name {
+  font-weight: 700;
+  color: var(--wd-color-link, #005f99);
+}
+
 .wd-panel-instrument-characteristics {
   font-family: var(--wd-font-ui);
   font-size: 0.8rem;

@@ -29,7 +29,9 @@ const MIN_SETTLED_BEFORE_DONE = 3;
  *
  * For each (concept, candidate node) pairing, in bank order: the mascot re-anchors to that node
  * and asks a gate question (`Mascot.showGate`) — "In Wardley Mapping, {concept.definition}.
- * Could we learn something from exploring this with {node}?" — with subtitle "Choosing is how you
+ * Could we learn something from exploring this with {node}?" — passing `[concept.label,
+ * node.label]` as `showGate`'s `emphasize` list so both names stand out from the surrounding
+ * prose (`Panel.renderWithEmphasis`) — with subtitle "Choosing is how you
  * learn!" on the very first gate of the phase,
  * "Keep going!" on every one after. Yes/No are always offered, plus:
  *  - "Try something else" (shuffle): abandons the current pairing and jumps to a uniformly random
@@ -78,6 +80,7 @@ export async function runPhase30(ctx: ScenarioContext): Promise<void> {
       `In Wardley Mapping, ${current.concept.definition}.\n\nCould we learn something from exploring this with ${current.node.label}?`,
       subtitle,
       gateOptions,
+      [current.concept.label, current.node.label],
     );
 
     if (choice === "done") break;
