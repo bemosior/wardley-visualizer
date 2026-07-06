@@ -20,7 +20,7 @@ export const BIAS_CHECK_QUESTION: Question = {
     {
       id: "no-bias",
       label: "No bias here.",
-      annotation: "Bias Check: Clear",
+      annotation: "",
     },
     {
       id: "novelty-bias",
@@ -43,17 +43,17 @@ export const BUILD_BUY_OUTSOURCE_QUESTION: Question = {
     {
       id: "build",
       label: "Build (stronger in Genesis / Custom-Built), since it's the only way to get one. Or maybe we think we can compete with the best.",
-      annotation: "Build",
+      annotation: "Build!",
     },
     {
       id: "buy",
       label: "Buy (stronger in late Custom Built and Product). There are plenty of vendors. How we implement it will be key.",
-      annotation: "Buy",
+      annotation: "Buy!",
     },
     {
       id: "outsource",
       label: "Outsource (stronger in late Product and Commodity). We dare not play here. We'll take the standard version offered.",
-      annotation: "Outsource",
+      annotation: "Outsource!",
     },
     {
       id: "unknown",
@@ -68,7 +68,7 @@ export const INERTIA_QUESTION: Question = {
   id: "inertia",
   prompt: "Is anything — habits, contracts, sunk costs — holding us back from adapting to change here?",
   options: [
-    { id: "no-inertia", label: "No — we are adapting readily.", annotation: "No Inertia" },
+    { id: "no-inertia", label: "No — we are adapting readily.", annotation: "" },
     { id: "yes-inertia", label: "Yes — we are not adapting readily.", annotation: "Danger: Inertia" },
     { id: "unknown", label: "Unknown — not sure.", annotation: "Organizational Inertia: Unknown!" },
   ],
@@ -80,8 +80,8 @@ export const DIFFERENTIATION_QUESTION: Question = {
   prompt: "Does this set you apart from competitors, or is it table stakes?",
   options: [
     { id: "differentiates", label: "It genuinely differentiates us.", annotation: "Differentiates" },
-    { id: "table-stakes", label: "It's table stakes — everyone needs it, nobody wins because of it.", annotation: "Table stakes" },
-    { id: "neither", label: "It's neither — it's just there.", annotation: "Neither" },
+    { id: "table-stakes", label: "It's table stakes — everyone needs it, nobody wins because of it.", annotation: "Table Stakes" },
+    { id: "neither", label: "It's neither — it's just there.", annotation: "" },
     { id: "unknown", label: "Unknown — not sure.", annotation: "Commodity vs. Differentiation: Unknown!" },
   ],
 };
@@ -103,7 +103,7 @@ export const EFFICIENCY_ENABLES_INNOVATION_QUESTION: Question = {
   id: "efficiency-innovation",
   prompt: "Are we taking advantage of efficient building blocks?",
   options: [
-    { id: "yes-efficiency-innovation", label: "Yes, we're building innovative Genesis / Custom Built parts on top of efficient Product / Commodity parts.", annotation: "Efficiency Enables Innovation" },
+    { id: "yes-efficiency-innovation", label: "Yes, we're building innovative Genesis / Custom Built parts on top of efficient Product / Commodity parts.", annotation: "" },
     { id: "no-efficiency-innovation", label: "No. We're building innovation on top of innovation (risky) or failing to leverage efficient Product / Commodity parts.", annotation: "Danger: Inefficient Innovation" },
     { id: "unknown", label: "Unknown — not sure.", annotation: "Efficiency Enables Innovation: Unknown!" },
   ],
@@ -114,9 +114,9 @@ export const ALLIANCES_QUESTION: Question = {
   id: "alliances",
   prompt: "Do we have any potential friends in this space with whom we could collaborate?",
   options: [
-    { id: "yes-begin", label: "We could, but we'd have to start building those relationships.", annotation: "Alliance: Begin" },
-    { id: "yes-maintain", label: "Yes. We ought to maintain and deepen those relationships.", annotation: "Alliance: Maintain / Deepen" },
-    { id: "no", label: "No. There is zero chance.", annotation: "Alliance: Zero Chance" },
+    { id: "yes-begin", label: "We could, but we'd have to start building those relationships.", annotation: "Alliances: Begin" },
+    { id: "yes-maintain", label: "Yes. We ought to maintain and deepen those relationships.", annotation: "Alliances: Maintain / Deepen" },
+    { id: "no", label: "No. There is zero chance.", annotation: "" },
     { id: "unknown", label: "Unknown — not sure.", annotation: "Alliances: Unknown!" },
   ],
 };
@@ -126,8 +126,8 @@ export const EDUCATION_QUESTION: Question = {
   id: "education",
   prompt: "Would people make better choices if they understood this part better?",
   options: [
-    { id: "yes-education", label: "Yes. Teaching them what it is, how it works, or how to use it would be beneficial to us.", annotation: "Education Play" },
-    { id: "no-education", label: "No. There's no value to education here.", annotation: "Education: Not Needed" },
-    { id: "unknown", label: "Unknown — not sure.", annotation: "Education: Unknown!" },
+    { id: "yes-education", label: "Yes. Teaching them what it is, how it works, how to implement it, or how to use it would be beneficial to us.", annotation: "Education Play" },
+    { id: "no-education", label: "No. There's no value to education here.", annotation: "" },
+    { id: "unknown", label: "Unknown — not sure.", annotation: "Education Play: Unknown!" },
   ],
 };
