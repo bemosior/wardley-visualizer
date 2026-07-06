@@ -97,15 +97,14 @@ export const METHOD_QUESTION: Question = {
   ],
 };
 
-/** the "how needs evolve" climate concept's deep-dive question. */
-export const HOW_NEEDS_EVOLVE_QUESTION: Question = {
-  id: "needs-evolve",
-  prompt: "User needs feel fixed once you've named them — but do you expect this one to change as norms and expectations shift?",
+/** the "efficiency enables innovation" climate concept's deep-dive question. */
+export const EFFICIENCY_ENABLES_INNOVATION_QUESTION: Question = {
+  id: "efficiency-innovation",
+  prompt: "Is this efficient enough yet to free up budget, time, or attention for something new?",
   options: [
-    { id: "stable", label: "No — this need is fundamental and unlikely to change much.", annotation: "Need: stable" },
-    { id: "rising-expectations", label: "Yes — people will expect it delivered faster, cheaper, or with less effort over time.", annotation: "Watch: rising expectations" },
-    { id: "unclear", label: "Not sure yet — worth watching for signals before assuming either way.", annotation: "Watch: need trajectory unclear" },
-    { id: "unknown", label: "Unknown — not sure.", annotation: "How Needs Evolve: Unknown!" },
+    { id: "freed-up", label: "Yes — treating this as standard/utility already frees us to invest elsewhere.", annotation: "Efficiency: Freed Up" },
+    { id: "still-draining", label: "No — we're still pouring disproportionate effort into it, crowding out innovation.", annotation: "Danger: Efficiency Drain" },
+    { id: "unknown", label: "Unknown — not sure.", annotation: "Efficiency Enables Innovation: Unknown!" },
   ],
 };
 
@@ -116,5 +115,6 @@ export const SHARED_PURPOSE_QUESTION: Question = {
   options: [
     { id: "clear", label: "Yes — the purpose is well understood and shared across the team.", annotation: "Purpose: Clear" },
     { id: "unclear", label: "Not really — people execute without much sense of why it matters.", annotation: "Danger: Missing Shared Purpose" },
+    { id: "unknown", label: "Unknown — not sure.", annotation: "Shared Purpose: Unknown!" },
   ],
 };

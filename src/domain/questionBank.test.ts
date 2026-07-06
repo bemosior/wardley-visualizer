@@ -3,7 +3,7 @@ import {
   BIAS_CHECK_QUESTION,
   BUILD_BUY_OUTSOURCE_QUESTION,
   DIFFERENTIATION_QUESTION,
-  HOW_NEEDS_EVOLVE_QUESTION,
+  EFFICIENCY_ENABLES_INNOVATION_QUESTION,
   INERTIA_QUESTION,
   METHOD_QUESTION,
   SHARED_PURPOSE_QUESTION,
@@ -41,8 +41,8 @@ describe("METHOD_QUESTION", () => {
   it("is a well-formed question", () => expectValidQuestion(METHOD_QUESTION));
 });
 
-describe("HOW_NEEDS_EVOLVE_QUESTION", () => {
-  it("is a well-formed question", () => expectValidQuestion(HOW_NEEDS_EVOLVE_QUESTION));
+describe("EFFICIENCY_ENABLES_INNOVATION_QUESTION", () => {
+  it("is a well-formed question", () => expectValidQuestion(EFFICIENCY_ENABLES_INNOVATION_QUESTION));
 });
 
 describe("SHARED_PURPOSE_QUESTION", () => {

@@ -55,7 +55,12 @@ describe("candidateNodesForConcept", () => {
     const userAndNeed = CONCEPT_BANK.find((c) => c.id === "shared-purpose")!;
     expect(candidateNodesForConcept(chain, userAndNeed).map((n) => n.id)).toEqual(["user", "need"]);
 
-    const needOnly = CONCEPT_BANK.find((c) => c.id === "needs-evolve")!;
-    expect(candidateNodesForConcept(chain, needOnly).map((n) => n.id)).toEqual(["need"]);
+    const capabilityAndNeed = CONCEPT_BANK.find((c) => c.id === "inertia")!;
+    expect(candidateNodesForConcept(chain, capabilityAndNeed).map((n) => n.id)).toEqual([
+      "need",
+      "dependency-1",
+      "dependency-2",
+      "dependency-3",
+    ]);
   });
 });

@@ -3,7 +3,7 @@ import {
   BIAS_CHECK_QUESTION,
   BUILD_BUY_OUTSOURCE_QUESTION,
   DIFFERENTIATION_QUESTION,
-  HOW_NEEDS_EVOLVE_QUESTION,
+  EFFICIENCY_ENABLES_INNOVATION_QUESTION,
   INERTIA_QUESTION,
   METHOD_QUESTION,
   SHARED_PURPOSE_QUESTION,
@@ -29,9 +29,9 @@ export interface Concept {
 /**
  * curated climate/doctrine/leadership concepts for Phase 30, deliberately kept small and
  * newcomer-legible rather than exhaustive. Each concept is restricted to the node kinds it
- * meaningfully applies to via `applicableKinds` (e.g. "how needs evolve" only makes sense
- * against a Need, not a Capability) — `candidateNodesForConcept` turns that into an ordered
- * list of actual nodes on the current map.
+ * meaningfully applies to via `applicableKinds` (e.g. "novelty bias" only makes sense against
+ * a Capability, not a Need) — `candidateNodesForConcept` turns that into an ordered list of
+ * actual nodes on the current map.
  */
 export const CONCEPT_BANK: Concept[] = [
   {
@@ -67,12 +67,12 @@ export const CONCEPT_BANK: Concept[] = [
     question: DIFFERENTIATION_QUESTION,
   },
   {
-    id: "needs-evolve",
+    id: "efficiency-innovation",
     category: "climate",
-    label: "How Needs Evolve",
-    definition: "Needs evolve over time, too.",
-    applicableKinds: ["need"],
-    question: HOW_NEEDS_EVOLVE_QUESTION,
+    label: "Efficiency Enables Innovation",
+    definition: "Commoditizing the old frees resources for the new.",
+    applicableKinds: ["capability"],
+    question: EFFICIENCY_ENABLES_INNOVATION_QUESTION,
   },
   {
     id: "build-buy-outsource",
