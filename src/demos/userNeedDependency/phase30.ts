@@ -28,8 +28,9 @@ const MIN_SETTLED_BEFORE_DONE = 3;
  * (`domain/conceptBank.ts`'s `CONCEPT_BANK`) against candidate nodes on the map.
  *
  * For each (concept, candidate node) pairing, in bank order: the mascot re-anchors to that node
- * and asks a gate question (`Mascot.showGate`) — "Could exploring {concept} with {node} teach us
- * something?" — with subtitle "Choosing is how you learn!" on the very first gate of the phase,
+ * and asks a gate question (`Mascot.showGate`) — "In Wardley Mapping, {concept.definition}.
+ * Could we learn something from exploring this with {node}?" — with subtitle "Choosing is how you
+ * learn!" on the very first gate of the phase,
  * "Keep going!" on every one after. Yes/No are always offered, plus:
  *  - "Try something else" (shuffle): abandons the current pairing and jumps to a uniformly random
  *    other still-unresolved pairing anywhere in the bank.
@@ -74,7 +75,7 @@ export async function runPhase30(ctx: ScenarioContext): Promise<void> {
     if (settled.size >= MIN_SETTLED_BEFORE_DONE) gateOptions.push({ id: "done", label: "Done" });
 
     const choice = await mascot.showGate(
-      `Could exploring ${current.concept.label} with ${current.node.label} teach us something?`,
+      `In Wardley Mapping, ${current.concept.definition}.\n\nCould we learn something from exploring this with ${current.node.label}?`,
       subtitle,
       gateOptions,
     );
