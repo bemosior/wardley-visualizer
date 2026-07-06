@@ -52,12 +52,36 @@ describe("candidateNodesForConcept", () => {
       "dependency-3",
     ]);
 
-    const userAndNeed = CONCEPT_BANK.find((c) => c.id === "shared-purpose")!;
-    expect(candidateNodesForConcept(chain, userAndNeed).map((n) => n.id)).toEqual(["user", "need"]);
-
     const capabilityAndNeed = CONCEPT_BANK.find((c) => c.id === "inertia")!;
     expect(candidateNodesForConcept(chain, capabilityAndNeed).map((n) => n.id)).toEqual([
       "need",
+      "dependency-1",
+      "dependency-2",
+      "dependency-3",
+    ]);
+  });
+
+  it("further filters by evolution stage when the concept restricts it and a stage lookup is given", () => {
+    const chain = buildChain();
+    const noveltyBias = CONCEPT_BANK.find((c) => c.id === "novelty-bias")!;
+    const stages: Record<string, "Genesis" | "Product"> = {
+      "dependency-1": "Genesis",
+      "dependency-2": "Product",
+    };
+    expect(
+      candidateNodesForConcept(chain, noveltyBias, (nodeId) => stages[nodeId]).map((n) => n.id),
+    ).toEqual(["dependency-2", "dependency-3"]);
+  });
+
+  it("keeps nodes whose stage the lookup can't resolve, rather than dropping them", () => {
+    const chain = buildChain();
+    const noveltyBias = CONCEPT_BANK.find((c) => c.id === "novelty-bias")!;
+    expect(candidateNodesForConcept(chain, noveltyBias, () => undefined).map((n) => n.id)).toEqual([
+      "dependency-1",
+      "dependency-2",
+      "dependency-3",
+    ]);
+    expect(candidateNodesForConcept(chain, noveltyBias).map((n) => n.id)).toEqual([
       "dependency-1",
       "dependency-2",
       "dependency-3",

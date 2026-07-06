@@ -2,6 +2,7 @@ import type { Component } from "../../domain/component";
 import { CONCEPT_BANK, candidateNodesForConcept, type Concept } from "../../domain/conceptBank";
 import type { ValueChain } from "../../domain/valueChain";
 import type { GateOption } from "../../engine/panel";
+import type { WardleyDemo } from "../../engine/WardleyDemo";
 import type { ScenarioContext } from "./index";
 
 interface Pairing {
@@ -9,10 +10,13 @@ interface Pairing {
   node: Component;
 }
 
-/** flattens the concept bank into one ordered (concept, candidate node) list, concept-major */
-function buildPairings(chain: ValueChain): Pairing[] {
+/** flattens the concept bank into one ordered (concept, candidate node) list, concept-major, restricted to each node's current evolution stage where a concept cares (`Concept.applicableStages`) */
+function buildPairings(chain: ValueChain, demo: WardleyDemo): Pairing[] {
   return CONCEPT_BANK.flatMap((concept) =>
-    candidateNodesForConcept(chain, concept).map((node) => ({ concept, node })),
+    candidateNodesForConcept(chain, concept, (nodeId) => demo.getNodeStage(nodeId)).map((node) => ({
+      concept,
+      node,
+    })),
   );
 }
 
@@ -25,7 +29,9 @@ const MIN_SETTLED_BEFORE_DONE = 3;
 /**
  * Phase 30: think with the map. Waits for the visitor to click "Let's get strategic →" (the
  * Phase 25 -> Phase 30 gate), then walks a curated bank of climate/doctrine/leadership concepts
- * (`domain/conceptBank.ts`'s `CONCEPT_BANK`) against candidate nodes on the map.
+ * (`domain/conceptBank.ts`'s `CONCEPT_BANK`) against candidate nodes on the map — each concept
+ * further narrowed to the evolution stages it's meaningfully explored against, per node's
+ * confirmed Phase 20 placement (`Concept.applicableStages`, `WardleyDemo.getNodeStage`).
  *
  * For each (concept, candidate node) pairing, in bank order: the mascot re-anchors to that node
  * and asks a gate question (`Mascot.showGate`) — "In Wardley Mapping, {concept.definition}.
@@ -59,7 +65,7 @@ export async function runPhase30(ctx: ScenarioContext): Promise<void> {
 
   await mascot.confirmPlacement("Let's get strategic →");
 
-  let remaining = buildPairings(chain);
+  let remaining = buildPairings(chain, demo);
   const settled = new Set<string>();
   let gatesShown = 0;
   let current = remaining[0];

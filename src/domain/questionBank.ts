@@ -81,6 +81,7 @@ export const DIFFERENTIATION_QUESTION: Question = {
   options: [
     { id: "differentiates", label: "It genuinely differentiates us.", annotation: "Differentiates" },
     { id: "table-stakes", label: "It's table stakes — everyone needs it, nobody wins because of it.", annotation: "Table stakes" },
+    { id: "neither", label: "It's neither — it's just there.", annotation: "" },
     { id: "unknown", label: "Unknown — not sure.", annotation: "Commodity vs. Differentiation: Unknown!" },
   ],
 };
@@ -100,21 +101,33 @@ export const METHOD_QUESTION: Question = {
 /** the "efficiency enables innovation" climate concept's deep-dive question. */
 export const EFFICIENCY_ENABLES_INNOVATION_QUESTION: Question = {
   id: "efficiency-innovation",
-  prompt: "Is this efficient enough yet to free up budget, time, or attention for something new?",
+  prompt: "Are we taking advantage of efficient building blocks?",
   options: [
-    { id: "freed-up", label: "Yes — treating this as standard/utility already frees us to invest elsewhere.", annotation: "Efficiency: Freed Up" },
-    { id: "still-draining", label: "No — we're still pouring disproportionate effort into it, crowding out innovation.", annotation: "Danger: Efficiency Drain" },
+    { id: "yes-efficiency-innovation", label: "Yes, we're building innovative Genesis / Custom Built parts on top of efficient Product / Commodity parts.", annotation: "Efficiency Enables Innovation" },
+    { id: "no-efficiency-innovation", label: "No. We're building innovation on top of innovation (risky) or failing to leverage efficient Product / Commodity parts.", annotation: "Danger: Inefficient Innovation" },
     { id: "unknown", label: "Unknown — not sure.", annotation: "Efficiency Enables Innovation: Unknown!" },
   ],
 };
 
-/** the "shared purpose" leadership concept's deep-dive question. */
-export const SHARED_PURPOSE_QUESTION: Question = {
-  id: "shared-purpose",
-  prompt: "Does everyone acting on this actually understand *why* it matters, not just what to deliver?",
+/** the "alliances" leadership concept's deep-dive question. */
+export const ALLIANCES_QUESTION: Question = {
+  id: "alliances",
+  prompt: "Do we have any potential friends in this space with whom we could collaborate?",
   options: [
-    { id: "clear", label: "Yes — the purpose is well understood and shared across the team.", annotation: "Purpose: Clear" },
-    { id: "unclear", label: "Not really — people execute without much sense of why it matters.", annotation: "Danger: Missing Shared Purpose" },
-    { id: "unknown", label: "Unknown — not sure.", annotation: "Shared Purpose: Unknown!" },
+    { id: "yes-begin", label: "We could, but we'd have to start building those relationships.", annotation: "Alliance: Begin" },
+    { id: "yes-maintain", label: "Yes. We ought to maintain and deepen those relationships.", annotation: "Alliance: Maintain / Deepen" },
+    { id: "no", label: "No. There is zero chance.", annotation: "Alliance: Zero Chance" },
+    { id: "unknown", label: "Unknown — not sure.", annotation: "Alliances: Unknown!" },
+  ],
+};
+
+/** the "education" leadership concept's deep-dive question. */
+export const EDUCATION_QUESTION: Question = {
+  id: "education",
+  prompt: "Would people make better choices if they understood this part better?",
+  options: [
+    { id: "yes-education", label: "Yes. Teaching them what it is, how it works, or how to use it would be beneficial to us.", annotation: "Education Play" },
+    { id: "no-education", label: "No. There's no value to education here.", annotation: "" },
+    { id: "unknown", label: "Unknown — not sure.", annotation: "Education: Unknown!" },
   ],
 };

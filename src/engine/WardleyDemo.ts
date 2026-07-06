@@ -750,6 +750,11 @@ export class WardleyDemo {
     return node ? { x: node.x, y: node.y } : null;
   }
 
+  /** a node's last-confirmed evolution stage (Phase 20's `runEvolutionDragStep`/`slideToGenesis`), if it's been placed on the evolution axis yet. */
+  getNodeStage(nodeId: string): EvolutionStage | undefined {
+    return this.nodeStage.get(nodeId);
+  }
+
   /**
    * container-pixel position of an arbitrary viewBox coordinate, plus the standard node radius —
    * for anchoring UI (e.g. the mascot) to a draggable node's pre-drag `start` position, which

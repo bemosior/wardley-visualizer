@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+  ALLIANCES_QUESTION,
   BIAS_CHECK_QUESTION,
   BUILD_BUY_OUTSOURCE_QUESTION,
   DIFFERENTIATION_QUESTION,
+  EDUCATION_QUESTION,
   EFFICIENCY_ENABLES_INNOVATION_QUESTION,
   INERTIA_QUESTION,
   METHOD_QUESTION,
-  SHARED_PURPOSE_QUESTION,
   type Question,
 } from "./questionBank";
 
@@ -45,6 +46,10 @@ describe("EFFICIENCY_ENABLES_INNOVATION_QUESTION", () => {
   it("is a well-formed question", () => expectValidQuestion(EFFICIENCY_ENABLES_INNOVATION_QUESTION));
 });
 
-describe("SHARED_PURPOSE_QUESTION", () => {
-  it("is a well-formed question", () => expectValidQuestion(SHARED_PURPOSE_QUESTION));
+describe("ALLIANCES_QUESTION", () => {
+  it("is a well-formed question", () => expectValidQuestion(ALLIANCES_QUESTION));
+});
+
+describe("EDUCATION_QUESTION", () => {
+  it("is a well-formed question", () => expectValidQuestion(EDUCATION_QUESTION));
 });
