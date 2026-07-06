@@ -53,9 +53,10 @@ const MASCOT_MULTIPLE_PARTS = {
  * node's position afterward to add whichever of the three Capability nodes aren't already there,
  * spreading any missing ones into the empty slots on either side (that node becomes the row's
  * visual center — `DEFAULT_CAPABILITY_GAP` on either side, same spacing `valueChainLayout.ts` uses
- * when it renders all three from the start), and connects each new node to the Need (nothing to do
- * here for `index.html`'s default layout, which already renders all three from Phase 0 — the
- * "missing" list is just empty).
+ * when it renders all three from the start), fading each new node in (`demo.addNode`'s `animateIn`
+ * option) rather than having it pop straight into existence beside the one that's already there,
+ * and connects each new node to the Need (nothing to do here for `index.html`'s default layout,
+ * which already renders all three from Phase 0 — the "missing" list is just empty).
  *
  * Once all three exist, relabels them "Part A"/"Part B"/"Part C" *by final left-to-right screen
  * position* (not by domain id order, since a host config's pre-existing node isn't necessarily
@@ -94,13 +95,16 @@ export async function runPhase5(ctx: ScenarioContext): Promise<void> {
     const anchorPos = demo.getNodePosition(anchor.id)!;
     const sideOffsets = [-1, 1]; // left/right slots around the already-rendered node
     missing.forEach((capability, i) => {
-      demo.addNode({
-        id: capability.id,
-        label: capability.label,
-        x: anchorPos.x + sideOffsets[i] * DEFAULT_CAPABILITY_GAP,
-        y: anchorPos.y,
-        draggable: false,
-      });
+      demo.addNode(
+        {
+          id: capability.id,
+          label: capability.label,
+          x: anchorPos.x + sideOffsets[i] * DEFAULT_CAPABILITY_GAP,
+          y: anchorPos.y,
+          draggable: false,
+        },
+        { animateIn: true },
+      );
       demo.addConnection({ from: ctx.chain.need.id, to: capability.id });
     });
   }

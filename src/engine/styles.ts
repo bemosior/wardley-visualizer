@@ -39,6 +39,11 @@ const CSS = `
   overflow: visible;
 }
 
+/** the whole evolution-axis backdrop fades in as a unit when it first appears (Phase 20's transition into a map) rather than popping in instantly */
+.wd-backdrop {
+  animation: wd-fade-in 0.8s ease-out;
+}
+
 .wd-backdrop-band {
   opacity: 0.12;
 }
@@ -194,6 +199,38 @@ const CSS = `
 @keyframes wd-chevron-nudge-left {
   0%, 100% { transform: translateX(0); opacity: 0.5; }
   50% { transform: translateX(-5px); opacity: 1; }
+}
+
+@keyframes wd-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/**
+ * transient entrance for a node added mid-scenario (e.g. Phase 5 filling in the two missing
+ * Capability nodes beside the one Phase 0 already rendered) — an animation, not a transition,
+ * so it plays reliably even though the class is added in the same tick the node is appended (a
+ * transition there would need the deferred-reflow trick showMapCaption uses; see WardleyDemo.ts
+ * addNode's animateIn option).
+ */
+.wd-node--entering {
+  animation: wd-fade-in 0.4s ease-out;
+}
+
+.wd-node--entering .wd-node-shape {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: wd-node-enter-pop 0.4s ease-out;
+}
+
+@keyframes wd-node-enter-pop {
+  from { transform: scale(0.5); }
+  to { transform: scale(1); }
+}
+
+/** same idea as .wd-node--entering, for a connection line added after activateLines() has already fired (see addConnection) */
+.wd-line--entering {
+  animation: wd-fade-in 0.4s ease-out;
 }
 
 /**
@@ -779,6 +816,12 @@ const CSS = `
     display: none;
   }
   .wd-node--charged .wd-node-shape {
+    animation: none;
+  }
+  .wd-node--entering,
+  .wd-node--entering .wd-node-shape,
+  .wd-line--entering,
+  .wd-backdrop {
     animation: none;
   }
   .wd-firework-shell {

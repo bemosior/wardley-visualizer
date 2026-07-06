@@ -72,6 +72,9 @@ const MAP_CAPTION_VISIBLE_MS = 5200;
  */
 export const MAP_CAPTION_FADE_MS = 600;
 
+/** matches `.wd-node--entering`/`.wd-line--entering`'s animation duration (`styles.ts`) — how long before the transient entrance class can be cleaned up */
+const NODE_ENTER_MS = 400;
+
 export class WardleyDemo {
   private container: HTMLElement;
   private svg: SVGSVGElement;
@@ -279,11 +282,22 @@ export class WardleyDemo {
     }
   }
 
-  /** registers a node's data and renders its group into the node layer, at its `start` position if draggable */
-  addNode(node: DemoNode): SVGGElement {
+  /**
+   * registers a node's data and renders its group into the node layer, at its `start` position if
+   * draggable. `animateIn` fades/pops the node in (`wd-node--entering`, `styles.ts`) instead of
+   * having it pop into existence instantly — pass this for a node added mid-scenario alongside
+   * others that are already sitting there (e.g. Phase 5 filling in the two missing Capability
+   * nodes beside the one Phase 0 already rendered); leave it off for the initial mount, where
+   * every node appears together and there's nothing for a lone node to visually jump ahead of.
+   */
+  addNode(node: DemoNode, options?: { animateIn?: boolean }): SVGGElement {
     this.nodesById.set(node.id, node);
     const group = createNodeGroup(node);
     this.nodeGroups.set(node.id, group);
+    if (options?.animateIn) {
+      group.classList.add("wd-node--entering");
+      setTimeout(() => group.classList.remove("wd-node--entering"), NODE_ENTER_MS);
+    }
     this.nodeLayer.appendChild(group);
     const label = group.querySelector<SVGTextElement>(".wd-node-label");
     if (label) {
@@ -300,15 +314,18 @@ export class WardleyDemo {
    * every other already-active line instead of sitting invisible forever (nothing else ever
    * re-activates a line added after the fact) — and both endpoints get the idle "charged" glow
    * too, matching whatever every other already-active connection's nodes already show (see
-   * `celebrateSnap`; Phase 20's `stopCharging` expects every Capability to have it).
+   * `celebrateSnap`; Phase 20's `stopCharging` expects every Capability to have it). That line
+   * also fades in (`wd-line--entering`, same `NODE_ENTER_MS` duration as a new node's entrance)
+   * rather than snapping straight to full opacity.
    */
   addConnection(conn: DemoConnection): SVGLineElement {
     const el = createConnectionLine(conn, this.nodesById);
     this.lines.push({ conn, el });
     this.lineLayer.appendChild(el);
     if (this.linesActive) {
-      el.classList.add("wd-line--active");
+      el.classList.add("wd-line--active", "wd-line--entering");
       el.style.opacity = "";
+      setTimeout(() => el.classList.remove("wd-line--entering"), NODE_ENTER_MS);
       this.spawnParticlesForLine(this.lines.length - 1);
       this.nodeGroups.get(conn.from)?.classList.add("wd-node--charged");
       this.nodeGroups.get(conn.to)?.classList.add("wd-node--charged");
