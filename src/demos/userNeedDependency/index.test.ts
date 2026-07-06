@@ -3,6 +3,12 @@ import { runValueChainScenario } from "./index";
 import { MAP_CAPTION_FADE_MS } from "../../engine/WardleyDemo";
 import { NEED_CATALOG } from "../../domain/needCatalog";
 import { BIAS_CHECK_QUESTION } from "../../domain/questionBank";
+import { CONCEPT_BANK } from "../../domain/conceptBank";
+
+function gatePrompt(conceptId: string, nodeLabel: string): string {
+  const concept = CONCEPT_BANK.find((c) => c.id === conceptId)!;
+  return `In Wardley Mapping, ${concept.definition}.\n\nCould we learn something from exploring this with ${nodeLabel}?`;
+}
 
 function drag(handle: Element, to: { x: number; y: number }): void {
   handle.dispatchEvent(new PointerEvent("pointerdown", { clientX: 0, clientY: 0, pointerId: 1 }));
@@ -402,7 +408,7 @@ describe("runValueChainScenario", () => {
 
     expect(resolved).toBe(false);
     expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(
-      "Could exploring novelty bias with A kettle teach us something?",
+      gatePrompt("novelty-bias", "A kettle"),
     );
     expect(mascotHost.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe(
       "Choosing is how you learn!",
@@ -455,7 +461,7 @@ describe("runValueChainScenario", () => {
       "Choosing is how you learn!",
     );
     expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(
-      "Could exploring novelty bias with A kettle teach us something?",
+      gatePrompt("novelty-bias", "A kettle"),
     );
     expect(optionLabels(mascotHost)).toEqual(["Yes", "No", "Try something else"]);
 
@@ -464,7 +470,7 @@ describe("runValueChainScenario", () => {
 
     expect(mascotHost.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe("Keep going!");
     expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(
-      "Could exploring novelty bias with Water teach us something?",
+      gatePrompt("novelty-bias", "Water"),
     );
     vi.useRealTimers();
   });
@@ -489,7 +495,7 @@ describe("runValueChainScenario", () => {
     expect(canvas.querySelectorAll(".wd-annotation").length).toBe(1);
     // next concept in the bank ("using the right methods") re-opens on the same first candidate node
     expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(
-      "Could exploring using the right methods with A kettle teach us something?",
+      gatePrompt("right-methods", "A kettle"),
     );
     vi.useRealTimers();
   });

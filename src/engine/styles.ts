@@ -532,6 +532,7 @@ const CSS = `
   color: var(--wd-color-ink);
   text-align: left;
   margin-top: 0.5rem;
+  white-space: pre-line;
 }
 
 .wd-panel-question-options {

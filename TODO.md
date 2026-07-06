@@ -94,9 +94,11 @@ Goal: the mascot walks a curated bank of climate/doctrine/leadership concepts
 (`domain/conceptBank.ts`'s `CONCEPT_BANK`) against candidate nodes on the map,
 each restricted to the node kinds it meaningfully applies to
 (`Concept.applicableKinds`, resolved via `candidateNodesForConcept`). For each
-(concept, node) pairing, `Panel.showGate`/`Mascot.showGate` asks "Could
-exploring {concept} with {node} teach us something?" (subtitle "Choosing is
-how you learn!" on the very first gate of the phase, "Keep going!" after) with
+(concept, node) pairing, `Panel.showGate`/`Mascot.showGate` leads with a
+one-sentence definition of the concept ("In Wardley Mapping,
+{concept.definition}.") followed by "Could we learn something from exploring
+this with {node}?" (subtitle "Choosing is how you learn!" on the very first
+gate of the phase, "Keep going!" after) with
 Yes/No plus a "Try something else" shuffle (jumps to a random other
 unresolved pairing) and, once at least 3 concepts have settled, a "Done"
 option. Yes opens the concept's fixed deep-dive multiple-choice question
