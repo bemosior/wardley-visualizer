@@ -411,7 +411,7 @@ describe("runValueChainScenario", () => {
 
     expect(resolved).toBe(false);
     expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe(
-      "Thinking strategically with a Wardley Map",
+      "Use the map to think",
     );
 
     // Phase 25's own confirm link starts Phase 30's Q&A, opening on the first concept/node gate

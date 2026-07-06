@@ -8,6 +8,7 @@ export default defineConfig({
   test: {
     environment: "happy-dom",
     setupFiles: ["./src/test/setup.ts"],
+    exclude: ["**/node_modules/**", "**/dist/**", ".claude/worktrees/**"],
   },
   build: {
     lib: {
