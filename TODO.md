@@ -214,7 +214,7 @@ browser dropdown:
   inert with nothing to anchor it to yet. Keeping it at first point of use is
   the deliberate call here.
 
-### 4. Phase 30 — stop and check in the moment a question produces an annotation
+### 4. Phase 30 — stop and check in the moment a question produces an annotation (done, 2026-07-10)
 
 Confirmed interpretation: only *insight-producing* answers pause; an answer
 with no annotation keeps flowing straight to the next pairing, unchanged.
@@ -237,7 +237,7 @@ with no annotation keeps flowing straight to the next pairing, unchanged.
 - The no-annotation branch (declined/no-insight answers) is untouched — the
   `remaining`/`current` advancing logic at `phase30.ts:103-110` stays as-is.
 
-### 5. Final findings report, attributed by node *and* concept, before the Finale recap
+### 5. Final findings report, attributed by node *and* concept, before the Finale recap (done, 2026-07-10)
 
 Ben's call: attribute each finding by concept as well as node (not node
 alone) — nearly free since `current.concept.label` is already in scope

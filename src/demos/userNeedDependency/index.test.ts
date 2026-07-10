@@ -445,7 +445,7 @@ describe("runValueChainScenario", () => {
     mascotHost.querySelectorAll<HTMLButtonElement>(".wd-panel-question-option")[index].click();
   }
 
-  /** gate buttons always render Yes/No/"Try something else" in that order, with "Done" appended once eligible */
+  /** gate buttons always render exactly Yes/No/"Try something else", in that order */
   function clickYes(mascotHost: HTMLElement): void {
     clickOption(mascotHost, 0);
   }
@@ -487,7 +487,7 @@ describe("runValueChainScenario", () => {
     vi.useRealTimers();
   });
 
-  it("answering Yes opens that concept's deep-dive question, and answering it anchors an annotation and advances to the next concept's gate", async () => {
+  it("answering Yes opens that concept's deep-dive question, and answering it anchors an annotation and, once past the 'Nice insight!' pause, advances to the next concept's gate", async () => {
     vi.useFakeTimers();
     const canvas = document.createElement("div");
     const mascotHost = document.createElement("div");
@@ -505,6 +505,10 @@ describe("runValueChainScenario", () => {
     await flush();
 
     expect(canvas.querySelectorAll(".wd-annotation").length).toBe(1);
+
+    clickOption(mascotHost, 0); // "Keep Going" past the "Nice insight!" pause
+    await flush();
+
     // next concept in the bank ("organizational inertia") opens on Need, since it's the first candidate
     // node in valueChainComponents order whose kind (need or capability) inertia applies to
     expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(
@@ -530,7 +534,66 @@ describe("runValueChainScenario", () => {
     vi.useRealTimers();
   });
 
-  it("anchors an annotation for each concept explored via Yes, offers Done only once 3 concepts have settled, and celebrates + resolves once Done then the final Next is clicked", async () => {
+  it("pauses on a 'Nice insight!' gate right after an annotation-producing answer, and 'Keep Going' resumes the walk", async () => {
+    vi.useFakeTimers();
+    const canvas = document.createElement("div");
+    const mascotHost = document.createElement("div");
+    document.body.append(canvas, mascotHost);
+    runValueChainScenario({ canvas, mascotHost });
+    await reachThinkingStep(canvas, mascotHost);
+
+    clickYes(mascotHost);
+    await flush();
+    clickOption(mascotHost); // "Using the Right Methods" -> Agile, annotation "Methods: Agile"
+    await flush();
+
+    expect(canvas.querySelectorAll(".wd-annotation").length).toBe(1);
+    expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(
+      "Nice insight!\n\nThis sort of thing might factor into your strategy.",
+    );
+    expect(optionLabels(mascotHost)).toEqual(["Keep Going", "Finish Up"]);
+
+    clickOption(mascotHost, 0); // "Keep Going"
+    await flush();
+
+    // next concept in the bank ("organizational inertia") opens on Need, since it's the first candidate
+    // node in valueChainComponents order whose kind (need or capability) inertia applies to
+    expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(
+      gatePrompt("inertia", NEED_CATALOG[0].label),
+    );
+    vi.useRealTimers();
+  });
+
+  it("does not pause after an answer with a blank annotation, and unlike Done there is no settled-count threshold", async () => {
+    vi.useFakeTimers();
+    const canvas = document.createElement("div");
+    const mascotHost = document.createElement("div");
+    document.body.append(canvas, mascotHost);
+    runValueChainScenario({ canvas, mascotHost });
+    await reachThinkingStep(canvas, mascotHost);
+
+    clickYes(mascotHost);
+    await flush();
+    clickOption(mascotHost);
+    await flush();
+    clickOption(mascotHost, 0); // "Keep Going" past "right-methods"'s insight gate
+    await flush();
+
+    // "organizational inertia"'s first (auto-picked) option is "No — we are adapting readily.",
+    // an intentionally blank annotation, so it falls straight through to the next gate
+    clickYes(mascotHost);
+    await flush();
+    clickOption(mascotHost);
+    await flush();
+
+    expect(canvas.querySelectorAll(".wd-annotation").length).toBe(1);
+    expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(
+      gatePrompt("differentiation", NEED_CATALOG[0].label),
+    );
+    vi.useRealTimers();
+  });
+
+  it("'Finish Up' ends the phase, renders a concept-and-node-attributed findings report, and the Finale's link still appends beneath it", async () => {
     vi.useFakeTimers();
     const canvas = document.createElement("div");
     const mascotHost = document.createElement("div");
@@ -541,29 +604,17 @@ describe("runValueChainScenario", () => {
     });
     await reachThinkingStep(canvas, mascotHost);
 
-    const settleCurrentConceptWithYes = async () => {
-      clickYes(mascotHost);
-      await flush();
-      clickOption(mascotHost);
-      await flush();
-    };
-
-    await settleCurrentConceptWithYes();
-    expect(canvas.querySelectorAll(".wd-annotation").length).toBe(1);
-    expect(optionLabels(mascotHost)).not.toContain("Done");
-
-    // "organizational inertia"'s first (auto-picked) option is "No — we are adapting readily.",
-    // an intentionally blank annotation, so the settled count advances but no callout is added
-    await settleCurrentConceptWithYes();
-    expect(canvas.querySelectorAll(".wd-annotation").length).toBe(1);
-    expect(optionLabels(mascotHost)).not.toContain("Done");
-
-    await settleCurrentConceptWithYes();
-    expect(canvas.querySelectorAll(".wd-annotation").length).toBe(2);
-    expect(optionLabels(mascotHost)).toContain("Done");
-
-    clickOption(mascotHost, optionLabels(mascotHost).indexOf("Done"));
+    clickYes(mascotHost);
     await flush();
+    clickOption(mascotHost); // "Using the Right Methods" -> Agile, annotation "Methods: Agile"
+    await flush();
+    clickOption(mascotHost, 1); // "Finish Up"
+    await flush();
+
+    const findingsHeading = mascotHost.querySelector(".wd-panel-findings")!.querySelector(".wd-panel-placeholder-heading");
+    expect(findingsHeading!.textContent).toBe("Here's what you found, and you're barely scratching the surface!");
+    const items = Array.from(mascotHost.querySelectorAll(".wd-panel-findings-list li")).map((li) => li.textContent);
+    expect(items).toEqual(["Using the Right Methods → A kettle: Methods: Agile"]);
 
     const finalLink = mascotHost.querySelector<HTMLButtonElement>(".wd-next-link")!;
     expect(finalLink.textContent).toBe("What's next →");

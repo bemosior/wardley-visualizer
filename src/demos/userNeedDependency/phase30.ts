@@ -1,7 +1,7 @@
 import type { Component } from "../../domain/component";
 import { CONCEPT_BANK, candidateNodesForConcept, type Concept } from "../../domain/conceptBank";
 import type { ValueChain } from "../../domain/valueChain";
-import type { GateOption } from "../../engine/panel";
+import type { Finding, GateOption } from "../../engine/panel";
 import type { WardleyDemo } from "../../engine/WardleyDemo";
 import type { ScenarioContext } from "./index";
 
@@ -23,9 +23,6 @@ function buildPairings(chain: ValueChain, demo: WardleyDemo): Pairing[] {
 const samePairing = (a: Pairing, b: Pairing): boolean =>
   a.concept.id === b.concept.id && a.node.id === b.node.id;
 
-/** once at least this many concepts are settled, the gate grows a "Done" option */
-const MIN_SETTLED_BEFORE_DONE = 3;
-
 /**
  * Phase 30: think with the map. Waits for the visitor to click "Let's get strategic →" (the
  * Phase 25 -> Phase 30 gate), then walks a curated bank of climate/doctrine/leadership concepts
@@ -39,26 +36,24 @@ const MIN_SETTLED_BEFORE_DONE = 3;
  * node.label]` as `showGate`'s `emphasize` list so both names stand out from the surrounding
  * prose (`Panel.renderWithEmphasis`) — with subtitle "Choosing is how you
  * learn!" on the very first gate of the phase,
- * "Keep going!" on every one after. Yes/No are always offered, plus:
- *  - "Try something else" (shuffle): abandons the current pairing and jumps to a uniformly random
- *    other still-unresolved pairing anywhere in the bank.
- *  - "Done": only offered once at least `MIN_SETTLED_BEFORE_DONE` concepts have been *settled*
- *    (see below); ends the phase immediately.
+ * "Keep going!" on every one after. Exactly three options are always offered: Yes, No, and
+ * "Try something else" (shuffle) — abandons the current pairing and jumps to a uniformly random
+ * other still-unresolved pairing anywhere in the bank.
  *
  * Yes leads into that concept's fixed deep-dive multiple-choice question (`Mascot.showQuestion`,
- * unchanged), and the chosen answer's `annotation` is anchored permanently near that node via
- * `demo.addAnnotation` — the concept is then settled. No re-poses the same gate for the next
- * candidate node of the *same* concept; once a concept has no candidates left (all declined, via
- * No or shuffle-abandonment), it's settled too, without an annotation. Either way settling advances
- * to the next concept in bank order once its own candidates run out.
+ * unchanged). If the chosen answer carries an `annotation`, it's anchored permanently near that
+ * node via `demo.addAnnotation`, pushed onto `findings`, and the mascot immediately pauses on a
+ * "Nice insight!" gate (Keep Going / Finish Up) — only insight-producing answers interrupt the
+ * flow; an answer with no annotation falls straight through to the next pairing. "Finish Up" ends
+ * the phase right there, same as naturally exhausting the bank. No re-poses the same gate for the
+ * next candidate node of the *same* concept; once a concept has no candidates left (all declined,
+ * via No or shuffle-abandonment), it advances to the next concept in bank order.
  *
- * A `Set` of settled concept ids drives the "Done" threshold — checked once per gate, *before*
- * that gate's own outcome, so "Done" first appears on the gate *after* the one that settles the
- * 3rd concept, not on it. Don't "fix" this into a post-outcome check; it's the intended reading of
- * "once the visitor has encountered at least 3 concepts."
- *
- * The phase ends either via "Done" or by naturally exhausting the whole bank (`remaining` empties
- * out), both falling through to the same `celebrateAll(2)` + handoff to `finale.ts`.
+ * The phase ends either via "Finish Up" or by naturally exhausting the whole bank (`remaining`
+ * empties out). Either way, if any concept produced a finding, `Mascot.showFindings` renders a
+ * concept-and-node-attributed report in place of the usual `showEmpty` — reusing its
+ * `.wd-panel-content` container so the Finale's own "What's next →" confirm link (`finale.ts`)
+ * appends directly beneath the list — before `celebrateAll(2)` + handoff to `finale.ts`.
  */
 export async function runPhase30(ctx: ScenarioContext): Promise<void> {
   const { demo, mascot, chain } = ctx;
@@ -66,9 +61,9 @@ export async function runPhase30(ctx: ScenarioContext): Promise<void> {
   await mascot.confirmPlacement("Let's get strategic →");
 
   let remaining = buildPairings(chain, demo);
-  const settled = new Set<string>();
   let gatesShown = 0;
   let current = remaining[0];
+  const findings: Finding[] = [];
 
   while (current) {
     const pos = demo.getNodePixelPosition(current.node.id);
@@ -80,7 +75,6 @@ export async function runPhase30(ctx: ScenarioContext): Promise<void> {
       { id: "no", label: "No" },
       { id: "shuffle", label: "Try something else" },
     ];
-    if (settled.size >= MIN_SETTLED_BEFORE_DONE) gateOptions.push({ id: "done", label: "Done" });
 
     const choice = await mascot.showGate(
       `${current.concept.definition}\n\nCould we learn something from exploring this with ${current.node.label}?`,
@@ -89,20 +83,29 @@ export async function runPhase30(ctx: ScenarioContext): Promise<void> {
       [current.concept.label, current.node.label],
     );
 
-    if (choice === "done") break;
-
     if (choice === "yes") {
       const answer = await mascot.showQuestion(current.node.label, current.concept.question);
-      if (answer.annotation) demo.addAnnotation(current.node.id, answer.annotation);
       remaining = remaining.filter((p) => p.concept.id !== current!.concept.id);
-      settled.add(current.concept.id);
+      if (answer.annotation) {
+        demo.addAnnotation(current.node.id, answer.annotation);
+        findings.push({ concept: current.concept.label, node: current.node.label, text: answer.annotation });
+
+        const next = await mascot.showGate(
+          "Nice insight!\n\nThis sort of thing might factor into your strategy.",
+          "",
+          [
+            { id: "keepGoing", label: "Keep Going" },
+            { id: "finishUp", label: "Finish Up" },
+          ],
+        );
+        if (next === "finishUp") break;
+      }
       current = remaining[0];
       continue;
     }
 
     // "no" or "shuffle": drop the current pairing
     remaining = remaining.filter((p) => !samePairing(p, current!));
-    if (!remaining.some((p) => p.concept.id === current!.concept.id)) settled.add(current.concept.id);
 
     current =
       choice === "shuffle"
@@ -110,6 +113,10 @@ export async function runPhase30(ctx: ScenarioContext): Promise<void> {
         : (remaining.find((p) => p.concept.id === current!.concept.id) ?? remaining[0]);
   }
 
-  mascot.showEmpty();
+  if (findings.length > 0) {
+    mascot.showFindings(findings, "Here's what you found, and you're barely scratching the surface!");
+  } else {
+    mascot.showEmpty();
+  }
   demo.celebrateAll(2);
 }
