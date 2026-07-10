@@ -460,6 +460,21 @@ const CSS = `
   flex: none;
 }
 
+.wd-panel-findings-list {
+  font-family: var(--wd-font-ui);
+  font-size: 0.85rem;
+  color: var(--wd-color-ink);
+  line-height: 1.5;
+  text-align: left;
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding-left: 0;
+}
+
+.wd-panel-findings-list li + li {
+  margin-top: 0.5rem;
+}
+
 .wd-panel-recap-cta {
   text-align: center;
   margin-top: 1rem;

@@ -64,6 +64,13 @@ export interface GateOption {
   label: string;
 }
 
+/** one insight-producing (concept, node) pairing from Phase 30, rendered by `showFindings` */
+export interface Finding {
+  concept: string;
+  node: string;
+  text: string;
+}
+
 export type PanelField = {
   type: "text";
   prompt: string;
@@ -425,6 +432,38 @@ export class Panel {
     link.rel = "noopener";
     link.textContent = cta.label;
     content.appendChild(link);
+
+    this.container.appendChild(content);
+  }
+
+  /**
+   * renders the Phase 30 exit report: `heading` followed by one line per finding
+   * ("{concept} → {node}: {text}", concept emphasized via `.wd-name`). Rendered in place of
+   * `showEmpty` whenever at least one concept produced an annotation, right before Phase 30 hands
+   * off to the Finale — reuses the same `.wd-panel-content` container so the Finale's
+   * `confirmPlacement` "What's next →" link appends directly beneath the list.
+   */
+  showFindings(findings: Finding[], heading: string): void {
+    this.clear();
+    const content = document.createElement("div");
+    content.classList.add("wd-panel-content", "wd-panel-content--top", "wd-panel-findings");
+
+    const headingEl = document.createElement("div");
+    headingEl.classList.add("wd-panel-placeholder-heading");
+    headingEl.textContent = heading;
+    content.appendChild(headingEl);
+
+    const list = document.createElement("ul");
+    list.classList.add("wd-panel-findings-list");
+    for (const finding of findings) {
+      const li = document.createElement("li");
+      const conceptEl = document.createElement("span");
+      conceptEl.classList.add("wd-name");
+      conceptEl.textContent = finding.concept;
+      li.append(conceptEl, document.createTextNode(` → ${finding.node}: ${finding.text}`));
+      list.appendChild(li);
+    }
+    content.appendChild(list);
 
     this.container.appendChild(content);
   }

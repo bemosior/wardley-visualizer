@@ -1,4 +1,4 @@
-import { Panel, type EvolutionKind, type GateOption, type PanelDragSlot, type PanelDragHandle, type PanelField } from "./panel";
+import { Panel, type EvolutionKind, type Finding, type GateOption, type PanelDragSlot, type PanelDragHandle, type PanelField } from "./panel";
 import { createMascotAvatar, type MascotState } from "./mascotAvatar";
 import type { WardleyDemo } from "./WardleyDemo";
 import type { EvolutionStage } from "../domain/evolution";
@@ -520,6 +520,12 @@ export class Mascot {
 
   showEmpty(): void {
     this.panel.showEmpty();
+    this.reposition();
+  }
+
+  showFindings(findings: Finding[], heading: string): void {
+    this.talk();
+    this.panel.showFindings(findings, heading);
     this.reposition();
   }
 
