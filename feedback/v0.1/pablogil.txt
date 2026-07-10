@@ -1,0 +1,31 @@
+
+
+Hi Ben
+
+Here is the next walkthrough, hope it helps!
+
+I'm presented with a puzzle with several options but no goal or question. It feels like the challenge is something along the lines of "what is a user need" since that is the option pulsing, but no direction, explanation or context of what I am doing here. Feels like I was thrown a couple steps in.
+
+Animations are lovely and work great. Definition of value chain is crisp and easy to get. Walking through the nodes explaining them also works very nicely. Provides a moment of pause and doesn't assume what the user knows.
+
+Very nice also the split into multiple capabilities and the comparison with a recipe.
+
+Very nice that we start with who we are helping. Chose "home cook" since we are taking recipes. However I am presented with an option and an open text box when choosing the need. I am concerned about the open text. I don't know if I will mess up if I enter sth that is not prepared or scripted. This experience is so guided that I don't even know if it will take a random suggestion. Since there is no back button I'll go with the default one.
+
+This repeats again. I click and select the pills. Not sure what the open text would provide (it even has the pill's text as a placeholder. Am I supposed to type it in? I already have the pill for that)
+
+Since we are trying stuff I entered a different capability. It placed it in the value chain. That's ok.
+
+Placement works nicely. It feels like it supports my choices as I move back and forth. No one explained me what this placement is for or how it is relevant to what I am trying to do.
+Animations are still cool
+
+I like the cue, let's use the map to think. Eager to see what happens. 
+The framing of wrong placement, presenting the Bias, the prompt question. All feels great, clear, reversible. I am in control. Wonder if I could get this experience earlier (e.g. when choosing default or custom capabilities and why).
+
+Mmm, the dialogs kept on repeating. Didn't know if I was in a loop or this was intended to happen. Eventually a Done option appear but not sure why and when.
+The dialogs themselves guide me through thinking but when it feels like I am going to reach an insight or a diagnostic it jumps (with no end-start cue) into the next question. It's a bit frustrating cos I was aiming to fix my thinking with the conclusion. Wonder if there will be a summary/diagnostic/report at the end
+
+A couple of labels have appeared in the map, but I'm not familiar with them nor what caused them to be.
+
+Looks like we are done. The strategic part was the most interesting bit, but it felt a bit chaotic and without a pay off.
+
