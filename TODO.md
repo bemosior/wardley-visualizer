@@ -111,6 +111,159 @@ bias-check, Capability-2 always build/buy/outsource, Capability-3 a
 re-rollable random pool question) — the pool/reroll mechanic is gone,
 superseded by the gate's node-cycling and shuffle.
 
+## Next: v0.1 feedback response (planned, not yet built, 2026-07-10)
+
+Five decisions made in response to a second playtest round —
+`feedback/v0.1/pablogil.txt` (his second walkthrough; compare
+`feedback/v0.0/pablogil.txt` for what changed) and `feedback/v0.1/henkoudman.txt`.
+Read those files for the full playtester quotes behind each item below. None of
+this is built yet — this section is written to be picked up cold in a fresh
+session.
+
+### 1. Opening frame — defer the mascot past the first celebration
+
+Goal: stop explaining the opening ("Solve the puzzle. / Drag the missing piece
+into place.", `phase0.ts`'s `MASCOT_INTRO`) and instead remove the puzzle
+framing entirely — nothing to explain because there's only one visible thing
+to do. A fresh v0.1 tester still reported "no goal, no direction, thrown in a
+couple steps" despite the earlier opening-frame fix (see the `[x]` item below,
+which this supersedes in mechanism, not just copy).
+
+- `phase0.ts`: currently mounts `Mascot` and calls
+  `mascot.showPlaceholder(MASCOT_INTRO.heading, MASCOT_INTRO.subheading)`
+  *before* `WardleyDemo.mount()` (`phase0.ts:40-42`). New behavior: don't
+  mount or show the mascot yet at all. The Need node still renders
+  out-of-place and pulsing (`wd-node--beckon`, unchanged) — add a directional
+  arrow as the only affordance, pointing from its `start` position toward its
+  destination marker.
+- New engine primitive needed: `createEvolutionChevron` (`render.ts:54`) is
+  axis-bound (left/right only, tied to `attachAxisDrag`'s min/maxX, only ever
+  called from `runEvolutionDragStep`) — **not** directly reusable here, since
+  Phase 0's drag (`attachDrag`) moves freely toward an arbitrary target, not
+  along a fixed horizontal axis. Add a new one-off arrow primitive (e.g.
+  `createDirectionalArrow(fromPixel, toPixel)` in `render.ts`) oriented along
+  the vector from the Need's `start` position to its destination — both known
+  at mount time via `layoutValueChain`/`demo.getNodePixelPosition` — a static
+  orientation is fine, it doesn't need to track live drag position the way
+  the evolution chevrons do.
+- On drop/snap (today's `onNeedPlaced` callback path, `phase0.ts:59-63`):
+  *then* mount the mascot and show a one-button gate — heading "Want to learn
+  about Wardley Mapping?", single option "Let's begin!" (a single-CTA gate;
+  reuse whichever existing mechanism is cheaper — `confirmPlacement`-style
+  single link, or `showGate` with one option). No "No" path — it's a
+  rhetorical hype beat, not a real fork.
+- Once "Let's begin!" is clicked: node labels transition in (check whether
+  `layoutValueChain`-rendered nodes need their labels hidden pre-click, e.g.
+  via opacity/visibility, and only revealed at this beat), and the mascot
+  says heading "This is a value chain." / subheading "A value chain is a
+  recipe for delivering value." — **this exact copy already exists** as
+  `phase5.ts`'s `MASCOT_NEED_PLACED` (`phase5.ts:10-13`); move it here and
+  delete it from its current spot so it isn't said twice. `runPhase5` should
+  then start directly with the User/Need/Capability node-by-node walk
+  (`phase5.ts:76` onward).
+
+### 2. User/Need fields: pill-only, no free text — but keep pills, not a dropdown
+
+Correction from an earlier back-and-forth: `PanelField` (`panel.ts:67-73`) has
+only one variant today (`type: "text"`) — a text `<input>` plus optional
+clickable `examples` chips rendered alongside it. Those chips **are** the
+"pills" — there's no `<select>` dropdown anywhere in this codebase. The fix
+is adding a new pill-only variant with no `<input>` at all, not swapping to a
+browser dropdown:
+
+- Add `{ type: "choice"; prompt: string; options: string[] }` to the
+  `PanelField` union in `panel.ts`.
+- `Panel.showField` (`panel.ts:186`): branch on `field.type`. The new
+  `"choice"` branch renders the prompt plus a row of chip buttons only (reuse
+  the `wd-panel-form-example` styling/click-to-resolve behavior at
+  `panel.ts:205-220`) — no input, no placeholder text, no "Confirm" submit
+  button.
+- `phase10.ts`: the User field call (`phase10.ts:21-26`) switches from
+  `type: "text"` to `type: "choice"` with
+  `options: NEED_CATALOG.map(n => n.userPlaceholder)` (6 unique values today:
+  Commuter, Teenager, Home Cook, Traveler, Contractor, Parent). The Need
+  field call (`phase10.ts:39-44`) switches to `type: "choice"` with
+  `options: relevantNeeds.map(n => n.label)` (already narrowed to the
+  matched user). Capability fields (`phase10.ts:74-79`) are **unchanged** —
+  stay `type: "text"` with free typing; that's the part nobody complained
+  about and Ben confirmed should stay editable.
+- Not required to fix now, but worth knowing: since User is always an exact
+  `NEED_CATALOG` value by construction, the fuzzy-match/fallback logic at
+  `phase10.ts:32-35` and `:51-52` can never actually miss anymore — those
+  "falls back to full catalog" branches become dead code. Fine to leave as
+  defensive code; simplify later if it's ever touched again.
+- Side benefit: this also tightens the still-open "audit assessment copy
+  against arbitrary user input" item below — locking User/Need to the
+  catalog means Phase 30's deep-dive questions (`domain/conceptBank.ts`) can
+  never again land against an unanticipated combination the way "messaging
+  with friends → deep commoditization" did in `feedback/v0.0/pablogil.txt`.
+
+### 3. Evolution intro beat — explain "everything evolves" right before the first drag
+
+- `phase20.ts`: insert one new `mascot.showPlaceholder(...)` +
+  `await mascot.confirmPlacement("Next")` beat at the very top of
+  `runPhase20` (`phase20.ts:54`), right after the Phase 10 → 20 gate
+  (`phase20.ts:57`) fires but before `demo.stopCharging`/`showMapBackdrop`/
+  the Need's `awaitEvolutionConfirm` call.
+- Copy direction from Ben: "more straightforward phrasing" than the current
+  instrument-panel text. Placeholder wording to refine before shipping:
+  heading "Everything evolves." / subheading "As things evolve, how you
+  build, buy, and lead around them changes too."
+- Deliberately **not** moved earlier to the capability-selection step (which
+  is what Pablo originally suggested) — teaching the concept there would be
+  inert with nothing to anchor it to yet. Keeping it at first point of use is
+  the deliberate call here.
+
+### 4. Phase 30 — stop and check in the moment a question produces an annotation
+
+Confirmed interpretation: only *insight-producing* answers pause; an answer
+with no annotation keeps flowing straight to the next pairing, unchanged.
+
+- `phase30.ts`, inside the `choice === "yes"` branch (`phase30.ts:94-101`):
+  today, after `if (answer.annotation) demo.addAnnotation(...)`, it silently
+  continues to `remaining[0]`. New behavior: if `answer.annotation` is
+  truthy, immediately show a gate —
+  `mascot.showGate("Nice insight!\n\nThis sort of thing might factor into your strategy.", "", [{id: "keepGoing", label: "Keep Going"}, {id: "finishUp", label: "Finish Up"}])`
+  (empty/no subtitle for now, adjust once rendered). "Keep Going" proceeds to
+  `current = remaining[0]` exactly as today; "Finish Up" does what today's
+  "Done" choice does — `break` (`phase30.ts:92`) — falling through into the
+  new findings report (see #5) before `celebrateAll(2)`.
+- This *replaces* the old count-based mechanism entirely: delete
+  `MIN_SETTLED_BEFORE_DONE` (`phase30.ts:27`), the `settled` `Set`
+  (`phase30.ts:69`, `:98`, `:105`), and the conditional
+  `{id: "done", ...}` option on the regular gate (`phase30.ts:83`) — the
+  regular Yes/No/"Try something else" gate is now always exactly those 3
+  options, no more `settled.size >= 3` bookkeeping anywhere.
+- The no-annotation branch (declined/no-insight answers) is untouched — the
+  `remaining`/`current` advancing logic at `phase30.ts:103-110` stays as-is.
+
+### 5. Final findings report, attributed by node *and* concept, before the Finale recap
+
+Ben's call: attribute each finding by concept as well as node (not node
+alone) — nearly free since `current.concept.label` is already in scope
+wherever `addAnnotation` is called.
+
+- `phase30.ts`: accumulate a local array as the phase runs —
+  `const findings: { concept: string; node: string; text: string }[] = []` —
+  push `{ concept: current.concept.label, node: current.node.label, text: answer.annotation }`
+  right alongside the existing `demo.addAnnotation(current.node.id, answer.annotation)`
+  call (`phase30.ts:96`), whenever `answer.annotation` is truthy.
+- Once the phase ends — either via "Finish Up" (new, see #4) or the loop
+  naturally exhausting `remaining` (today's existing exit path) — render the
+  findings before `celebrateAll(2)` (`phase30.ts:114`, after today's
+  `mascot.showEmpty()`). This needs a new small mascot/panel mode (e.g.
+  `Mascot.showFindings(items, {heading, subheading})` → `Panel.showFindings`)
+  since `showRecap` (`mascot.ts:515`, `panel.ts`) only takes flat prose
+  lines, not node/concept-attributed entries.
+- Framing per Ben: heading "Here's what you found, and you're barely
+  scratching the surface!" followed by one line per finding, e.g. "**Alliances**
+  → Delivery Driver: {annotation text}".
+- If `findings` is empty (visitor declined every concept), skip the report
+  entirely and go straight to `celebrateAll(2)` as today.
+- `finale.ts` is unaffected — its own recap (`finale.ts:14-17`) still runs
+  after this, unchanged; the findings report is a Phase 30 exit beat, not a
+  Finale change.
+
 ## Feedback-driven TODOs (from `feedback/` playtests, 2026-07-03)
 
 Patterns pulled from summarized playtester notes in `feedback/*.txt` — see those
@@ -154,6 +307,11 @@ testers hit the same thing (strongest signal first).
       "Next" gates now render inside the mascot's own speech bubble
       (`Mascot.confirmPlacement`, `phase10.ts`'s `MASCOT_NEED_PLACED`), so
       `ValueChainScenarioOptions` no longer takes a `nextControl`.
+      **Reopened 2026-07-10:** a fresh v0.1 tester (`feedback/v0.1/pablogil.txt`)
+      still described the opening as "a puzzle with no goal or context" — this
+      fix addressed copy/placement but not the underlying framing. See "Next:
+      v0.1 feedback response" → item 1 above for the planned redesign (defer
+      the mascot past the first celebration instead of explaining upfront).
 - [-] **Scaffold the capabilities step.** Testers had no confidence in what
       counts as a capability or at what abstraction level
       (`pablogil.txt`, `joshkruszynski.txt`). `michaellindqvist.txt` proposes
