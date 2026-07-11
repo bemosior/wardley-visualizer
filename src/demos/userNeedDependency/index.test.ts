@@ -208,7 +208,7 @@ describe("runValueChainScenario", () => {
     expect(canvas.querySelector('[data-node-id="dependency-3"] .wd-node-label')!.textContent).toBe("Electricity");
   });
 
-  it("shows placeholders matching the selected need, not a different need's example", async () => {
+  it("shows a generic placeholder and example pills matching the selected need, not a different need's example", async () => {
     const { canvas, mascotHost } = buildScenario(vi.fn());
     await completeDragStep(canvas, mascotHost);
 
@@ -219,8 +219,14 @@ describe("runValueChainScenario", () => {
     chooseOption(mascotHost, grocery.label);
     await flush();
 
-    for (const placeholder of grocery.capabilityPlaceholders) {
-      expect(mascotHost.querySelector<HTMLInputElement>(".wd-panel-form-input")!.placeholder).toBe(placeholder);
+    for (let i = 0; i < 3; i++) {
+      expect(mascotHost.querySelector<HTMLInputElement>(".wd-panel-form-input")!.placeholder).toBe("Write your own");
+      const exampleLabels = Array.from(mascotHost.querySelectorAll(".wd-panel-form-example")).map(
+        (chip) => chip.textContent,
+      );
+      for (const label of exampleLabels) {
+        expect(grocery.capabilityOptions).toContain(label);
+      }
       submitText(mascotHost, "answer");
       await flush();
     }

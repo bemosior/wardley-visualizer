@@ -21,9 +21,9 @@ export async function runPhase10(ctx: ScenarioContext): Promise<void> {
   const userLabel = await mascot.showField({
     type: "choice",
     prompt: "Who should we help today?",
-    // several NEED_CATALOG entries deliberately share a userPlaceholder (that user's other
-    // needs) -- dedupe so each user gets exactly one pill, not one per need they have.
-    options: [...new Set(NEED_CATALOG.map((need) => need.userPlaceholder))],
+    // several NEED_CATALOG entries deliberately share a user (that user's other needs) --
+    // dedupe so each user gets exactly one pill, not one per need they have.
+    options: [...new Set(NEED_CATALOG.map((need) => need.user))],
   });
   ctx.chain = relabelUser(ctx.chain, userLabel);
   demo.relabelNode(ctx.chain.user.id, ctx.chain.user.label);
@@ -32,7 +32,7 @@ export async function runPhase10(ctx: ScenarioContext): Promise<void> {
   // now always an exact NEED_CATALOG value (a pill choice, not free text), this always matches --
   // the full-catalog fallback below is defensive dead code, left in case that ever changes.
   const matchingUserNeeds = NEED_CATALOG.filter(
-    (need) => need.userPlaceholder.toLowerCase() === userLabel.trim().toLowerCase(),
+    (need) => need.user.toLowerCase() === userLabel.trim().toLowerCase(),
   );
   const relevantNeeds = matchingUserNeeds.length ? matchingUserNeeds : NEED_CATALOG;
 
@@ -46,9 +46,9 @@ export async function runPhase10(ctx: ScenarioContext): Promise<void> {
   ctx.chain = relabelNeed(ctx.chain, needLabel);
   demo.relabelNode(ctx.chain.need.id, ctx.chain.need.label);
 
-  // best-effort match against the catalog, used to pick fitting placeholders and pills for
-  // the capability steps below; falls back to the first catalog need if the visitor typed
-  // something custom, so the placeholder is never empty
+  // best-effort match against the catalog, used to pick fitting capability pills for the steps
+  // below; falls back to the first catalog need if the visitor typed something custom, so the
+  // pill list is never empty
   const needOption =
     NEED_CATALOG.find((need) => need.label.toLowerCase() === needLabel.trim().toLowerCase()) ?? NEED_CATALOG[0];
 
@@ -67,16 +67,15 @@ export async function runPhase10(ctx: ScenarioContext): Promise<void> {
     const capability = capabilitiesByScreenX[i];
     const capabilityPos = demo.getNodePixelPosition(capability.id);
     if (capabilityPos) mascot.moveTo(capability.id, capabilityPos, "south");
-    // offer every capability option as a pill (not just the one at this index) -- the 3
-    // placeholders plus the richer, evolution-spanning moreCapabilityOptions pool -- minus any
-    // already picked in an earlier slot so the same option isn't offered twice
-    const remainingCapabilities = [...needOption.capabilityPlaceholders, ...needOption.moreCapabilityOptions].filter(
+    // offer every capability option as a pill, minus any already picked in an earlier slot so
+    // the same option isn't offered twice
+    const remainingCapabilities = needOption.capabilityOptions.filter(
       (label) => !usedCapabilityLabels.has(label.toLowerCase()),
     );
     const capabilityLabel = await mascot.showField({
       type: "text",
       prompt: `What's something ${i > 0 ? "else " : ""}they depend on to get this need met? \r\n(${i + 1} of ${capabilityCount})`,
-      placeholder: needOption.capabilityPlaceholders[i],
+      placeholder: "Write your own",
       examples: remainingCapabilities,
     });
     usedCapabilityLabels.add(capabilityLabel.trim().toLowerCase());
