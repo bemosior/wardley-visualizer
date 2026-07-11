@@ -122,6 +122,15 @@ export class Mascot {
 
     this.root = document.createElement("div");
     this.root.classList.add("wd-mascot");
+    // hides the bubble (`wd-mascot--arriving` in styles.ts) from the moment it exists, before
+    // `mount`/`moveTo` ever insert or position it -- otherwise the still-empty bubble gets its
+    // *first* real paint at the base rule's `opacity: 1` (mount/moveTo both run before `arrive`
+    // gets a chance to add this class), and adding the class only afterward doesn't hide it
+    // instantly: the bubble's own `transition: opacity 0.4s ease` animates that already-visible,
+    // still-empty bubble smoothly *out* of view instead. Starting hidden here means there's no
+    // prior visible style for a transition to animate away from, so it simply never appears until
+    // `arrive` (the only place this class is ever removed) reveals it with real content already set.
+    this.root.classList.add("wd-mascot--arriving");
 
     this.bubbleEl = document.createElement("div");
     this.bubbleEl.classList.add("wd-mascot-bubble");
@@ -150,24 +159,24 @@ export class Mascot {
   /**
    * plays a one-time "arrival" flourish the moment the mascot first appears (Phase 0, right after
    * the Need snaps into place): a pop-in plus the same celebratory bounce/glow `setState
-   * ("celebrating")` uses elsewhere (`wd-mascot--arriving` in styles.ts), so the very first
-   * appearance reads as "you unlocked this" rather than the mascot just flatly existing at its
-   * spawn point. The speech bubble stays hidden (`wd-mascot--arriving .wd-mascot-bubble`) for the
-   * same span -- an empty bubble box would otherwise flash beside the avatar before any content
-   * exists. `reveal`, if passed, is invoked right as the flourish ends -- *before* the hiding class
-   * is removed -- so it's the one place to set the bubble's actual content (e.g. `showPlaceholder`)
-   * and have that content already sitting in the DOM the instant the bubble becomes visible, rather
-   * than the caller setting it themselves a statement later and leaving the now-unhidden-but-still-
-   * empty box to flash first. Skips straight to idle (still invoking `reveal` immediately) with no
-   * delay under `prefers-reduced-motion`, same as `animateTo`.
+   * ("celebrating")` uses elsewhere. The speech bubble stays hidden (`wd-mascot--arriving` in
+   * styles.ts, added in the constructor -- see its doc comment for why it has to start there
+   * rather than here) for the same span -- an empty bubble box would otherwise flash beside the
+   * avatar before any content exists. `reveal`, if passed, is invoked right as the flourish ends --
+   * *before* the hiding class is removed -- so it's the one place to set the bubble's actual
+   * content (e.g. `showPlaceholder`) and have that content already sitting in the DOM the instant
+   * the bubble becomes visible, rather than the caller setting it themselves a statement later and
+   * leaving the now-unhidden-but-still-empty box to flash first. Skips straight to idle (still
+   * invoking `reveal` and unhiding the bubble immediately, just with no transition) with no delay
+   * under `prefers-reduced-motion`, same as `animateTo`.
    */
   async arrive(reveal?: () => void): Promise<void> {
     if (prefersReducedMotion()) {
       this.setState("idle");
       reveal?.();
+      this.root.classList.remove("wd-mascot--arriving");
       return;
     }
-    this.root.classList.add("wd-mascot--arriving");
     this.setState("celebrating");
     await new Promise<void>((resolve) => setTimeout(resolve, ARRIVE_DURATION_MS));
     this.setState("idle");
