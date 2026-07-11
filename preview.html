@@ -81,6 +81,52 @@
         font-size: 0.75rem;
         margin-left: 0.35rem;
       }
+
+      /* draft: end credits, scrolling like a game/Patreon-video outro */
+      .credits {
+        background: #111;
+        color: #eee;
+        padding: 2.5rem 1.5rem;
+        text-align: center;
+      }
+      .credits-heading {
+        font-family: var(--font-ui);
+        font-size: 0.85rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #999;
+        margin: 0 0 1.25rem;
+      }
+      .credits-scroll {
+        height: 180px;
+        overflow: hidden;
+        position: relative;
+        mask-image: linear-gradient(to bottom, transparent, #000 15%, #000 85%, transparent);
+        -webkit-mask-image: linear-gradient(to bottom, transparent, #000 15%, #000 85%, transparent);
+      }
+      .credits-scroll ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        animation: credits-scroll-up 14s linear infinite;
+      }
+      .credits-scroll li {
+        font-family: var(--font-ui);
+        font-size: 1.05rem;
+        padding: 0.4rem 0;
+      }
+      @keyframes credits-scroll-up {
+        from {
+          transform: translateY(0);
+        }
+        to {
+          transform: translateY(-100%);
+        }
+      }
     </style>
   </head>
   <body>
@@ -108,6 +154,24 @@
             </div>
           </div>
         </div>
+      </div>
+    </section>
+
+    <section class="credits">
+      <p class="credits-heading">Thank you to everyone who gave feedback</p>
+      <div class="credits-scroll">
+        <ul>
+          <li>James Fairbairn</li>
+          <li>Joel Tosi</li>
+          <li>Josh Kruszynski</li>
+          <li>Michael Lindqvist</li>
+          <li>Pablo Gil</li>
+          <li>Rian Porter</li>
+          <li>Tom Geraghty</li>
+          <li>Velocirachael</li>
+          <li>Henk Oudman</li>
+          <li>Tristan Slominski</li>
+        </ul>
       </div>
     </section>
 
