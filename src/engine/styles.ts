@@ -868,6 +868,16 @@ const CSS = `
   transition: opacity 0.4s ease;
 }
 
+/* set right before a panel-content change that's immediately followed by a moveTo elsewhere
+   (Mascot.hideBubbleInstantly) -- transition: none makes the hide itself instant, unlike the
+   base rule's opacity 0.4s ease above, which would otherwise fade the *old* content out at the
+   *old* position instead of just disappearing. Removing this class (Mascot.revealBubble) falls
+   back to that base transition, fading the *new* content in at the *new* position. */
+.wd-mascot-bubble--instant-hide {
+  opacity: 0;
+  transition: none;
+}
+
 .wd-mascot-bubble::before {
   content: "";
   position: absolute;

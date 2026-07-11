@@ -202,6 +202,26 @@ export class Mascot {
   }
 
   /**
+   * hides the speech bubble instantly (no fade), leaving the avatar itself untouched — for a
+   * panel-content change that's immediately followed by a `moveTo` to a very different spot (e.g.
+   * `phase20.ts`'s jump from the evolution-intro beat to the Need's instrument panel, deferred
+   * behind a node-slide animation). Without this, the new content paints at the *old* anchor
+   * position the instant it's set, then the bubble visibly jumps to the new anchor once the
+   * deferred `moveTo` finally runs — reading as a flash-then-teleport. Pairs with `revealBubble`,
+   * called once the move has actually happened, which fades the bubble back in via its own normal
+   * opacity transition (`.wd-mascot-bubble`'s `transition: opacity 0.4s ease` in styles.ts) instead
+   * of the instant snap this method uses to hide.
+   */
+  hideBubbleInstantly(): void {
+    this.bubbleEl.classList.add("wd-mascot-bubble--instant-hide");
+  }
+
+  /** reveals a bubble hidden by `hideBubbleInstantly`, fading it in via the bubble's own opacity transition. */
+  revealBubble(): void {
+    this.bubbleEl.classList.remove("wd-mascot-bubble--instant-hide");
+  }
+
+  /**
    * plants the mascot at an arbitrary point in the canvas's open whitespace, not anchored to any
    * node — e.g. Phase 7's "stepping back" beat, where the mascot introduces itself away from the
    * value chain rather than beside one of its nodes. `x`/`y` are viewBox coordinates (the same
