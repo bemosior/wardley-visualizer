@@ -878,6 +878,15 @@ const CSS = `
   transition: none;
 }
 
+/* a prompt with a long tail of example/option chips (Phase 10's capability step, offering up to
+   10 catalog options) wraps into so many rows at the base 280px max-width that the bubble grows
+   too tall to fit "above" its anchor without spilling into the row above -- widening it lets the
+   same chips wrap into far fewer rows instead. Panel.showField toggles this on/off per render
+   (see its doc comment), so it never lingers onto a later, short-content render. */
+.wd-mascot-bubble--wide {
+  max-width: 440px;
+}
+
 .wd-mascot-bubble::before {
   content: "";
   position: absolute;

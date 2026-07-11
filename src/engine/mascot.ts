@@ -72,10 +72,6 @@ const CORNER_MARGIN_TOP = 14;
  * rightward shift has nowhere to go but into the next sibling, regardless of which vertical side
  * gets picked.
  *
- * `"south"`: no shift, but *forces* "below" -- for anchoring beside one of several side-by-side
- * siblings that has another row directly above it and nothing below (a Capability node, with its
- * Need above). Same forced-"below" reasoning as `"northeast"` above, without the shift.
- *
  * `"pinned"`: `"northeast"`'s stricter sibling, for a node that will itself be dragged *along* its
  * own row afterward while the mascot stays put (the evolution axis, `WardleyDemo.
  * runEvolutionDragStep`). Forcing "above" isn't a hard-enough guarantee there on its own -- a
@@ -84,7 +80,7 @@ const CORNER_MARGIN_TOP = 14;
  * and falls back to the same out-of-the-way corner `moveToTopRight` uses when it doesn't -- see
  * `reposition`'s `pinned` branch.
  */
-export type MascotPlacement = "auto" | "northeast" | "south" | "pinned";
+export type MascotPlacement = "auto" | "northeast" | "pinned";
 
 /**
  * the mascot's speech-bubble guide — the sole guide for the whole scenario, from the moment
@@ -400,18 +396,18 @@ export class Mascot {
 
     // only "auto" measures which side actually has less overflow against the host's real bounds --
     // right for a node that could plausibly need either side (moveToTopRight's corner, a settled
-    // lone node). "south" and "northeast" both force "below" instead: both are used exactly where
-    // "below" is the side that's *always* structurally safe (nothing ever renders under that row),
-    // so the measurement is never protecting against a real collision there -- it can only ever
-    // misfire, gambling on "above" once a tall enough bubble makes "below" *look* like the worse
-    // overflow even though nothing is actually there. That misfire is exactly what "south" was
-    // already written to avoid; "northeast" needs the same guard for the same reason, since its own
-    // up-and-right shift eats into the row's remaining "below" room before this pick ever runs,
-    // making the false-overflow trigger even easier to hit for whichever node anchors last.
+    // lone node). "northeast" forces "below" instead, since it's used exactly where "below" is the
+    // side that's *always* structurally safe (nothing ever renders under that row), so the
+    // measurement is never protecting against a real collision there -- it can only ever misfire,
+    // gambling on "above" once a tall enough bubble makes "below" *look* like the worse overflow
+    // even though nothing is actually there. That misfire is easy to hit here since "northeast"'s
+    // own up-and-right shift already eats into the row's remaining "below" room before this pick
+    // ever runs, making the false-overflow trigger even easier to hit for whichever node anchors
+    // last.
     let side: "below" | "above" = "below";
     if (forcePinnedAbove) {
       side = "above";
-    } else if (this.placement !== "south" && this.placement !== "northeast" && hostRect.height) {
+    } else if (this.placement !== "northeast" && hostRect.height) {
       const belowOverflow = Math.max(0, clearBelow + groupHeight - hostRect.height);
       const aboveOverflow = Math.max(0, groupHeight - clearAbove);
       if (aboveOverflow < belowOverflow) side = "above";

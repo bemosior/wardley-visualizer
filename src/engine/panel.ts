@@ -10,6 +10,11 @@ export type EvolutionKind = "need" | "capability";
 const SVG_NS = "http://www.w3.org/2000/svg";
 const ICON_RADIUS = 26;
 
+/** `showField` widens the bubble (`wd-mascot-bubble--wide`, styles.ts) once a chip list exceeds
+ * this -- picked to sit above every other field's chip count (the "who should we help" choice
+ * list tops out at 6) and below Phase 10's capability step, whose catalog options run to 10 */
+const WIDE_BUBBLE_CHIP_THRESHOLD = 6;
+
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -196,9 +201,19 @@ export class Panel {
    * value once the visitor submits a non-empty answer, plus an optional row of clickable
    * `examples` chips that confirm immediately) or a pill-only row of clickable `options` chips
    * with no input at all (`type: "choice"`, for a question where free typing isn't wanted).
+   *
+   * Toggles `wd-mascot-bubble--wide` (styles.ts) on the bubble itself based on how many chips this
+   * particular render has, rather than leaving it permanently on: a long chip list (Phase 10's
+   * capability step, offering up to 10 catalog options) wraps into far fewer rows at the wider
+   * max-width, which keeps that step's bubble shorter -- see `phase10.ts`'s doc comment on why its
+   * capability sub-questions stay anchored beside the Need node instead of re-anchoring beside
+   * each Capability in turn. Re-set on every call (not just added once) so a later render with few
+   * chips isn't left stuck wide.
    */
   showField(field: PanelField): Promise<string> {
     this.clear();
+    const chipCount = field.type === "choice" ? field.options.length : (field.examples?.length ?? 0);
+    this.container.classList.toggle("wd-mascot-bubble--wide", chipCount > WIDE_BUBBLE_CHIP_THRESHOLD);
     if (field.type === "choice") {
       return new Promise((resolve) => {
         const content = document.createElement("div");

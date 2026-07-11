@@ -63,10 +63,24 @@ export async function runPhase10(ctx: ScenarioContext): Promise<void> {
 
   const capabilityCount = capabilitiesByScreenX.length;
   const usedCapabilityLabels = new Set<string>();
+
+  // stays anchored beside the Need node (the same "northeast" spot the question above already
+  // used) for all `capabilityCount` sub-questions, rather than re-anchoring beside each Capability
+  // node in turn (this used to be "south"). Each capability's example list runs up to 10 catalog
+  // options (`needCatalog.ts`), which makes for a bubble far wider than the ~140px gap between
+  // adjacent Capability nodes -- anchoring "above" any one of them, even an outer one, bridges
+  // clean across into the Need node's own column and hides it behind the bubble (tried and
+  // measured live: the bubble ends up wide enough to fully cover Need regardless of which
+  // Capability it's meant to hover above). "South" avoided that by never going above at all, but
+  // forced the bubble below the bottom-most row on the page, tall enough with 10 examples to push
+  // the page's height past the viewport and force a jarring auto-scroll on every capability.
+  // Staying at Need's already-safe, already-visible spot avoids both: nothing forces the page to
+  // grow, and nothing sits low enough to need scrolling into view.
+  const needPosForCapabilities = demo.getNodePixelPosition(ctx.chain.need.id);
+  if (needPosForCapabilities) mascot.moveTo(ctx.chain.need.id, needPosForCapabilities, "northeast");
+
   for (let i = 0; i < capabilityCount; i++) {
     const capability = capabilitiesByScreenX[i];
-    const capabilityPos = demo.getNodePixelPosition(capability.id);
-    if (capabilityPos) mascot.moveTo(capability.id, capabilityPos, "south");
     // offer every capability option as a pill, minus any already picked in an earlier slot so
     // the same option isn't offered twice
     const remainingCapabilities = needOption.capabilityOptions.filter(
