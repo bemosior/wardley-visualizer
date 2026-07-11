@@ -657,7 +657,7 @@ describe("runValueChainScenario", () => {
     const findingsHeading = mascotHost.querySelector(".wd-panel-findings")!.querySelector(".wd-panel-placeholder-heading");
     expect(findingsHeading!.textContent).toBe("Here's what you found, and you're barely scratching the surface!");
     const items = Array.from(mascotHost.querySelectorAll(".wd-panel-findings-list li")).map((li) => li.textContent);
-    expect(items).toEqual(["Using the Right Methods → A kettle: Methods: Agile"]);
+    expect(items).toEqual(["Using the Right Methods at A kettle"]);
 
     const finalLink = mascotHost.querySelector<HTMLButtonElement>(".wd-next-link")!;
     expect(finalLink.textContent).toBe("What's next →");

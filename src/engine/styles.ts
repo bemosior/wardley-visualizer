@@ -491,7 +491,7 @@ const CSS = `
   line-height: 1.5;
   text-align: left;
   list-style: none;
-  margin: 0.75rem 0 0;
+  margin: 0.75rem 0;
   padding-left: 0;
 }
 
