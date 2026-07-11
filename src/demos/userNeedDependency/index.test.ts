@@ -122,7 +122,7 @@ describe("runValueChainScenario", () => {
     expect(canvas.querySelector('[data-node-id="user"] .wd-node-label')!.classList.contains("wd-node-label--hidden")).toBe(
       false,
     );
-    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("You made a Value Chain!");
+    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("You just made a Value Chain!");
     expect(mascotHost.querySelector(".wd-next-link")).not.toBeNull();
   });
 

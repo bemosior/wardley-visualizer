@@ -24,7 +24,7 @@ const MASCOT_BEGIN_GATE = { prompt: "Want to learn about Wardley Mapping?", cta:
  * "what's a Value Chain?" payoff (a one-shot "it's a recipe" summary); the User/Need/Capability
  * walkthrough that explains the chain piece-by-piece continues from here in `phase5.ts`. */
 const MASCOT_NEED_PLACED = {
-  heading: "You made a Value Chain!",
+  heading: "You just made a Value Chain!",
   subheading: "A value chain is a recipe for delivering value.",
 };
 
