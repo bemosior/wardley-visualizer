@@ -445,9 +445,12 @@ describe("runValueChainScenario", () => {
       "Use the map to think",
     );
 
-    // Phase 25's own confirm link starts Phase 30's Q&A, opening on the first concept/node gate
+    // Phase 25's own confirm link starts Phase 30's Q&A, opening on the first concept/node gate --
+    // Phase 30 picks that opening pairing at random, so pin Math.random to land on index 0
+    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0);
     clickNext(mascotHost);
     await flush();
+    randomSpy.mockRestore();
 
     expect(resolved).toBe(false);
     expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(
@@ -459,7 +462,7 @@ describe("runValueChainScenario", () => {
     vi.useRealTimers();
   });
 
-  /** walks placement through the Phase 20->25->30 gates, landing on the first concept/node gate ("using the right methods" x Capability 1) -- "novelty bias" is restricted to Product/Commodity nodes (`applicableStages`), and every node here lands at Custom-Built (each dragged to x=150 in a 400-wide viewBox), so it has no candidates and is skipped entirely */
+  /** walks placement through the Phase 20->25->30 gates, landing on the first concept/node gate ("using the right methods" x Capability 1) -- "novelty bias" is restricted to Product/Commodity nodes (`applicableStages`), and every node here lands at Custom-Built (each dragged to x=150 in a 400-wide viewBox), so it has no candidates and is skipped entirely. Phase 30 picks its opening pairing at random (`Math.random`), so `Math.random` is pinned to 0 for the single call that makes that pick -- `Math.floor(0 * remaining.length)` is index 0, the same pairing every other test in this file already expects -- and released immediately after so later shuffle/randomness in the same test stays genuinely random. */
   async function reachThinkingStep(canvas: HTMLElement, mascotHost: HTMLElement): Promise<void> {
     await reachEvolutionStep(canvas, mascotHost);
     await confirmEvolutionStep(canvas, mascotHost, "need", 150, 76);
@@ -468,8 +471,10 @@ describe("runValueChainScenario", () => {
     await confirmEvolutionStep(canvas, mascotHost, "dependency-3", 150, 157);
     clickNext(mascotHost);
     await flush();
+    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0);
     clickNext(mascotHost);
     await flush();
+    randomSpy.mockRestore();
   }
 
   function clickOption(mascotHost: HTMLElement, index = 0): void {
@@ -492,7 +497,7 @@ describe("runValueChainScenario", () => {
     );
   }
 
-  it("shows a gate for the first concept/node pairing, offering only Yes/No/Try something else, and switches the subtitle to 'Keep going!' after a No", async () => {
+  it("shows a gate for the first concept/node pairing, offering only Yes/No/Try something else, and a No skips the whole concept, switching the subtitle to 'Keep going!'", async () => {
     vi.useFakeTimers();
     const canvas = document.createElement("div");
     const mascotHost = document.createElement("div");
@@ -512,8 +517,10 @@ describe("runValueChainScenario", () => {
     await flush();
 
     expect(mascotHost.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe("Keep going!");
+    // No drops every remaining "right-methods" candidate, not just A kettle, so this lands on
+    // the next concept in the bank ("organizational inertia"), opening on Need
     expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(
-      gatePrompt("right-methods", "Water"),
+      gatePrompt("inertia", NEED_CATALOG[0].label),
     );
     vi.useRealTimers();
   });

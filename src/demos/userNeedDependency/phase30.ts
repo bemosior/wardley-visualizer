@@ -28,9 +28,11 @@ const samePairing = (a: Pairing, b: Pairing): boolean =>
  * Phase 25 -> Phase 30 gate), then walks a curated bank of climate/doctrine/leadership concepts
  * (`domain/conceptBank.ts`'s `CONCEPT_BANK`) against candidate nodes on the map — each concept
  * further narrowed to the evolution stages it's meaningfully explored against, per node's
- * confirmed Phase 20 placement (`Concept.applicableStages`, `WardleyDemo.getNodeStage`).
+ * confirmed Phase 20 placement (`Concept.applicableStages`, `WardleyDemo.getNodeStage`). The very
+ * first pairing shown is picked uniformly at random from the full bank, not always the first one
+ * built — otherwise every run opened on the same concept/node.
  *
- * For each (concept, candidate node) pairing, in bank order: the mascot re-anchors to that node
+ * For each (concept, candidate node) pairing, in bank order thereafter: the mascot re-anchors to that node
  * and asks a gate question (`Mascot.showGate`) — "{concept.definition} Do you think we could learn
  * something from exploring {concept.label} with {node}?" — passing `[concept.label,
  * node.label]` as `showGate`'s `emphasize` list so both names stand out from the surrounding
@@ -47,9 +49,11 @@ const samePairing = (a: Pairing, b: Pairing): boolean =>
  * node via `demo.addAnnotation`, pushed onto `findings`, and the mascot immediately pauses on a
  * "Nice insight!" gate (Keep Going / Finish Up) — only insight-producing answers interrupt the
  * flow; an answer with no annotation falls straight through to the next pairing. "Finish Up" ends
- * the phase right there, same as naturally exhausting the bank. No re-poses the same gate for the
- * next candidate node of the *same* concept; once a concept has no candidates left (all declined,
- * via No or shuffle-abandonment), it advances to the next concept in bank order.
+ * the phase right there, same as naturally exhausting the bank. No drops every remaining candidate
+ * node for that concept, not just the current one, and advances straight to the next concept in
+ * bank order — a decline is treated as "not interested in this concept," not "not this node."
+ * Shuffle abandons only the current pairing and jumps to a uniformly random other still-unresolved
+ * pairing anywhere in the bank, which may land back on the same concept with a different node.
  *
  * The phase ends either via "Finish Up" or by naturally exhausting the whole bank (`remaining`
  * empties out). Either way, if any concept produced a finding, `Mascot.showFindings` renders a
@@ -64,7 +68,7 @@ export async function runPhase30(ctx: ScenarioContext): Promise<void> {
 
   let remaining = buildPairings(chain, demo);
   let gatesShown = 0;
-  let current = remaining[0];
+  let current = remaining[Math.floor(Math.random() * remaining.length)];
   const findings: Finding[] = [];
 
   while (current) {
@@ -119,13 +123,16 @@ export async function runPhase30(ctx: ScenarioContext): Promise<void> {
       continue;
     }
 
-    // "no" or "shuffle": drop the current pairing
-    remaining = remaining.filter((p) => !samePairing(p, current!));
-
-    current =
-      choice === "shuffle"
-        ? remaining[Math.floor(Math.random() * remaining.length)]
-        : (remaining.find((p) => p.concept.id === current!.concept.id) ?? remaining[0]);
+    if (choice === "no") {
+      // a decline means "not this concept," so drop every remaining candidate node for it and
+      // move straight to the next concept in bank order
+      remaining = remaining.filter((p) => p.concept.id !== current!.concept.id);
+      current = remaining[0];
+    } else {
+      // shuffle: abandon just this pairing and jump to a random other one still unresolved
+      remaining = remaining.filter((p) => !samePairing(p, current!));
+      current = remaining[Math.floor(Math.random() * remaining.length)];
+    }
   }
 
   if (findings.length > 0) {
