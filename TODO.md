@@ -146,21 +146,23 @@ are unchanged (`type: "text"`, still free typing). Since User is now always an e
 value by construction (a pill choice, not free text), the `relevantNeeds` fuzzy-match/fallback logic
 in `phase10.ts` can never actually miss anymore — left as defensive dead code rather than removed.
 
-### 3. Evolution intro beat — explain "everything evolves" right before the first drag
+### 3. Evolution intro beat — explain "everything evolves" right before the first drag (done, 2026-07-10)
 
-- `phase20.ts`: insert one new `mascot.showPlaceholder(...)` +
-  `await mascot.confirmPlacement("Next")` beat at the very top of
-  `runPhase20` (`phase20.ts:54`), right after the Phase 10 → 20 gate
-  (`phase20.ts:57`) fires but before `demo.stopCharging`/`showMapBackdrop`/
-  the Need's `awaitEvolutionConfirm` call.
-- Copy direction from Ben: "more straightforward phrasing" than the current
-  instrument-panel text. Placeholder wording to refine before shipping:
-  heading "Everything evolves." / subheading "As things evolve, how you
-  build, buy, and lead around them changes too."
-- Deliberately **not** moved earlier to the capability-selection step (which
-  is what Pablo originally suggested) — teaching the concept there would be
-  inert with nothing to anchor it to yet. Keeping it at first point of use is
-  the deliberate call here.
+Implemented in `phase20.ts`: right after the Phase 10 → 20 gate
+(`await mascot.confirmPlacement("Next")`) and before `demo.captureScale`/
+`onEvolutionReady`/`showMapBackdrop`, `runPhase20` now shows a
+`MASCOT_EVOLUTION_INTRO` placeholder (heading "Everything evolves." /
+subheading "As things evolve, how you build, buy, and lead around them
+changes too.") gated behind its own `mascot.confirmPlacement("Let's see it
+→")` — a distinct label rather than a second generic "Next", so it doesn't
+collide with `dev/autopilot.ts`'s plain-"Next" counting. `autopilot.ts`'s
+`phase20`/`finale`/`thinking`/`recap` skip targets and `index.test.ts`'s
+`reachEvolutionStep` helper were updated to click through the new gate.
+
+Deliberately **not** moved earlier to the capability-selection step (which
+is what Pablo originally suggested) — teaching the concept there would be
+inert with nothing to anchor it to yet. Keeping it at first point of use was
+the deliberate call here.
 
 ### 4. Phase 30 — stop and check in the moment a question produces an annotation (done, 2026-07-10)
 

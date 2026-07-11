@@ -279,6 +279,13 @@ describe("runValueChainScenario", () => {
     clickNext(mascotHost);
     await flush();
 
+    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Everything evolves.");
+    expect(onEvolutionReady).not.toHaveBeenCalled();
+    expect(canvas.querySelector(".wd-backdrop")).toBeNull();
+
+    clickNext(mascotHost);
+    await flush();
+
     expect(canvas.querySelector(".wd-backdrop")).not.toBeNull();
 
     expect(onEvolutionReady).toHaveBeenCalledOnce();
@@ -322,13 +329,15 @@ describe("runValueChainScenario", () => {
 
     clickNext(mascotHost);
     await flush();
+    clickNext(mascotHost);
+    await flush();
 
     expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe(
       `Is ${need.label} in Genesis?`,
     );
   });
 
-  /** walks the Phase 10 form and clicks past the Phase 10->20 gate, landing right where the Need starts beckoning on the map (default layout's Genesis x is 50, at the Need's unchanged y of 76) */
+  /** walks the Phase 10 form and clicks past the Phase 10->20 gate and the evolution-intro gate, landing right where the Need starts beckoning on the map (default layout's Genesis x is 50, at the Need's unchanged y of 76) */
   async function reachEvolutionStep(canvas: HTMLElement, mascotHost: HTMLElement): Promise<void> {
     await completeDragStep(canvas, mascotHost);
     chooseOption(mascotHost, "Commuter");
@@ -340,6 +349,8 @@ describe("runValueChainScenario", () => {
     submitText(mascotHost, "Water");
     await flush();
     submitText(mascotHost, "Electricity");
+    await flush();
+    clickNext(mascotHost);
     await flush();
     clickNext(mascotHost);
     await flush();
