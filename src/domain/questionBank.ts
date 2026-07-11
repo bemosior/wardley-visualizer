@@ -39,7 +39,7 @@ export const BIAS_CHECK_QUESTION: Question = {
 export const BUILD_BUY_OUTSOURCE_QUESTION: Question = {
   id: "build-buy-outsource",
   prompt:
-    "Build fits Genesis/Custom-Built (it's the only way to get one, or we think we can out-innovate). Buy fits late Custom-Built/Product (there are vendors — how we implement it is what matters). Outsource fits late Product/Commodity (we take the standard offering). Are we playing this the way its evolution stage calls for?",
+    "Building our own fits Genesis/Custom-Built (it's the only way to get one, or we think we can out-innovate). Buying fits late Custom-Built/Product (there are vendors — how we implement it is what matters). Outsourcing fits late Product/Commodity (we take the standard offering). Are we playing this the way its evolution stage calls for?",
   options: [
     {
       id: "yes",
@@ -49,17 +49,17 @@ export const BUILD_BUY_OUTSOURCE_QUESTION: Question = {
     {
       id: "mixed",
       label: "Sort of — we're straddling two approaches.",
-      annotation: "Caution: Mixed Play",
+      annotation: "Caution: Build/Buy/Outsource",
     },
     {
       id: "no",
       label: "No, we're out of step with where this sits.",
-      annotation: "Danger: Wrong Play",
+      annotation: "Danger: Build/Buy/Outsource",
     },
     {
       id: "unknown",
       label: "Unknown — not sure.",
-      annotation: "Build vs. Buy vs. Outsource: Unknown!",
+      annotation: "Build/Buy/Outsource: Unknown!",
     },
   ],
 };
@@ -67,11 +67,11 @@ export const BUILD_BUY_OUTSOURCE_QUESTION: Question = {
 /** the "organizational inertia" climate concept's deep-dive question. */
 export const INERTIA_QUESTION: Question = {
   id: "inertia",
-  prompt: "Is anything — habits, contracts, sunk costs — holding us back from adapting to change here?",
+  prompt: "Are we adapting readily to change here, regardless of habits, contracts, and sunk costs?",
   options: [
-    { id: "no-inertia", label: "No — we are adapting readily.", annotation: "" },
-    { id: "yes-inertia", label: "Yes — we are not adapting readily.", annotation: "Danger: Inertia" },
-    { id: "unknown", label: "Unknown — not sure.", annotation: "Organizational Inertia: Unknown!" },
+    { id: "no-inertia", label: "Yes — we are adapting readily.", annotation: "" },
+    { id: "yes-inertia", label: "No — we are not adapting readily.", annotation: "Danger: Inertia" },
+    { id: "unknown", label: "Unknown — not sure.", annotation: "Inertia: Unknown!" },
   ],
 };
 
@@ -84,7 +84,7 @@ export const DIFFERENTIATION_QUESTION: Question = {
     { id: "differentiates", label: "Differentiates.", annotation: "Differentiates" },
     { id: "table-stakes", label: "Table stakes.", annotation: "Table Stakes" },
     { id: "neither", label: "Neither.", annotation: "" },
-    { id: "unknown", label: "Unknown — not sure.", annotation: "Commodity vs. Differentiation: Unknown!" },
+    { id: "unknown", label: "Unknown — not sure.", annotation: "Differentiation: Unknown!" },
   ],
 };
 
@@ -97,7 +97,7 @@ export const METHOD_QUESTION: Question = {
     { id: "yes", label: "Yes, our methods fit.", annotation: "" },
     { id: "mixed", label: "Sort of — we're partway through switching methods.", annotation: "Caution: Method Mismatch" },
     { id: "no", label: "No, we're using the wrong methods for this stage.", annotation: "Danger: Wrong Methods" },
-    { id: "unknown", label: "Unknown — not sure.", annotation: "Using the Right Methods: Unknown!" },
+    { id: "unknown", label: "Unknown — not sure.", annotation: "Methods: Unknown!" },
   ],
 };
 
@@ -105,7 +105,7 @@ export const METHOD_QUESTION: Question = {
 export const EFFICIENCY_ENABLES_INNOVATION_QUESTION: Question = {
   id: "efficiency-innovation",
   prompt:
-    "Innovative Genesis/Custom-Built work is strongest when it's built on efficient Product/Commodity building blocks — not stacked on other innovation. Are we taking advantage of efficient building blocks here?",
+    "Innovative Genesis/Custom-Built work is strongest when it's built on efficient Product/Commodity building blocks — not stacked on other innovation. Are we making the most of efficient building blocks here?",
   options: [
     { id: "yes-efficiency-innovation", label: "Yes.", annotation: "" },
     { id: "no-efficiency-innovation", label: "No.", annotation: "Danger: Inefficient Innovation" },
@@ -120,7 +120,7 @@ export const ALLIANCES_QUESTION: Question = {
   options: [
     { id: "yes-begin", label: "Not yet — we'd need to start building them.", annotation: "Alliances: Begin" },
     { id: "yes-maintain", label: "Yes — we should deepen them.", annotation: "Alliances: Maintain / Deepen" },
-    { id: "no", label: "No.", annotation: "" },
+    { id: "no", label: "No. We're truly alone", annotation: "Alliances: None" },
     { id: "unknown", label: "Unknown — not sure.", annotation: "Alliances: Unknown!" },
   ],
 };
