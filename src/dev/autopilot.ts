@@ -8,7 +8,8 @@ import type { WardleyDemo, EvolutionDragHandle } from "../engine/WardleyDemo";
  * `phase10`: also click past Phase 7's "I'm Ben" introduction gate, land at the start of
  * Phase 10's form.
  * `celebrate`: also auto-fill all 5 form fields, land right after the Phase 10 celebration.
- * `phase20`: also click past the Phase 10->20 gate, land at today's frontier.
+ * `phase20`: also click past the Phase 10->20 gate and the evolution-intro gate, land at today's
+ * frontier.
  * `finale`: also auto-click every Phase 20 confirm-placement link, land at the placement celebration.
  * `thinking`: also click through Phase 25's explanatory gate and into Phase 30, auto-pick the
  * first option for every question, land at the Phase 30 celebration (its own final "What's
@@ -92,8 +93,13 @@ export function attachAutopilot({ mascotHost, target }: AutopilotOptions): Autop
         // introduction gate
         link!.click();
       } else if (plainNextCount === 6) {
+        // Phase 10 -> Phase 20 gate -- click through it for every target that reaches Phase 20.
+        // Every target that stops here for good (celebrate/intro/phase10 never reach this count,
+        // they disconnect earlier) still disconnects immediately, same as before this gate got a
+        // successor -- except `phase20` itself, which now also has to click past the new
+        // evolution-intro gate below before it lands at today's frontier
         if (target === "phase20" || target === "finale" || target === "thinking" || target === "recap") link!.click();
-        if (target !== "finale" && target !== "thinking" && target !== "recap") disconnect();
+        if (target !== "finale" && target !== "thinking" && target !== "recap" && target !== "phase20") disconnect();
       } else if (plainNextCount === 7) {
         // Phase 20 -> Phase 25 gate (right after "You made a Wardley Map!") -- finale stops at
         // the placement celebration itself, so only thinking/recap click through into Phase 25's
@@ -109,6 +115,11 @@ export function attachAutopilot({ mascotHost, target }: AutopilotOptions): Autop
         link!.click();
         if (target === "phase10") disconnect();
       }
+    } else if (linkText === "Let's see it →") {
+      // Phase 20's evolution-intro gate ("Everything evolves.") -- phase20 stops right after
+      // clicking through this one, landing at today's frontier (the map, Need beckoning)
+      if (target === "phase20" || target === "finale" || target === "thinking" || target === "recap") link!.click();
+      if (target === "phase20") disconnect();
     } else if (linkText === "Confirm placement" && (target === "finale" || target === "thinking" || target === "recap")) {
       // auto-click "Confirm placement" links that appear during Phase 20,
       // but not the finale's "What's next →" which should be left for the visitor
