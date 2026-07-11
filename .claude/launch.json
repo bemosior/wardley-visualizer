@@ -19,6 +19,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["http-server", ".", "-p", "8766", "-c-1"],
       "port": 8766
+    },
+    {
+      "name": "lwm-html-dist",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["http-server", "/Users/b/Code/lwm-html/dist", "-p", "8767", "-c-1"],
+      "port": 8767
     }
   ]
 }
