@@ -64,13 +64,20 @@ export interface GateOption {
   label: string;
 }
 
-export type PanelField = {
-  type: "text";
-  prompt: string;
-  placeholder?: string;
-  /** fallback suggestions rendered as clickable chips below the input; clicking one confirms it immediately */
-  examples?: string[];
-};
+export type PanelField =
+  | {
+      type: "text";
+      prompt: string;
+      placeholder?: string;
+      /** fallback suggestions rendered as clickable chips below the input; clicking one confirms it immediately */
+      examples?: string[];
+    }
+  | {
+      type: "choice";
+      prompt: string;
+      /** rendered as clickable chips only — no text input, no free typing; clicking one resolves the field immediately */
+      options: string[];
+    };
 
 /**
  * a single region that swaps between interaction modes as the tutorial
@@ -178,13 +185,39 @@ export class Panel {
   }
 
   /**
-   * renders one prompt + one text input; resolves with the trimmed value once the visitor
-   * submits a non-empty answer. If `field.examples` is given, also renders a row of clickable
-   * chips below the input — clicking one confirms that example immediately, resolving the
-   * field without requiring a separate submit.
+   * renders one prompt, then either a text input (`type: "text"`, resolving with the trimmed
+   * value once the visitor submits a non-empty answer, plus an optional row of clickable
+   * `examples` chips that confirm immediately) or a pill-only row of clickable `options` chips
+   * with no input at all (`type: "choice"`, for a question where free typing isn't wanted).
    */
   showField(field: PanelField): Promise<string> {
     this.clear();
+    if (field.type === "choice") {
+      return new Promise((resolve) => {
+        const content = document.createElement("div");
+        content.classList.add("wd-panel-form", "wd-panel-content");
+
+        const prompt = document.createElement("label");
+        prompt.classList.add("wd-panel-form-prompt");
+        prompt.textContent = field.prompt;
+        content.appendChild(prompt);
+
+        const options = document.createElement("div");
+        options.classList.add("wd-panel-form-examples");
+        for (const option of field.options) {
+          const chip = document.createElement("button");
+          chip.type = "button";
+          chip.classList.add("wd-panel-form-example");
+          chip.textContent = option;
+          chip.addEventListener("click", () => resolve(option.trim()));
+          options.appendChild(chip);
+        }
+        content.appendChild(options);
+
+        this.container.appendChild(content);
+      });
+    }
+
     return new Promise((resolve) => {
       const form = document.createElement("form");
       form.classList.add("wd-panel-form", "wd-panel-content");

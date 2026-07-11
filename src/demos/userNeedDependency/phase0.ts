@@ -15,52 +15,69 @@ const seedValueChain = createValueChain({
   ],
 });
 
-/** the mascot's Phase 0 bubble copy, shown before the first drag */
-const MASCOT_INTRO = { heading: "Solve the puzzle.", subheading: "Drag the missing piece into place." };
+/** the mascot's one-button gate shown right after the Need snaps into place — a rhetorical hype
+ * beat, not a real fork, so it offers only a single option ("Let's begin!"), no "No" path */
+const MASCOT_BEGIN_GATE = { prompt: "Want to learn about Wardley Mapping?", options: [{ id: "begin", label: "Let's begin!" }] };
+
+/** the mascot's Phase 0 -> Phase 5 "waiting for Next" pause, once labels are revealed. Carries the
+ * "what's a Value Chain?" payoff (a one-shot "it's a recipe" summary); the User/Need/Capability
+ * walkthrough that explains the chain piece-by-piece continues from here in `phase5.ts`. */
+const MASCOT_NEED_PLACED = {
+  heading: "You made a Value Chain!",
+  subheading: "A value chain is a recipe for delivering value.",
+};
 
 /**
  * Phase 0: drag the Need into place. The Need node itself renders already on the canvas, out of
  * place at its `start` position (`layoutValueChain`'s default, same row as its final spot but off
  * to one side) and pulsing (`wd-node--beckon`) to invite a direct drag — no separate toolbox slot
- * to pick up from. Mounts the sole `Mascot` guide (`engine/mascot.ts`) before `WardleyDemo` itself,
- * since the mascot renders from the very start of the scenario. The mascot anchors beside the
- * Need's *destination* marker instead — the dashed target circle at its final `layoutValueChain`
- * position (`WardleyDemo.getNodePixelPosition`), via `Mascot`'s `"northeast"` placement — so it
- * points at where the Need is headed rather than sitting on top of the node the visitor is about
- * to pick up. It greets the visitor (`MASCOT_INTRO`, via `Mascot.showPlaceholder`), then waits for the
- * Need to be dragged into place. Once it snaps, the mascot re-anchors to the Need's settled
- * position (`"northeast"`, clear of the Capability row underneath) and fires `onNeedPlaced`
- * (Phase 0 done) — the caller then shows the "That's a Value Chain!" placeholder and a "Next" link
- * (see `phase10.ts`).
+ * to pick up from. There is nothing else to explain here (no mascot, no puzzle-framing copy): a
+ * `createDirectionalArrow` cue (`WardleyDemo.addDirectionalArrow`) points from the Need's `start`
+ * toward its destination instead, and every node's label starts hidden (`WardleyDemo.
+ * hideNodeLabels`) so there's only one visible thing to do.
+ *
+ * Once the Need snaps into place, `onNeedPlaced` fires (Phase 0 done), the arrow cue is removed,
+ * and *only then* does the `Mascot` mount for the first time — anchored beside the Need's settled
+ * position (`"northeast"`, clear of the Capability row underneath). It shows a single-CTA gate
+ * (`MASCOT_BEGIN_GATE`, "Want to learn about Wardley Mapping?" / "Let's begin!") before revealing
+ * every node's label (`WardleyDemo.revealNodeLabels`) and explaining what was just built
+ * (`MASCOT_NEED_PLACED`) behind its own "Next" gate — the caller (`phase5.ts`) then starts directly
+ * with the User/Need/Capability walkthrough.
  */
 export async function runPhase0(options: ValueChainScenarioOptions): Promise<ScenarioContext> {
   const chain = seedValueChain;
   const demoConfig = options.config ?? layoutValueChain(chain, options.layout);
-
-  const mascot = new Mascot(options.mascotHost);
-  mascot.mount();
-  mascot.showPlaceholder(MASCOT_INTRO.heading, MASCOT_INTRO.subheading);
+  const needNodeConfig = demoConfig.nodes.find((n) => n.id === chain.need.id)!;
+  const needStart = needNodeConfig.start ?? { x: needNodeConfig.x, y: needNodeConfig.y };
+  const needTarget = { x: needNodeConfig.x, y: needNodeConfig.y };
 
   let demo!: WardleyDemo;
+  let arrow!: SVGGElement;
   await new Promise<void>((resolve) => {
     demo = WardleyDemo.mount(options.canvas, { ...demoConfig, onComplete: resolve });
     // grows the viewBox to fill the container right away, so the canvas is already the same size
     // it'll be in Phase 20 (see `growToFillContainer`'s doc comment) instead of visibly widening
     // later at the Phase 20 transition.
     demo.growToFillContainer(PANEL_CONTENT_MIN_HEIGHT);
-    const needDestination = demo.getNodePixelPosition(chain.need.id);
-    // anchors beside the Need's *destination* marker (the dashed target circle), not its
-    // out-of-place `start` position -- keeps the mascot clear of the node the visitor is about
-    // to pick up and drag, and points at where it's headed instead.
-    if (needDestination) mascot.moveTo(chain.need.id, needDestination, "northeast");
+    demo.hideNodeLabels();
+    arrow = demo.addDirectionalArrow(needStart, needTarget);
     options.onMount?.(demo);
   });
 
+  arrow.remove();
+  options.onNeedPlaced?.();
+
+  const mascot = new Mascot(options.mascotHost);
+  mascot.mount();
   mascot.attachDemo(demo);
   const needPlacedPos = demo.getNodePixelPosition(chain.need.id);
   if (needPlacedPos) mascot.moveTo(chain.need.id, needPlacedPos, "northeast");
 
-  options.onNeedPlaced?.();
+  await mascot.showGate(MASCOT_BEGIN_GATE.prompt, "", MASCOT_BEGIN_GATE.options);
+
+  demo.revealNodeLabels();
+  mascot.showPlaceholder(MASCOT_NEED_PLACED.heading, MASCOT_NEED_PLACED.subheading);
+  await mascot.confirmPlacement("Next");
 
   return { demo, mascot, chain, options };
 }

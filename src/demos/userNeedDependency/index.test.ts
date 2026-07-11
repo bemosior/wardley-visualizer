@@ -28,9 +28,22 @@ function submitText(mascotHost: HTMLElement, value: string): void {
   submitForm(mascotHost);
 }
 
+/** clicks a `type: "choice"` field's pill option matching `label` exactly (User/Need in Phase 10 -- no text input to type into, see panel.ts) */
+function chooseOption(mascotHost: HTMLElement, label: string): void {
+  const chip = Array.from(mascotHost.querySelectorAll<HTMLButtonElement>(".wd-panel-form-example")).find(
+    (button) => button.textContent === label,
+  )!;
+  chip.click();
+}
+
 /** every gate/confirm link (every "Next" click point in the scenario) renders inside the mascot's own speech bubble */
 function clickNext(mascotHost: HTMLElement): void {
   mascotHost.querySelector<HTMLButtonElement>(".wd-next-link")!.click();
+}
+
+/** Phase 0's post-drop single-CTA gate ("Want to learn about Wardley Mapping?" / "Let's begin!") -- a `showGate` button, not a `.wd-next-link` */
+function clickBegin(mascotHost: HTMLElement): void {
+  mascotHost.querySelector<HTMLButtonElement>(".wd-panel-question-option")!.click();
 }
 
 function buildScenario(onCelebrate: () => void) {
@@ -55,10 +68,12 @@ async function passCelebrateDelay(): Promise<void> {
   }
 }
 
-/** drags the Need into place (default layout's target is centerX=200, needY=76 for the default 400x300 viewBox), then clicks past Phase 5's five "Next" gates ("Need placed", the User/Need/Capability walkthrough, and the Part A/B/C explanation) and Phase 7's single "I'm Ben" introduction gate into the form */
+/** drags the Need into place (default layout's target is centerX=200, needY=76 for the default 400x300 viewBox), clicks past Phase 0's post-drop "Let's begin!" gate, then clicks past its six "Next" gates ("You made a Value Chain!", the User/Need/Capability walkthrough, and the Part A/B/C explanation) and Phase 7's single "I'm Ben" introduction gate into the form */
 async function completeDragStep(canvas: HTMLElement, mascotHost: HTMLElement): Promise<void> {
   const needNode = canvas.querySelector('[data-node-id="need"]')!;
   drag(needNode, { x: 200, y: 76 });
+  await flush();
+  clickBegin(mascotHost);
   await flush();
   for (let i = 0; i < 6; i++) {
     clickNext(mascotHost);
@@ -68,16 +83,18 @@ async function completeDragStep(canvas: HTMLElement, mascotHost: HTMLElement): P
 }
 
 describe("runValueChainScenario", () => {
-  it("renders the Need already on the canvas, out of place and beckoning, before any form step", () => {
+  it("renders the Need already on the canvas, out of place, beckoning, and labelless, with a directional-arrow cue and no mascot yet", () => {
     const { canvas, mascotHost } = buildScenario(vi.fn());
     const needNode = canvas.querySelector('[data-node-id="need"]')!;
     expect(needNode.classList.contains("wd-node--beckon")).toBe(true);
     expect(needNode.getAttribute("transform")).not.toBe("translate(200, 76)");
-    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Solve the puzzle.");
+    expect(canvas.querySelector(".wd-direction-arrow")).not.toBeNull();
+    expect(needNode.querySelector(".wd-node-label")!.classList.contains("wd-node-label--hidden")).toBe(true);
+    expect(mascotHost.querySelector(".wd-mascot")).toBeNull();
     expect(mascotHost.querySelector("form")).toBeNull();
   });
 
-  it("fires onNeedPlaced as soon as the Need snaps, and waits for a Next click before advancing", async () => {
+  it("fires onNeedPlaced as soon as the Need snaps, mounts the mascot, removes the arrow cue, and shows a single-CTA gate", async () => {
     const onNeedPlaced = vi.fn();
     const canvas = document.createElement("div");
     const mascotHost = document.createElement("div");
@@ -89,15 +106,39 @@ describe("runValueChainScenario", () => {
     await flush();
 
     expect(onNeedPlaced).toHaveBeenCalledOnce();
+    expect(canvas.querySelector(".wd-direction-arrow")).toBeNull();
+    expect(mascotHost.querySelector(".wd-mascot")).not.toBeNull();
     expect(mascotHost.querySelector("form")).toBeNull();
-    expect(mascotHost.querySelector(".wd-next-link")).not.toBeNull();
+    expect(mascotHost.querySelector(".wd-next-link")).toBeNull();
+    const gateOption = mascotHost.querySelector<HTMLButtonElement>(".wd-panel-question-option");
+    expect(gateOption).not.toBeNull();
+    expect(gateOption!.textContent).toBe("Let's begin!");
+    expect(needNode.querySelector(".wd-node-label")!.classList.contains("wd-node-label--hidden")).toBe(true);
+  });
+
+  it("clicking 'Let's begin!' reveals every node's label and shows the Value Chain placeholder", async () => {
+    const { canvas, mascotHost } = buildScenario(vi.fn());
+    const needNode = canvas.querySelector('[data-node-id="need"]')!;
+    drag(needNode, { x: 200, y: 76 });
+    await flush();
+
+    clickBegin(mascotHost);
+    await flush();
+
+    expect(needNode.querySelector(".wd-node-label")!.classList.contains("wd-node-label--hidden")).toBe(false);
+    expect(canvas.querySelector('[data-node-id="user"] .wd-node-label')!.classList.contains("wd-node-label--hidden")).toBe(
+      false,
+    );
     expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("You made a Value Chain!");
+    expect(mascotHost.querySelector(".wd-next-link")).not.toBeNull();
   });
 
   it("walks the user through User/Need/Capability, relabels the three Capability nodes to Part A/B/C, explains multi-part needs, then has the mascot introduce itself before the form", async () => {
     const { canvas, mascotHost } = buildScenario(vi.fn());
     const needNode = canvas.querySelector('[data-node-id="need"]')!;
     drag(needNode, { x: 200, y: 76 });
+    await flush();
+    clickBegin(mascotHost);
     await flush();
     clickNext(mascotHost);
     await flush();
@@ -134,7 +175,7 @@ describe("runValueChainScenario", () => {
     clickNext(mascotHost);
     await flush();
     await passCelebrateDelay();
-    expect(mascotHost.querySelector("form")).not.toBeNull();
+    expect(mascotHost.querySelector(".wd-panel-form")).not.toBeNull();
     expect(mascotHost.querySelector(".wd-panel-form-prompt")!.textContent).toBe("Who should we help today?");
   });
 
@@ -152,12 +193,12 @@ describe("runValueChainScenario", () => {
     const { canvas, mascotHost } = buildScenario(vi.fn());
     await completeDragStep(canvas, mascotHost);
 
-    submitText(mascotHost, "A commuter");
+    chooseOption(mascotHost, "Commuter");
     await flush();
-    expect(canvas.querySelector('[data-node-id="user"] .wd-node-label')!.textContent).toBe("A commuter");
+    expect(canvas.querySelector('[data-node-id="user"] .wd-node-label')!.textContent).toBe("Commuter");
 
     const need = NEED_CATALOG[0];
-    submitText(mascotHost, need.label);
+    chooseOption(mascotHost, need.label);
     await flush();
     expect(canvas.querySelector('[data-node-id="need"] .wd-node-label')!.textContent).toBe(need.label);
 
@@ -178,11 +219,11 @@ describe("runValueChainScenario", () => {
     const { canvas, mascotHost } = buildScenario(vi.fn());
     await completeDragStep(canvas, mascotHost);
 
-    submitText(mascotHost, "A home cook");
+    chooseOption(mascotHost, "Home Cook");
     await flush();
 
     const grocery = NEED_CATALOG.find((need) => need.id === "fresh-grocery-delivery")!;
-    submitText(mascotHost, grocery.label);
+    chooseOption(mascotHost, grocery.label);
     await flush();
 
     for (const placeholder of grocery.capabilityPlaceholders) {
@@ -198,9 +239,9 @@ describe("runValueChainScenario", () => {
     await completeDragStep(canvas, mascotHost);
     expect(onCelebrate).not.toHaveBeenCalled();
 
-    submitText(mascotHost, "A commuter");
+    chooseOption(mascotHost, "Commuter");
     await flush();
-    submitText(mascotHost, NEED_CATALOG[0].label);
+    chooseOption(mascotHost, NEED_CATALOG[0].label);
     await flush();
     submitText(mascotHost, "A kettle");
     await flush();
@@ -225,9 +266,9 @@ describe("runValueChainScenario", () => {
     runValueChainScenario({ canvas, mascotHost, onEvolutionReady });
     await completeDragStep(canvas, mascotHost);
 
-    submitText(mascotHost, "A commuter");
+    chooseOption(mascotHost, "Commuter");
     await flush();
-    submitText(mascotHost, NEED_CATALOG[0].label);
+    chooseOption(mascotHost, NEED_CATALOG[0].label);
     await flush();
     submitText(mascotHost, "A kettle");
     await flush();
@@ -261,20 +302,22 @@ describe("runValueChainScenario", () => {
     vi.useRealTimers();
   });
 
-  it("mounts the mascot immediately, before any drag/form step, then swaps in a Need-label/Genesis bubble once Phase 20 begins", async () => {
+  it("does not mount the mascot until the Need is placed, then swaps in a Need-label/Genesis bubble once Phase 20 begins", async () => {
     const canvas = document.createElement("div");
     const mascotHost = document.createElement("div");
     document.body.append(canvas, mascotHost);
     runValueChainScenario({ canvas, mascotHost });
 
-    expect(mascotHost.querySelector(".wd-mascot")).not.toBeNull();
+    expect(mascotHost.querySelector(".wd-mascot")).toBeNull();
 
     await completeDragStep(canvas, mascotHost);
 
+    expect(mascotHost.querySelector(".wd-mascot")).not.toBeNull();
+
     const need = NEED_CATALOG[0];
-    submitText(mascotHost, "A commuter");
+    chooseOption(mascotHost, "Commuter");
     await flush();
-    submitText(mascotHost, need.label);
+    chooseOption(mascotHost, need.label);
     await flush();
     submitText(mascotHost, "A kettle");
     await flush();
@@ -294,9 +337,9 @@ describe("runValueChainScenario", () => {
   /** walks the Phase 10 form and clicks past the Phase 10->20 gate, landing right where the Need starts beckoning on the map (default layout's Genesis x is 50, at the Need's unchanged y of 76) */
   async function reachEvolutionStep(canvas: HTMLElement, mascotHost: HTMLElement): Promise<void> {
     await completeDragStep(canvas, mascotHost);
-    submitText(mascotHost, "A commuter");
+    chooseOption(mascotHost, "Commuter");
     await flush();
-    submitText(mascotHost, NEED_CATALOG[0].label);
+    chooseOption(mascotHost, NEED_CATALOG[0].label);
     await flush();
     submitText(mascotHost, "A kettle");
     await flush();
@@ -577,9 +620,9 @@ describe("runValueChainScenario", () => {
   it("does not advance on a whitespace-only capability answer", async () => {
     const { canvas, mascotHost } = buildScenario(vi.fn());
     await completeDragStep(canvas, mascotHost);
-    submitText(mascotHost, "A commuter");
+    chooseOption(mascotHost, "Commuter");
     await flush();
-    submitText(mascotHost, NEED_CATALOG[0].label);
+    chooseOption(mascotHost, NEED_CATALOG[0].label);
     await flush();
 
     submitText(mascotHost, "   ");

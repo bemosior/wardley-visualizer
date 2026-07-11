@@ -19,16 +19,16 @@ export async function runPhase10(ctx: ScenarioContext): Promise<void> {
   const userPos = demo.getNodePixelPosition(ctx.chain.user.id);
   if (userPos) mascot.moveTo(ctx.chain.user.id, userPos, "northeast");
   const userLabel = await mascot.showField({
-    type: "text",
+    type: "choice",
     prompt: "Who should we help today?",
-    placeholder: NEED_CATALOG[0].userPlaceholder,
-    examples: NEED_CATALOG.map((need) => need.userPlaceholder),
+    options: NEED_CATALOG.map((need) => need.userPlaceholder),
   });
   ctx.chain = relabelUser(ctx.chain, userLabel);
   demo.relabelNode(ctx.chain.user.id, ctx.chain.user.label);
 
-  // narrow the "what does X need?" pills to needs catalogued for that user; falls back to
-  // the full catalog when the visitor typed a custom user we don't recognize
+  // narrow the "what does X need?" pills to needs catalogued for that user. Since userLabel is
+  // now always an exact NEED_CATALOG value (a pill choice, not free text), this always matches --
+  // the full-catalog fallback below is defensive dead code, left in case that ever changes.
   const matchingUserNeeds = NEED_CATALOG.filter(
     (need) => need.userPlaceholder.toLowerCase() === userLabel.trim().toLowerCase(),
   );
@@ -37,10 +37,9 @@ export async function runPhase10(ctx: ScenarioContext): Promise<void> {
   const needPos = demo.getNodePixelPosition(ctx.chain.need.id);
   if (needPos) mascot.moveTo(ctx.chain.need.id, needPos, "northeast");
   const needLabel = await mascot.showField({
-    type: "text",
+    type: "choice",
     prompt: "What does " + userLabel + " need?",
-    placeholder: relevantNeeds[0].label,
-    examples: relevantNeeds.map((need) => need.label),
+    options: relevantNeeds.map((need) => need.label),
   });
   ctx.chain = relabelNeed(ctx.chain, needLabel);
   demo.relabelNode(ctx.chain.need.id, ctx.chain.need.label);

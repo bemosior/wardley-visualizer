@@ -2,9 +2,10 @@ import type { WardleyDemo, EvolutionDragHandle } from "../engine/WardleyDemo";
 
 /**
  * named moments in the demo's current (built-so-far) flow that `index.html?skipTo=` can land on.
- * `intro`: skip the Phase 0 drag and click past all five of Phase 5's "Next" gates ("Need placed"
- * through the Part A/B/C explanation), land at Phase 7's "I'm Ben, by the way" introduction (its
- * own "Nice to meet you!" gate is left for a real click).
+ * `intro`: skip the Phase 0 drag, its post-drop "Let's begin!" gate, and all five of the resulting
+ * "Next" gates (Phase 0's "You made a Value Chain!" placeholder, then Phase 5's User/Need/
+ * Capability walkthrough and Part A/B/C explanation), landing at Phase 7's "I'm Ben, by the way"
+ * introduction (its own "Nice to meet you!" gate is left for a real click).
  * `phase10`: also click past Phase 7's "I'm Ben" introduction gate, land at the start of
  * Phase 10's form.
  * `celebrate`: also auto-fill all 5 form fields, land right after the Phase 10 celebration.
@@ -45,12 +46,19 @@ export interface Autopilot {
 
 const DEFAULT_TEXT_ANSWER = "Test";
 
-/** fills a Phase 10 form field with a default answer and submits it, same as a visitor confirming */
-function fillAndSubmit(form: HTMLFormElement): void {
-  const input = form.querySelector<HTMLInputElement>(".wd-panel-form-input");
-  if (!input) return;
-  input.value = input.placeholder || DEFAULT_TEXT_ANSWER;
-  form.dispatchEvent(new Event("submit", { cancelable: true }));
+/**
+ * advances a Phase 10 field with a default answer, same as a visitor confirming: a `type: "text"`
+ * field fills its input and submits the form; a `type: "choice"` field (panel.ts) has no input at
+ * all, just pill chips, so this clicks the first one instead.
+ */
+function fillAndSubmit(field: HTMLElement): void {
+  const input = field.querySelector<HTMLInputElement>(".wd-panel-form-input");
+  if (input) {
+    input.value = input.placeholder || DEFAULT_TEXT_ANSWER;
+    field.dispatchEvent(new Event("submit", { cancelable: true }));
+    return;
+  }
+  field.querySelector<HTMLButtonElement>(".wd-panel-form-example")?.click();
 }
 
 /**
@@ -60,10 +68,10 @@ function fillAndSubmit(form: HTMLFormElement): void {
  * the-more-of-the-peaceful-sky plan for why this exists instead of a resumable step machine.
  */
 export function attachAutopilot({ mascotHost, target }: AutopilotOptions): Autopilot {
-  // counts only the plain "Next" links -- Phase 5's five gates ("Need placed", the User/Need/
-  // Capability walkthrough, and the Part A/B/C explanation) and the Phase 10->20 gate all share
-  // identical link text, so they can't be told apart by content the way every other gate below is
-  // (by its own distinct label).
+  // counts only the plain "Next" links -- Phase 0's "You made a Value Chain!" placeholder, Phase
+  // 5's four remaining gates (the User/Need/Capability walkthrough and the Part A/B/C
+  // explanation), and the Phase 10->20 gate all share identical link text, so they can't be told
+  // apart by content the way every other gate below is (by its own distinct label).
   let plainNextCount = 0;
 
   function disconnect(): void {
@@ -75,7 +83,16 @@ export function attachAutopilot({ mascotHost, target }: AutopilotOptions): Autop
    * slots, form, instrument panel, confirm/gate links, questions) into the same root.
    */
   function handleContentMutation(): void {
-    const form = mascotHost.querySelector<HTMLFormElement>(".wd-panel-form");
+    // Phase 0's post-drop single-CTA gate ("Want to learn about Wardley Mapping?" / "Let's
+    // begin!") -- a `showGate` button (`.wd-panel-question-option`, not `.wd-next-link`), auto-
+    // clicked unconditionally since every target is downstream of it.
+    const beginOption = mascotHost.querySelector<HTMLButtonElement>(".wd-panel-question-option");
+    if (beginOption?.textContent === "Let's begin!") {
+      beginOption.click();
+      return;
+    }
+
+    const form = mascotHost.querySelector<HTMLElement>(".wd-panel-form");
     if (form) fillAndSubmit(form);
 
     const link = mascotHost.querySelector<HTMLButtonElement>(".wd-next-link");
@@ -84,8 +101,8 @@ export function attachAutopilot({ mascotHost, target }: AutopilotOptions): Autop
     if (linkText === "Next") {
       plainNextCount++;
       if (plainNextCount <= 4) {
-        // Phase 5's "Need placed" gate, then the User/Need/Capability walkthrough gates --
-        // always skip past them, no target stops here
+        // Phase 0's "You made a Value Chain!" gate, then Phase 5's User/Need/Capability
+        // walkthrough gates -- always skip past them, no target stops here
         link!.click();
       } else if (plainNextCount === 5) {
         // Phase 5's Part A/B/C explanation gate -- always skip past it too, into Phase 7's
