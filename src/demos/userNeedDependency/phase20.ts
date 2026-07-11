@@ -36,7 +36,7 @@ function awaitEvolutionConfirm(
 
 const MASCOT_EVOLUTION_INTRO = {
   heading: "Everything evolves.",
-  subheading: "As things evolve, how you build, buy, and lead around them changes too.",
+  subheading: "As things evolve, they change! And that means the way we treat them should change, too.",
 };
 
 /**
