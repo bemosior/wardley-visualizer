@@ -7,7 +7,7 @@ import { CELEBRATE_DURATION_MS } from "./phase7";
 
 function gatePrompt(conceptId: string, nodeLabel: string): string {
   const concept = CONCEPT_BANK.find((c) => c.id === conceptId)!;
-  return `${concept.definition}\n\nCould we learn something from exploring this with ${nodeLabel}?`;
+  return `${concept.definition}\n\nDo you think we could learn something from exploring ${concept.label} with ${nodeLabel}?`;
 }
 
 function drag(handle: Element, to: { x: number; y: number }): void {
