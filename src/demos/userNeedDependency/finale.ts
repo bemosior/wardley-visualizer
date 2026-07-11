@@ -13,7 +13,7 @@ export async function runFinale(ctx: ScenarioContext): Promise<void> {
   mascot.moveToTopRight();
   mascot.showRecap(
     ["You made a Value Chain", "Then you turned it into a Wardley Map", "And finally, you used the map for strategic thinking! Well done!"],
-    { label: "Take your next step →", href: "https://learnwardleymapping.com" },
+    { label: "Take your next step →", href: "https://learnwardleymapping.com#start-today" },
   );
   mascot.setState("celebrating");
   options.onComplete?.();
