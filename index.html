@@ -86,12 +86,26 @@
         margin-left: 0.35rem;
       }
 
-      /* draft: end credits, scrolling like a game/Patreon-video outro */
+      /* draft: end credits, scrolling like a game/Patreon-video outro.
+         Hidden until the mascot's closing "Nice work!" recap fires (onComplete). */
       .credits {
+        display: none;
         background: #111;
         color: #eee;
         padding: 2.5rem 1.5rem;
         text-align: center;
+      }
+      .credits.is-visible {
+        display: block;
+        animation: credits-fade-in 0.6s ease;
+      }
+      @keyframes credits-fade-in {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
       }
       .credits-heading {
         font-family: var(--font-ui);
@@ -207,6 +221,8 @@
         mascotHost,
         onMount: autopilot?.onMount,
         onEvolutionStep: autopilot?.onEvolutionStep,
+        // Reveal the end credits only once the mascot's closing "Nice work!" recap fires.
+        onComplete: () => document.querySelector(".credits").classList.add("is-visible"),
         config: {
           viewBox: { width: 400, height: 520 },
           snapThreshold: 30,
