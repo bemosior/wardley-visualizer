@@ -133,7 +133,7 @@ describe("Panel.showField", () => {
     const result = panel.showField({
       type: "choice",
       prompt: "Who should we help today?",
-      options: ["Commuter", "Teenager", "Home Cook"],
+      options: ["Commuter", "College Student", "Home Cook"],
     });
 
     expect(container.querySelector("input")).toBeNull();
