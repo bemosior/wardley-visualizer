@@ -24,7 +24,7 @@ export interface ValueChainScenarioOptions {
    * canvas itself, not a mascot bubble.
    */
   mascotHost: HTMLElement;
-  /** fires as soon as the Need snaps into place (Phase 0 done); the scenario then mounts the mascot for the first time and shows a single-CTA "Want to learn about Wardley Mapping?" gate before revealing every node's label and walking into Phase 5 */
+  /** fires as soon as the Need snaps into place (Phase 0 done); the scenario then mounts the mascot for the first time, reveals every node's label, and shows the "You just made a Value Chain!" placeholder before walking into Phase 5 */
   onNeedPlaced?: () => void;
   onCelebrate?: () => void;
   /** fires right after the canvas mounts, before the drag step resolves — lets a caller grab the `WardleyDemo` instance early enough to call `skipDrag()` (see `src/dev/autopilot.ts`) */
@@ -67,8 +67,8 @@ export interface ScenarioContext {
  * `ScenarioContext` from one to the next:
  *
  * - `phase0.ts` — a directional-arrow cue (no mascot yet) invites dragging the Need into place;
- *   once it snaps, the mascot mounts for the first time with a single-CTA "Let's begin!" gate,
- *   then reveals every node's label and shows the "You made a Value Chain!" placeholder.
+ *   once it snaps, the mascot mounts for the first time, reveals every node's label, and shows
+ *   the "You made a Value Chain!" placeholder.
  * - `phase5.ts` — relabels the three Capability nodes to "Part A"/"Part B"/"Part C" and explains
  *   that a need can take multiple parts adding up together.
  * - `phase7.ts` — the mascot steps back into open canvas whitespace to introduce itself ("I'm Ben,

@@ -15,11 +15,6 @@ const seedValueChain = createValueChain({
   ],
 });
 
-/** the mascot's one-button beat shown right after the Need snaps into place — a rhetorical hype
- * beat, not a real fork, so it renders as a heading + the shared "Next"-style CTA (`wd-next-link`)
- * rather than `showGate`'s pale multiple-choice buttons, which are reserved for actual forks */
-const MASCOT_BEGIN_GATE = { prompt: "Want to build a Wardley Map?", cta: "Let's begin!" };
-
 /** the mascot's Phase 0 -> Phase 5 "waiting for Next" pause, once labels are revealed. Carries the
  * "what's a Value Chain?" payoff (a one-shot "it's a recipe" summary); the User/Need/Capability
  * walkthrough that explains the chain piece-by-piece continues from here in `phase5.ts`. */
@@ -43,11 +38,9 @@ const MASCOT_NEED_PLACED = {
  * position (`"northeast"`, clear of the Capability row underneath). Before saying anything, it
  * plays a one-time "arrival" flourish (`Mascot.arrive`) — a pop-in plus the reused celebrating
  * bounce/glow — so this first appearance reads as a small reward rather than the mascot just
- * flatly existing. It then shows a single-CTA beat (`MASCOT_BEGIN_GATE`, "Want to learn about
- * Wardley Mapping?" / "Let's begin!") before revealing
- * every node's label (`WardleyDemo.revealNodeLabels`) and explaining what was just built
- * (`MASCOT_NEED_PLACED`) behind its own "Next" beat — the caller (`phase5.ts`) then starts directly
- * with the User/Need/Capability walkthrough.
+ * flatly existing. It then reveals every node's label (`WardleyDemo.revealNodeLabels`) and
+ * explains what was just built (`MASCOT_NEED_PLACED`) behind its own "Next" beat — the caller
+ * (`phase5.ts`) then starts directly with the User/Need/Capability walkthrough.
  */
 export async function runPhase0(options: ValueChainScenarioOptions): Promise<ScenarioContext> {
   const chain = seedValueChain;
@@ -77,11 +70,8 @@ export async function runPhase0(options: ValueChainScenarioOptions): Promise<Sce
   const needPlacedPos = demo.getNodePixelPosition(chain.need.id);
   if (needPlacedPos) mascot.moveTo(chain.need.id, needPlacedPos, "northeast");
 
-  await mascot.arrive(() => mascot.showPlaceholder(MASCOT_BEGIN_GATE.prompt, ""));
-  await mascot.confirmPlacement(MASCOT_BEGIN_GATE.cta);
-
   demo.revealNodeLabels();
-  mascot.showPlaceholder(MASCOT_NEED_PLACED.heading, MASCOT_NEED_PLACED.subheading);
+  await mascot.arrive(() => mascot.showPlaceholder(MASCOT_NEED_PLACED.heading, MASCOT_NEED_PLACED.subheading));
   await mascot.confirmPlacement("Next");
 
   return { demo, mascot, chain, options };
