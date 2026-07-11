@@ -109,6 +109,7 @@ export class Mascot {
   private viewBoxAnchor: { x: number; y: number } | null = null;
   private lastPos: { x: number; y: number; radius?: number } | null = null;
   private placement: MascotPlacement = "auto";
+  private hasPositioned = false;
   private resizeHandler = (): void => this.trackAnchor();
 
   constructor(host: HTMLElement) {
@@ -350,8 +351,24 @@ export class Mascot {
 
     const avatarTop = side === "below" ? clearBelow : effectiveClearAbove - AVATAR_HEIGHT;
 
+    // `.wd-mascot`'s CSS gives it a resting `top: 0; left: 0` (styles.ts) plus a `left`/`top`
+    // transition meant for *later* re-anchors (e.g. jumping between nodes). Without this guard,
+    // the very first `reposition` after `mount` would animate from that CSS resting position to
+    // the real spawn point -- the mascot visibly appearing top-left of the host and sliding into
+    // place instead of just appearing there. Suppressing the transition only for that first call
+    // (then forcing a reflow so the browser commits "no transition" before re-enabling it next
+    // frame) keeps every later re-anchor animated as intended.
+    const isFirstPosition = !this.hasPositioned;
+    if (isFirstPosition) this.root.style.transition = "none";
     this.root.style.left = `${x - AVATAR_WIDTH / 2}px`;
     this.root.style.top = `${avatarTop}px`;
+    if (isFirstPosition) {
+      this.hasPositioned = true;
+      void this.root.offsetHeight;
+      requestAnimationFrame(() => {
+        this.root.style.transition = "";
+      });
+    }
     this.clampBubbleHorizontally(radius);
     this.positionBubbleVertically(side, avatarTop, clearBelow, effectiveClearAbove, bubbleHeight);
   }
