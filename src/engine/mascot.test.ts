@@ -544,4 +544,39 @@ describe("Mascot.arrive", () => {
     expect(host.querySelector(".wd-mascot")!.classList.contains("wd-mascot--arriving")).toBe(false);
     expect(host.querySelector(".wd-mascot-avatar")!.classList.contains("wd-mascot--idle")).toBe(true);
   });
+
+  it("keeps the bubble empty and hidden until reveal fires, right before it's unhidden", async () => {
+    window.matchMedia = (() => ({ matches: false })) as unknown as typeof window.matchMedia;
+    vi.useFakeTimers();
+    const host = makeHost();
+    const mascot = new Mascot(host);
+    mascot.mount();
+
+    let revealedWhileHidden = false;
+    const arrived = mascot.arrive(() => {
+      revealedWhileHidden = host.querySelector(".wd-mascot")!.classList.contains("wd-mascot--arriving");
+      mascot.showPlaceholder("Want to learn about Wardley Mapping?", "");
+    });
+
+    expect(host.querySelector(".wd-mascot-bubble")!.textContent).toBe("");
+
+    await vi.advanceTimersByTimeAsync(1000);
+    await arrived;
+
+    expect(revealedWhileHidden).toBe(true);
+    expect(host.querySelector(".wd-mascot")!.classList.contains("wd-mascot--arriving")).toBe(false);
+    expect(host.querySelector(".wd-mascot-bubble")!.textContent).toContain("Want to learn about Wardley Mapping?");
+    vi.useRealTimers();
+  });
+
+  it("invokes reveal immediately under prefers-reduced-motion, before returning", async () => {
+    window.matchMedia = (() => ({ matches: true })) as unknown as typeof window.matchMedia;
+    const host = makeHost();
+    const mascot = new Mascot(host);
+    mascot.mount();
+
+    await mascot.arrive(() => mascot.showPlaceholder("Want to learn about Wardley Mapping?", ""));
+
+    expect(host.querySelector(".wd-mascot-bubble")!.textContent).toContain("Want to learn about Wardley Mapping?");
+  });
 });

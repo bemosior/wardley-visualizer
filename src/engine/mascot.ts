@@ -152,21 +152,27 @@ export class Mascot {
    * the Need snaps into place): a pop-in plus the same celebratory bounce/glow `setState
    * ("celebrating")` uses elsewhere (`wd-mascot--arriving` in styles.ts), so the very first
    * appearance reads as "you unlocked this" rather than the mascot just flatly existing at its
-   * spawn point. The speech bubble stays hidden for the same span -- an empty bubble box would
-   * otherwise flash beside the avatar before the caller's next `showPlaceholder` gives it any
-   * content -- then fades in once this resolves and that content renders. Skips straight to idle
-   * with no delay under `prefers-reduced-motion`, same as `animateTo`.
+   * spawn point. The speech bubble stays hidden (`wd-mascot--arriving .wd-mascot-bubble`) for the
+   * same span -- an empty bubble box would otherwise flash beside the avatar before any content
+   * exists. `reveal`, if passed, is invoked right as the flourish ends -- *before* the hiding class
+   * is removed -- so it's the one place to set the bubble's actual content (e.g. `showPlaceholder`)
+   * and have that content already sitting in the DOM the instant the bubble becomes visible, rather
+   * than the caller setting it themselves a statement later and leaving the now-unhidden-but-still-
+   * empty box to flash first. Skips straight to idle (still invoking `reveal` immediately) with no
+   * delay under `prefers-reduced-motion`, same as `animateTo`.
    */
-  async arrive(): Promise<void> {
+  async arrive(reveal?: () => void): Promise<void> {
     if (prefersReducedMotion()) {
       this.setState("idle");
+      reveal?.();
       return;
     }
     this.root.classList.add("wd-mascot--arriving");
     this.setState("celebrating");
     await new Promise<void>((resolve) => setTimeout(resolve, ARRIVE_DURATION_MS));
-    this.root.classList.remove("wd-mascot--arriving");
     this.setState("idle");
+    reveal?.();
+    this.root.classList.remove("wd-mascot--arriving");
   }
 
   /**

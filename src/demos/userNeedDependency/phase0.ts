@@ -77,8 +77,7 @@ export async function runPhase0(options: ValueChainScenarioOptions): Promise<Sce
   const needPlacedPos = demo.getNodePixelPosition(chain.need.id);
   if (needPlacedPos) mascot.moveTo(chain.need.id, needPlacedPos, "northeast");
 
-  await mascot.arrive();
-  mascot.showPlaceholder(MASCOT_BEGIN_GATE.prompt, "");
+  await mascot.arrive(() => mascot.showPlaceholder(MASCOT_BEGIN_GATE.prompt, ""));
   await mascot.confirmPlacement(MASCOT_BEGIN_GATE.cta);
 
   demo.revealNodeLabels();
