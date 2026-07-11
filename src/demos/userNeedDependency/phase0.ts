@@ -33,8 +33,9 @@ const MASCOT_NEED_PLACED = {
  * to one side) and pulsing (`wd-node--beckon`) to invite a direct drag — no separate toolbox slot
  * to pick up from. There is nothing else to explain here (no mascot, no puzzle-framing copy): a
  * `createDirectionalArrow` cue (`WardleyDemo.addDirectionalArrow`) points from the Need's `start`
- * toward its destination instead, and every node's label starts hidden (`WardleyDemo.
- * hideNodeLabels`) so there's only one visible thing to do.
+ * toward its destination instead, and every node's label starts hidden with zero visible fade
+ * (`WardleyDemo.mount`'s `hideNodeLabels` option — not a post-mount class toggle, which would
+ * animate; see `createNodeGroup`'s doc comment) so there's only one visible thing to do.
  *
  * Once the Need snaps into place, `onNeedPlaced` fires (Phase 0 done), the arrow cue is removed,
  * and *only then* does the `Mascot` mount for the first time — anchored beside the Need's settled
@@ -54,12 +55,11 @@ export async function runPhase0(options: ValueChainScenarioOptions): Promise<Sce
   let demo!: WardleyDemo;
   let arrow!: SVGGElement;
   await new Promise<void>((resolve) => {
-    demo = WardleyDemo.mount(options.canvas, { ...demoConfig, onComplete: resolve });
+    demo = WardleyDemo.mount(options.canvas, { ...demoConfig, onComplete: resolve }, { hideNodeLabels: true });
     // grows the viewBox to fill the container right away, so the canvas is already the same size
     // it'll be in Phase 20 (see `growToFillContainer`'s doc comment) instead of visibly widening
     // later at the Phase 20 transition.
     demo.growToFillContainer(PANEL_CONTENT_MIN_HEIGHT);
-    demo.hideNodeLabels();
     arrow = demo.addDirectionalArrow(needStart, needTarget);
     options.onMount?.(demo);
   });

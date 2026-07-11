@@ -29,6 +29,13 @@ import { animateTo, type Point } from "./animate";
 export interface MountOptions {
   /** an external element (e.g. a toolbox slot) that the draggable node must be picked up from */
   dragHandle?: HTMLElement;
+  /**
+   * every initial node's label starts hidden (`wd-node-label--hidden`), with zero visible fade --
+   * see `createNodeGroup`'s `hideLabel` doc comment for why this must happen at mount time rather
+   * than via a separate post-mount `addNode`/class-toggle call. Used by Phase 0's opening beat,
+   * which reveals labels later via `revealNodeLabels()` (an intentional, animated reveal).
+   */
+  hideNodeLabels?: boolean;
 }
 
 export interface EvolutionDragStepOptions {
@@ -144,7 +151,7 @@ export class WardleyDemo {
     );
 
     for (const node of config.nodes) {
-      this.addNode(node);
+      this.addNode(node, { hideLabel: options?.hideNodeLabels });
     }
     for (const conn of config.connections) {
       this.addConnection(conn);
@@ -290,10 +297,12 @@ export class WardleyDemo {
    * others that are already sitting there (e.g. Phase 5 filling in the two missing Capability
    * nodes beside the one Phase 0 already rendered); leave it off for the initial mount, where
    * every node appears together and there's nothing for a lone node to visually jump ahead of.
+   * `hideLabel` starts the node's label hidden with zero visible fade -- see `createNodeGroup`'s
+   * doc comment for why this must be passed here rather than applied via a later class toggle.
    */
-  addNode(node: DemoNode, options?: { animateIn?: boolean }): SVGGElement {
+  addNode(node: DemoNode, options?: { animateIn?: boolean; hideLabel?: boolean }): SVGGElement {
     this.nodesById.set(node.id, node);
-    const group = createNodeGroup(node);
+    const group = createNodeGroup(node, { hideLabel: options?.hideLabel });
     this.nodeGroups.set(node.id, group);
     if (options?.animateIn) {
       group.classList.add("wd-node--entering");
@@ -357,17 +366,11 @@ export class WardleyDemo {
   }
 
   /**
-   * hides every currently-registered node's label (`wd-node-label--hidden`, faded via CSS
-   * transition) — Phase 0's opening beat calls this right after mount, so a node's identity is
-   * revealed only once the visitor commits to learning ("Let's begin!"), not before.
+   * reveals every currently-registered node's label (undoes the `hideNodeLabels` mount option, or
+   * `addNode`'s `hideLabel` option) — fades in via `.wd-node-label`'s CSS transition, an
+   * intentional animated reveal (unlike the hide itself, which must start instant — see
+   * `createNodeGroup`'s doc comment).
    */
-  hideNodeLabels(): void {
-    for (const group of this.nodeGroups.values()) {
-      group.querySelector<SVGTextElement>(".wd-node-label")?.classList.add("wd-node-label--hidden");
-    }
-  }
-
-  /** reveals every currently-registered node's label, undoing `hideNodeLabels` — fades in via the same CSS transition. */
   revealNodeLabels(): void {
     for (const group of this.nodeGroups.values()) {
       group.querySelector<SVGTextElement>(".wd-node-label")?.classList.remove("wd-node-label--hidden");

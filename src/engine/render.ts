@@ -16,7 +16,16 @@ export function createLayer(): SVGGElement {
   return document.createElementNS(SVG_NS, "g") as SVGGElement;
 }
 
-export function createNodeGroup(node: DemoNode): SVGGElement {
+/**
+ * `options.hideLabel`, if set, adds `wd-node-label--hidden` to the label at creation time --
+ * before it's ever appended to the DOM or measured (`fitNodeLabel`'s `getComputedTextLength`
+ * forces a style/layout flush). Applying the class any time *after* that first flush (e.g. a
+ * separate `hideNodeLabels()` call made post-mount) lets the browser treat the following hide as
+ * an actual value change from an already-rendered opacity:1, animating it via `.wd-node-label`'s
+ * transition even though no real frame was ever painted in between -- this option exists
+ * specifically to avoid that trap for a node that should start hidden with zero visible fade.
+ */
+export function createNodeGroup(node: DemoNode, options?: { hideLabel?: boolean }): SVGGElement {
   const g = document.createElementNS(SVG_NS, "g") as SVGGElement;
   g.dataset.nodeId = node.id;
   g.classList.add("wd-node");
@@ -34,6 +43,9 @@ export function createNodeGroup(node: DemoNode): SVGGElement {
 
   const label = document.createElementNS(SVG_NS, "text");
   label.classList.add("wd-node-label");
+  if (options?.hideLabel) {
+    label.classList.add("wd-node-label--hidden");
+  }
   label.textContent = node.label;
   g.appendChild(label);
 
