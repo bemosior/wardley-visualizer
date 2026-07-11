@@ -549,7 +549,7 @@ describe("runValueChainScenario", () => {
     expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("A kettle");
     expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(METHOD_QUESTION.prompt);
 
-    clickOption(mascotHost);
+    clickOption(mascotHost, 2); // "No, we're using the wrong methods for this stage.", annotation "Danger: Wrong Methods"
     await flush();
 
     expect(canvas.querySelectorAll(".wd-annotation").length).toBe(1);
@@ -592,7 +592,7 @@ describe("runValueChainScenario", () => {
 
     clickYes(mascotHost);
     await flush();
-    clickOption(mascotHost); // "Using the Right Methods" -> Agile, annotation "Methods: Agile"
+    clickOption(mascotHost, 2); // "Using the Right Methods" -> wrong methods, annotation "Danger: Wrong Methods"
     await flush();
 
     expect(canvas.querySelectorAll(".wd-annotation").length).toBe(1);
@@ -627,7 +627,7 @@ describe("runValueChainScenario", () => {
 
     clickYes(mascotHost);
     await flush();
-    clickOption(mascotHost); // "Using the Right Methods" -> Agile, annotation "Methods: Agile"
+    clickOption(mascotHost, 2); // "Using the Right Methods" -> wrong methods, annotation "Danger: Wrong Methods"
     await flush();
     clickOption(mascotHost, 0); // "Keep Going" past the "Nice insight!" pause
     await flush();
@@ -658,7 +658,7 @@ describe("runValueChainScenario", () => {
 
     clickYes(mascotHost);
     await flush();
-    clickOption(mascotHost);
+    clickOption(mascotHost, 2); // "Using the Right Methods" -> wrong methods, annotation "Danger: Wrong Methods"
     await flush();
     clickOption(mascotHost, 0); // "Keep Going" past "right-methods"'s insight gate
     await flush();
@@ -690,7 +690,7 @@ describe("runValueChainScenario", () => {
 
     clickYes(mascotHost);
     await flush();
-    clickOption(mascotHost); // "Using the Right Methods" -> Agile, annotation "Methods: Agile"
+    clickOption(mascotHost, 2); // "Using the Right Methods" -> wrong methods, annotation "Danger: Wrong Methods"
     await flush();
     clickOption(mascotHost, 1); // "Finish Up"
     await flush();

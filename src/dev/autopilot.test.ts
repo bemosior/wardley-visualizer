@@ -157,10 +157,11 @@ describe("attachAutopilot", () => {
     // deep-dive question, so autopilot says Yes to every one of CONCEPT_BANK's 8 concepts and
     // drains the whole bank. "novelty-bias" never gets a candidate node here (its
     // `applicableStages` needs Product/Commodity, and these capabilities never leave their
-    // default stage in this flow), leaving 7 gated concepts; of those, "inertia" and
-    // "efficiency-innovation" have an intentionally blank annotation on their first (autopilot-
-    // picked) option, so only 5 of the 7 actually anchor a callout
-    expect(canvas.querySelectorAll(".wd-annotation").length).toBe(5);
+    // default stage in this flow), leaving 7 gated concepts; of those, "inertia",
+    // "efficiency-innovation", "method", and "build-buy-outsource" have an intentionally blank
+    // annotation on their first (autopilot-picked, affirmative "we're on track") option, so only
+    // 3 of the 7 actually anchor a callout
+    expect(canvas.querySelectorAll(".wd-annotation").length).toBe(3);
     const finalLink = mascotHost.querySelector<HTMLButtonElement>(".wd-next-link");
     expect(finalLink).not.toBeNull();
     expect(finalLink!.textContent).toBe("What's next →");
