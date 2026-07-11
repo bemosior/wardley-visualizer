@@ -78,7 +78,7 @@ export const NEED_CATALOG: NeedOption[] = [
   {
     id: "messaging-with-friends",
     label: "Messaging with Friends",
-    user: "Teenager",
+    user: "College Student",
     capabilityOptions: [
       "Smartphone",
       "Messaging App",
@@ -95,7 +95,7 @@ export const NEED_CATALOG: NeedOption[] = [
   {
     id: "streaming-the-latest-show",
     label: "Streaming the Latest Show",
-    user: "Teenager",
+    user: "College Student",
     capabilityOptions: [
       "Streaming App",
       "Wifi Connection",
@@ -112,7 +112,7 @@ export const NEED_CATALOG: NeedOption[] = [
   {
     id: "charging-their-phone-on-the-go",
     label: "Charging Their Phone on the Go",
-    user: "Teenager",
+    user: "College Student",
     capabilityOptions: [
       "Portable Charger",
       "USB Cable",
