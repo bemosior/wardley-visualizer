@@ -114,6 +114,7 @@ export async function runPhase30(ctx: ScenarioContext): Promise<void> {
   }
 
   if (findings.length > 0) {
+    mascot.moveToTopRight();
     mascot.showFindings(findings, "Here's what you found, and you're barely scratching the surface!");
   } else {
     mascot.showEmpty();

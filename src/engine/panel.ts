@@ -471,7 +471,7 @@ export class Panel {
 
   /**
    * renders the Phase 30 exit report: `heading` followed by one line per finding
-   * ("{concept} → {node}: {text}", concept emphasized via `.wd-name`). Rendered in place of
+   * ("{concept} at {node}", concept emphasized via `.wd-name`). Rendered in place of
    * `showEmpty` whenever at least one concept produced an annotation, right before Phase 30 hands
    * off to the Finale — reuses the same `.wd-panel-content` container so the Finale's
    * `confirmPlacement` "What's next →" link appends directly beneath the list.
@@ -493,7 +493,7 @@ export class Panel {
       const conceptEl = document.createElement("span");
       conceptEl.classList.add("wd-name");
       conceptEl.textContent = finding.concept;
-      li.append(conceptEl, document.createTextNode(` → ${finding.node}: ${finding.text}`));
+      li.append(conceptEl, document.createTextNode(` at ${finding.node}`));
       list.appendChild(li);
     }
     content.appendChild(list);
