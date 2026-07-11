@@ -451,8 +451,7 @@ export class Panel {
 
   /**
    * renders the closing recap: a heading, one line per accomplishment, and an external CTA link
-   * (opens in a new tab) — the last thing the visitor sees after clicking the finale's
-   * "What's next →" link.
+   * — the last thing the visitor sees after clicking the finale's "What's next →" link.
    */
   showRecap(items: string[], cta: { label: string; href: string }): void {
     this.clear();
@@ -476,8 +475,6 @@ export class Panel {
     const link = document.createElement("a");
     link.classList.add("wd-next-link", "wd-panel-recap-cta");
     link.href = cta.href;
-    link.target = "_blank";
-    link.rel = "noopener";
     link.textContent = cta.label;
     content.appendChild(link);
 
