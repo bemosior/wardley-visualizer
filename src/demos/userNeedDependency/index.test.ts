@@ -721,7 +721,7 @@ describe("runValueChainScenario", () => {
     await flush();
 
     expect(mascotHost.querySelector(".wd-panel-form-prompt")!.textContent).toBe(
-      "What's something they depend on to get this need met? \r\n(1 of 3)",
+      "What's something they depend on to get the user need met? \r\n(1 of 3)",
     );
   });
 });
