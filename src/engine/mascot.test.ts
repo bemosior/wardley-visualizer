@@ -555,7 +555,7 @@ describe("Mascot.arrive", () => {
     let revealedWhileHidden = false;
     const arrived = mascot.arrive(() => {
       revealedWhileHidden = host.querySelector(".wd-mascot")!.classList.contains("wd-mascot--arriving");
-      mascot.showPlaceholder("Want to learn about Wardley Mapping?", "");
+      mascot.showPlaceholder("Want to build your first Wardley Map?", "");
     });
 
     expect(host.querySelector(".wd-mascot-bubble")!.textContent).toBe("");
@@ -565,7 +565,7 @@ describe("Mascot.arrive", () => {
 
     expect(revealedWhileHidden).toBe(true);
     expect(host.querySelector(".wd-mascot")!.classList.contains("wd-mascot--arriving")).toBe(false);
-    expect(host.querySelector(".wd-mascot-bubble")!.textContent).toContain("Want to learn about Wardley Mapping?");
+    expect(host.querySelector(".wd-mascot-bubble")!.textContent).toContain("Want to build your first Wardley Map");
     vi.useRealTimers();
   });
 
@@ -575,8 +575,8 @@ describe("Mascot.arrive", () => {
     const mascot = new Mascot(host);
     mascot.mount();
 
-    await mascot.arrive(() => mascot.showPlaceholder("Want to learn about Wardley Mapping?", ""));
+    await mascot.arrive(() => mascot.showPlaceholder("Want to build your first Wardley Map?", ""));
 
-    expect(host.querySelector(".wd-mascot-bubble")!.textContent).toContain("Want to learn about Wardley Mapping?");
+    expect(host.querySelector(".wd-mascot-bubble")!.textContent).toContain("Want to build your first Wardley Map?");
   });
 });

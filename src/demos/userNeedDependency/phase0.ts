@@ -18,7 +18,7 @@ const seedValueChain = createValueChain({
 /** the mascot's one-button beat shown right after the Need snaps into place — a rhetorical hype
  * beat, not a real fork, so it renders as a heading + the shared "Next"-style CTA (`wd-next-link`)
  * rather than `showGate`'s pale multiple-choice buttons, which are reserved for actual forks */
-const MASCOT_BEGIN_GATE = { prompt: "Want to learn about Wardley Mapping?", cta: "Let's begin!" };
+const MASCOT_BEGIN_GATE = { prompt: "Want to build your first Wardley Map?", cta: "Let's begin!" };
 
 /** the mascot's Phase 0 -> Phase 5 "waiting for Next" pause, once labels are revealed. Carries the
  * "what's a Value Chain?" payoff (a one-shot "it's a recipe" summary); the User/Need/Capability
