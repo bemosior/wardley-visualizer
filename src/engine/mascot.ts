@@ -12,6 +12,11 @@ const TALK_DURATION_MS = 600;
  * settling back to idle -- long enough for the pop-in plus the reused celebrate bounce to finish */
 const ARRIVE_DURATION_MS = 1000;
 
+/** matches `.wd-mascot`'s `transition: left 0.4s ease, top 0.4s ease` in styles.ts -- the one
+ * source of truth for how long a `moveTo` re-anchor animation takes, so `revealBubbleAfterMove`
+ * can time its fade-in to when the mascot has actually finished sliding to its new spot. */
+const MOVE_TRANSITION_MS = 400;
+
 /** matches `.wardley-demo-root .wd-mascot-avatar`'s width in styles.ts, so the avatar can be centered under a node */
 const AVATAR_WIDTH = 40;
 
@@ -219,6 +224,24 @@ export class Mascot {
   /** reveals a bubble hidden by `hideBubbleInstantly`, fading it in via the bubble's own opacity transition. */
   revealBubble(): void {
     this.bubbleEl.classList.remove("wd-mascot-bubble--instant-hide");
+  }
+
+  /**
+   * companion to `hideBubbleInstantly` for callers that change panel content in the same breath as
+   * a plain `moveTo` (no separate node-slide animation with its own completion callback to hang the
+   * reveal off, unlike `phase20.ts`'s evolution-axis placements, which call `revealBubble` directly
+   * from that animation's `onComplete`). Waits out `moveTo`'s own CSS position transition
+   * (`MOVE_TRANSITION_MS`, matching `.wd-mascot`'s `transition: left/top` in styles.ts) before
+   * revealing, so the new content doesn't become visible until the mascot has actually arrived at
+   * its new anchor. Skips the wait under `prefers-reduced-motion`, where that CSS transition is
+   * likewise collapsed to near-zero.
+   */
+  revealBubbleAfterMove(): void {
+    if (prefersReducedMotion()) {
+      this.revealBubble();
+      return;
+    }
+    setTimeout(() => this.revealBubble(), MOVE_TRANSITION_MS);
   }
 
   /**
