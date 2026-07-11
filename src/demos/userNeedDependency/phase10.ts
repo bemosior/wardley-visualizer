@@ -21,7 +21,9 @@ export async function runPhase10(ctx: ScenarioContext): Promise<void> {
   const userLabel = await mascot.showField({
     type: "choice",
     prompt: "Who should we help today?",
-    options: NEED_CATALOG.map((need) => need.userPlaceholder),
+    // several NEED_CATALOG entries deliberately share a userPlaceholder (that user's other
+    // needs) -- dedupe so each user gets exactly one pill, not one per need they have.
+    options: [...new Set(NEED_CATALOG.map((need) => need.userPlaceholder))],
   });
   ctx.chain = relabelUser(ctx.chain, userLabel);
   demo.relabelNode(ctx.chain.user.id, ctx.chain.user.label);
@@ -65,9 +67,10 @@ export async function runPhase10(ctx: ScenarioContext): Promise<void> {
     const capability = capabilitiesByScreenX[i];
     const capabilityPos = demo.getNodePixelPosition(capability.id);
     if (capabilityPos) mascot.moveTo(capability.id, capabilityPos, "south");
-    // offer all three of the need's capabilities as pills (not just the one at this index),
-    // minus any already picked in an earlier slot so the same option isn't offered twice
-    const remainingCapabilities = needOption.capabilityPlaceholders.filter(
+    // offer every capability option as a pill (not just the one at this index) -- the 3
+    // placeholders plus the richer, evolution-spanning moreCapabilityOptions pool -- minus any
+    // already picked in an earlier slot so the same option isn't offered twice
+    const remainingCapabilities = [...needOption.capabilityPlaceholders, ...needOption.moreCapabilityOptions].filter(
       (label) => !usedCapabilityLabels.has(label.toLowerCase()),
     );
     const capabilityLabel = await mascot.showField({

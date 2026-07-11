@@ -27,10 +27,21 @@ describe("NEED_CATALOG", () => {
     }
   });
 
-  it("scopes each option's placeholders to its own example, not shared across options", () => {
+  it("has a non-empty moreCapabilityOptions list per option", () => {
+    for (const option of NEED_CATALOG) {
+      expect(option.moreCapabilityOptions.length).toBeGreaterThan(0);
+      for (const extra of option.moreCapabilityOptions) {
+        expect(extra.trim().length).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  // userPlaceholder is intentionally excluded here: several options deliberately share the same
+  // user (that user's other needs), so it repeats across options by design -- see needCatalog.ts.
+  it("scopes each option's capability placeholders to its own example, not shared across options", () => {
     const seen = new Set<string>();
     for (const option of NEED_CATALOG) {
-      const placeholders = [option.userPlaceholder, ...option.capabilityPlaceholders];
+      const placeholders = [...option.capabilityPlaceholders, ...option.moreCapabilityOptions];
       for (const placeholder of placeholders) {
         expect(seen.has(placeholder)).toBe(false);
         seen.add(placeholder);
