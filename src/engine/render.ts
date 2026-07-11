@@ -70,6 +70,55 @@ export function createEvolutionChevron(direction: "left" | "right", radius: numb
   return g;
 }
 
+const DIRECTIONAL_ARROW_HEAD_LENGTH = 14;
+const DIRECTIONAL_ARROW_HEAD_WIDTH = 10;
+/** clearance from each endpoint's node circle, so the shaft neither starts inside the origin node nor its head overlaps the destination node */
+const DIRECTIONAL_ARROW_GAP = NODE_RADIUS + 10;
+
+/**
+ * a static "drag this way" cue pointing from `from` toward `to` (both viewBox coordinates) —
+ * unlike `createEvolutionChevron`, not tied to a node's own transform or an axis-bound drag, so
+ * it can point along an arbitrary vector (e.g. Phase 0's Need `start` -> destination). A fixed
+ * orientation computed once at creation is enough since the caller removes it entirely once the
+ * cue is no longer needed, rather than tracking a live drag position.
+ */
+export function createDirectionalArrow(from: { x: number; y: number }, to: { x: number; y: number }): SVGGElement {
+  const g = document.createElementNS(SVG_NS, "g") as SVGGElement;
+  g.classList.add("wd-direction-arrow");
+
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const angle = Math.atan2(dy, dx);
+  const ux = dx / len;
+  const uy = dy / len;
+
+  const startX = from.x + ux * DIRECTIONAL_ARROW_GAP;
+  const startY = from.y + uy * DIRECTIONAL_ARROW_GAP;
+  const endX = to.x - ux * DIRECTIONAL_ARROW_GAP;
+  const endY = to.y - uy * DIRECTIONAL_ARROW_GAP;
+
+  const shaft = document.createElementNS(SVG_NS, "line");
+  shaft.classList.add("wd-direction-arrow-shaft");
+  shaft.setAttribute("x1", String(startX));
+  shaft.setAttribute("y1", String(startY));
+  shaft.setAttribute("x2", String(endX));
+  shaft.setAttribute("y2", String(endY));
+  g.appendChild(shaft);
+
+  const backX = endX - Math.cos(angle) * DIRECTIONAL_ARROW_HEAD_LENGTH;
+  const backY = endY - Math.sin(angle) * DIRECTIONAL_ARROW_HEAD_LENGTH;
+  const perpX = -Math.sin(angle) * (DIRECTIONAL_ARROW_HEAD_WIDTH / 2);
+  const perpY = Math.cos(angle) * (DIRECTIONAL_ARROW_HEAD_WIDTH / 2);
+
+  const head = document.createElementNS(SVG_NS, "path");
+  head.classList.add("wd-direction-arrow-head");
+  head.setAttribute("d", `M ${endX},${endY} L ${backX + perpX},${backY + perpY} L ${backX - perpX},${backY - perpY} Z`);
+  g.appendChild(head);
+
+  return g;
+}
+
 const LABEL_PADDING = 12;
 const LABEL_MIN_FONT_SIZE = 9;
 

@@ -1,7 +1,26 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { attachAutopilot, parseSkipTarget } from "./autopilot";
 import { runValueChainScenario } from "../demos/userNeedDependency";
 import { CELEBRATE_DURATION_MS } from "../demos/userNeedDependency/phase7";
+
+/**
+ * every `attachAutopilot` test drives a real (uncompleted, for most targets) scenario -- with real
+ * timers, an earlier test's still-pending animation (e.g. a Phase 20 slide-to-Genesis tween) keeps
+ * ticking on the shared JS event loop into the *next* test, racing that test's own settle-polling
+ * and producing exactly the kind of order-dependent flakiness this suite hit once one more
+ * mutation round-trip (Phase 0's "Let's begin!" gate) was added upstream of every target. Fake
+ * timers (same pattern `index.test.ts` already uses) make every test's timing self-contained: each
+ * test gets its own fake clock that resets at teardown, so no test's leftover timer can ever fire
+ * during another's.
+ */
+beforeEach(() => {
+  vi.useFakeTimers();
+});
+
+afterEach(() => {
+  document.body.innerHTML = "";
+  vi.useRealTimers();
+});
 
 describe("parseSkipTarget", () => {
   it("returns the requested target when valid", () => {
@@ -18,24 +37,22 @@ describe("parseSkipTarget", () => {
 });
 
 /**
- * waits until `mascotHost`'s rendered content stops changing for a few consecutive ticks --
- * i.e. the autopilot has reacted to every mutation it can and is now blocked on one it can't
- * produce itself (a real visitor input, or the `CELEBRATE_DURATION_MS` pause below). A fixed
- * tick count was tried first and is what this replaced: the autopilot's mutation-observer/click
- * chain can take a variable number of microtask/macrotask hops to settle (more gates in the
- * scenario means more hops), so a fixed budget was either wastefully large or, once one more gate
- * got added, flaky under load. Polling for an actually-quiet DOM removes the guess entirely.
+ * waits until `mascotHost`'s rendered content stops changing for a few consecutive ticks -- i.e.
+ * the autopilot's mutation-observer/click chain has run its course and is now blocked on
+ * something it can't produce itself (a real visitor input, or `flushAll`'s `CELEBRATE_DURATION_MS`
+ * pause). A fixed tick count was tried first: the chain's length grows with the scenario (more
+ * gates before a given target means more microtask/macrotask hops to settle), so a fixed budget is
+ * either wastefully large or, once one more gate is added upstream of every target, flaky. Polling
+ * for an actually-quiet DOM removes the guess. Each tick advances the fake clock by 0ms (not a real
+ * wait) purely to flush the microtask queue between mutation-observer reactions.
  */
 async function settle(mascotHost: HTMLElement): Promise<void> {
-  // generous margin: this only costs real wall-clock time when the DOM is genuinely still
-  // settling, and the whole suite runs its test files under parallel workers, where CPU
-  // contention can stretch out how many real macrotask ticks a settled state needs to confirm
   const quietTicksNeeded = 10;
-  const maxTicks = 500;
+  const maxTicks = 200;
   let lastSnapshot: string | null = null;
   let quietTicks = 0;
   for (let i = 0; i < maxTicks && quietTicks < quietTicksNeeded; i++) {
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await vi.advanceTimersByTimeAsync(0);
     const snapshot = mascotHost.innerHTML;
     if (snapshot === lastSnapshot) {
       quietTicks++;
@@ -48,14 +65,14 @@ async function settle(mascotHost: HTMLElement): Promise<void> {
 
 /**
  * settles the autopilot's reaction chain, then waits out Phase 7's post-"Nice to meet you!"
- * `CELEBRATE_DURATION_MS` pause (a real `setTimeout`) so every target beyond `intro` (which stops
- * before that gate is clicked) can settle into whatever comes after it -- with another settle
- * pass afterward for the mutation-observer reactions (e.g. `celebrate`'s Phase 10 field
- * auto-fills) that only start once that pause elapses.
+ * `CELEBRATE_DURATION_MS` pause (a real `setTimeout` in source, advanced here via the fake clock)
+ * so every target beyond `intro` (which stops before that gate is clicked) can settle into
+ * whatever comes after it -- with another settle pass afterward for the mutation-observer
+ * reactions (e.g. `celebrate`'s Phase 10 field auto-fills) that only start once that pause elapses.
  */
 async function flushAll(mascotHost: HTMLElement): Promise<void> {
   await settle(mascotHost);
-  await new Promise((resolve) => setTimeout(resolve, CELEBRATE_DURATION_MS));
+  await vi.advanceTimersByTimeAsync(CELEBRATE_DURATION_MS);
   await settle(mascotHost);
 }
 

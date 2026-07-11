@@ -149,6 +149,30 @@ const CSS = `
   dominant-baseline: middle;
   pointer-events: none;
   user-select: none;
+  transition: opacity 0.5s ease;
+}
+
+/** hides a node's label (Phase 0's opening beat, before the visitor commits via "Let's begin!") — opacity, not visibility, so the fade transition above applies */
+.wd-node-label--hidden {
+  opacity: 0;
+}
+
+.wd-direction-arrow-shaft {
+  stroke: var(--wd-color-link, #005f99);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 6 6;
+  animation: wd-direction-arrow-dash 1s linear infinite;
+}
+
+.wd-direction-arrow-head {
+  fill: var(--wd-color-link, #005f99);
+}
+
+@keyframes wd-direction-arrow-dash {
+  to {
+    stroke-dashoffset: -24;
+  }
 }
 
 .wd-node--draggable {
@@ -458,6 +482,21 @@ const CSS = `
 .wd-panel-recap-list li::before {
   content: "🎉";
   flex: none;
+}
+
+.wd-panel-findings-list {
+  font-family: var(--wd-font-ui);
+  font-size: 0.85rem;
+  color: var(--wd-color-ink);
+  line-height: 1.5;
+  text-align: left;
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding-left: 0;
+}
+
+.wd-panel-findings-list li + li {
+  margin-top: 0.5rem;
 }
 
 .wd-panel-recap-cta {
@@ -823,6 +862,12 @@ const CSS = `
   .wd-line--entering,
   .wd-backdrop {
     animation: none;
+  }
+  .wd-direction-arrow-shaft {
+    animation: none;
+  }
+  .wd-node-label {
+    transition-duration: 0.01s;
   }
   .wd-firework-shell {
     display: none;
