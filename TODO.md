@@ -313,3 +313,232 @@ testers hit the same thing (strongest signal first).
       that an attempt is made to deliver value, but it's mostly missing.
       Custom-built is then a less unpredictable version of that; curves
       but hits most of the time.
+
+## Next: reusable foundation for ~150 embeddable exercises (planned 2026-07-11, not yet built)
+
+The course needs up to ~150 situation-specific Wardley Mapping exercises, each
+living standalone on its own lesson page as an embed. Today this repo
+contains exactly **one** hand-built narrative demo
+(`src/demos/userNeedDependency/`) — hardcoded to a single User→Need→Capability
+chain, with mascot dialogue and control flow interleaved in the same phase
+files. This section plans the refactor toward reusability, phased so any one
+item can be picked up in a fresh session. Each phase is independently
+landable — land Phase 1, verify, move on, rather than doing all of it in one
+pass.
+
+**Ground rules confirmed with Ben (2026-07-11):** the 150 exercises will be a
+*mix* of short 1-3 step drills and fuller narratives; authoring will be
+TS-first (engineers writing small files that call reusable functions, not a
+JSON schema/interpreter — but keep the step vocabulary data-shaped enough to
+bolt that on later); map *shapes will vary genuinely* (multi-chain, arbitrary
+graphs, anti-pattern maps, comparisons, evolution-only drills), not just
+parameterized copies of the existing chain. Given this repo's
+no-premature-abstraction convention, build only what's needed to prove the
+abstraction against 3 deliberately different validation exercises (Phase 6
+below) — not a speculative do-everything framework up front.
+
+**Audit finding, worth internalizing before touching code:** the `engine/`
+layer (SVG rendering, drag, animation, `WardleyDemo`, `Panel`/`Mascot`) is
+already close to fully generic — it knows about "nodes and connections," not
+"Users and Needs." The real gaps are (a) two small leaks of domain vocabulary
+into that supposedly-generic layer, (b) no domain/layout model for anything
+but the one linear chain shape, and (c) no reusable step vocabulary — every
+phase of the one existing demo is bespoke imperative code, so there's zero
+proof today a second, differently-shaped exercise is even possible without a
+rewrite. Phases 1-4 below close those three gaps in order; Phase 6 is the
+proof.
+
+- [ ] **Phase 1 — Fix two real layering leaks (no behavior change).**
+  - [render.ts:643](src/engine/render.ts) hardcodes
+    `conn.from === "user" && conn.to === "need"` to 1.5x a flow particle's
+    radius — a domain-specific special case inside the supposedly
+    domain-free engine. Add `weight?: number` to `DemoConnection`
+    (`src/engine/types.ts`), use it in `render.ts` instead, and set
+    `weight: 1.5` on that one connection wherever `userNeedDependency`
+    constructs its config.
+  - [panel.ts:4,349,363](src/engine/panel.ts) imports and calls
+    `characteristicsFor` (a `domain/evolution.ts` function) directly inside
+    `showInstrumentPanel`/`updateInstrumentPanel` — the engine reaching into
+    domain logic. Change these to accept an already-resolved
+    `characteristics: string`, and move the `characteristicsFor` call into
+    `phase20.ts` (its only caller).
+  - Extract `Question`/`QuestionOption` types out of
+    `domain/questionBank.ts` into a new generic `domain/question.ts`;
+    re-export from `questionBank.ts` for the existing demo.
+  - Full existing test suite (16 files) must stay green; `index.test.ts`
+    behavior unchanged. Run via a subagent, never inline (see
+    `[[feedback_test_execution]]` memory).
+
+- [ ] **Phase 2 — General domain graph model.** New file
+  `src/domain/graph.ts` (+ co-located `graph.test.ts`). Keep
+  `Component`/`Dependency`/`EVOLUTION_STAGES` unchanged — already universal.
+  ```ts
+  export interface WardleyMap { components: Component[]; dependencies: Dependency[] }
+  createGraph(spec): WardleyMap
+  addComponent(map, component): WardleyMap   // immutable, same convention as valueChain.ts
+  addDependency(map, dep): WardleyMap
+  mergeGraphs(...maps): WardleyMap
+  ```
+  No cardinality constraints (unlike `ValueChain`'s enforced "exactly one
+  User/Need"), so this covers arbitrary graphs, anti-pattern maps, and
+  evolution-only maps (empty `dependencies`) for free. `ValueChain`
+  (`src/domain/valueChain.ts`) stays as-is, untouched, as a narrower
+  convenience type for the legacy demo only — don't retrofit inheritance.
+  Also widen `ComponentKind` (`src/domain/component.ts:1`) from
+  `"user" | "need" | "capability"` to `string` — confirmed via grep that
+  nothing in `engine/` switches on this closed union today (only
+  `valueChain.ts` assigns the three literal values), so this is low-risk.
+
+- [ ] **Phase 3 — General layout family.** New file
+  `src/application/graphLayout.ts` (+ tests). `valueChainLayout.ts` is
+  untouched (legacy-only). A small family, not one do-everything function,
+  and deliberately no auto-layout algorithm — a Wardley map's x-axis has
+  fixed evolution semantics, so auto-placement doesn't make sense without
+  also guessing evolution stage, which should stay a human judgment call.
+  - `manualLayout(map, positions: Map<string, Point>, options): DemoConfig`
+    — the common case, author places every node. Covers evolution-only
+    drills and freeform/anti-pattern maps.
+  - `chainLayout(levels: Component[][], dependencies, options): DemoConfig`
+    — generalizes `layoutValueChain`'s row-based math (root row, dependent
+    row(s) below) to an arbitrary sequence of rows instead of hardcoded
+    User/Need/Capability[].
+  - `combineLayouts(parts: {config: DemoConfig, offsetX: number}[]): DemoConfig`
+    — merges pre-built `DemoConfig`s side-by-side (shift x, union
+    nodes/connections/viewBox). Covers multi-chain maps and comparisons by
+    composing the two functions above rather than a bespoke multi-shape
+    algorithm.
+
+- [ ] **Phase 4 — Exercise runner (the core reusability layer).** Reject a
+  rigid "array of steps piped through an interpreter" — it would either
+  force awkward data-threading (Phase 10's form answers feed Phase 20's
+  labels) or become the declarative interpreter we're deliberately not
+  building yet. Instead: extract the pattern already repeated across
+  `phase0/10/20/30.ts` into a tested library of step functions an exercise's
+  own file calls with plain `await` — same convention as today, less
+  duplicated boilerplate.
+  - New `src/runner/types.ts`:
+    ```ts
+    interface ExerciseContext { demo: WardleyDemo; mascot: Mascot; canvas: HTMLElement; mascotHost: HTMLElement }
+    mountExercise(canvas, mascotHost, config, options?): ExerciseContext
+    ```
+  - New `src/runner/steps.ts` (+ tests) — thin, tested wrappers pairing one
+    `WardleyDemo` method + one `Mascot` method + the existing "await
+    confirm" gating pattern: `dragStep`, `evolutionDragStep`, `formStep`,
+    `gateStep`, `questionStep`, `introStep`, `annotateStep`,
+    `revealBackdropStep`, `celebrateStep`, `recapStep`.
+  - A short drill composes 2-3 of these inline; a longer narrative still
+    splits across phase-style files, calling into `runner/steps.ts` instead
+    of hand-rolling `WardleyDemo`/`Mascot` calls. Content/copy convention
+    going forward (new exercises only, not retrofit onto the existing
+    demo): a sibling `content.ts` next to an exercise's `index.ts`, since
+    every step already takes a content object distinct from control flow —
+    a file-split convention, not a new schema. Each step's content argument
+    is already plain/serializable, so a future declarative authoring layer
+    could interpret JSON into these same functions later without a rewrite.
+
+- [ ] **Phase 5 — Public API surface.** Extend `src/index.ts` (don't
+  replace):
+  ```ts
+  domain: { createValueChain, createGraph, addComponent, addDependency, mergeGraphs }
+  layouts: { layoutValueChain, manualLayout, chainLayout, combineLayouts }
+  runner: { mountExercise, dragStep, evolutionDragStep, formStep, gateStep, questionStep, introStep, annotateStep, revealBackdropStep, celebrateStep, recapStep }
+  demos: { userNeedDependency, /* + Phase 6 validation exercises */ }
+  ```
+  `runner` is first-class public API so a lesson page can author a short
+  drill entirely inline (see Phase 6's embed example) without a new file in
+  this repo at all.
+
+- [ ] **Phase 6 — Validate with 3 deliberately different exercises.** Build
+  in `src/demos/<name>/` with co-located integration tests, mirroring
+  `index.test.ts`.
+  1. `evolutionOnlyDrill` (1-2 steps) — one component, no dependencies,
+     `manualLayout` + `evolutionDragStep` + `celebrateStep`. Proves the
+     scale-down case and freeform layout.
+  2. `chainComparison` (medium) — two independent chains built via the new
+     `chainLayout` (not the legacy `layoutValueChain`), placed side-by-side
+     via `combineLayouts`, ending in a `gateStep`/`questionStep`
+     comparison. Proves multi-chain composition and step reuse outside
+     Phase 30's bespoke mechanic.
+  3. `antiPatternSpotting` (5-7 steps) — a graph authored with a structural
+     anti-pattern (e.g. skipping the Need), walked through `introStep` →
+     `revealBackdropStep` → several `gateStep`/`questionStep`/
+     `annotateStep` → `recapStep`. Proves the runner scales *up* through a
+     non-chain graph using the same step functions.
+
+  These vary shape, length, and mechanic mix on purpose — expect this phase
+  to surface gaps in Phases 2-4 and require looping back; that's the point
+  of building them now instead of guessing.
+
+  Also add an `examples/` directory with a minimal standalone embed HTML
+  per validation exercise, doubling as the reference snippet for how a real
+  lesson page will look:
+  ```html
+  <script src=".../wardley-demo.js"></script>
+  <script>
+    var ctx = WardleyDemo.runner.mountExercise(canvasEl, mascotHostEl,
+      WardleyDemo.layouts.manualLayout(
+        WardleyDemo.domain.createGraph({ components: [...], dependencies: [] }),
+        new Map([["team", {x: 260, y: 120}]]),
+        { viewBox: { width: 400, height: 300 } }));
+    await WardleyDemo.runner.evolutionDragStep(ctx, "team", { heading: "Your Team", characteristics: {...} });
+    WardleyDemo.runner.celebrateStep(ctx);
+  </script>
+  ```
+  Per-lesson content stays inline in the page, keeping the shared bundle
+  exercise-content-free — same principle `index.html`/`preview.html`
+  already use today. Flagged, not solved here: once the `demos` registry
+  grows, whether the shared bundle needs per-lesson splitting is a
+  packaging call to make once bundle size is a *measured* problem, not now.
+
+- [ ] **Phase 7 — Structural dev/test tooling.** `src/dev/autopilot.ts`
+  stays untouched, servicing only `userNeedDependency`. For new
+  step-vocabulary exercises, replace copy-string/DOM-mutation matching
+  (which can't scale to 150 exercises' worth of distinct text) with a
+  structural mechanism, since steps are now typed function calls, not
+  free-form DOM to guess at.
+  - Reuse the existing structural escape hatches `WardleyDemo.skipDrag()` /
+    `EvolutionDragHandle.skipDrag()`.
+  - New `src/runner/devAutopilot.ts`: an `AutopilotController` that, when
+    armed, makes step functions resolve instantly (calling the skip
+    methods, or resolving with a default answer) instead of waiting for
+    real interaction — since the step functions own their own resolve
+    callback directly, no `MutationObserver` needed.
+  - Replace the legacy `SkipTarget` string-union with a numeric
+    `?skipTo=<stepIndex>` convention for the new exercises: steps
+    `0..n-1` resolve instantly, step `n` runs for real. Scales to any
+    exercise length with zero per-exercise autopilot code.
+
+- [-] **Migration of `userNeedDependency` onto the new runner — deferred,
+  not scheduled.** Don't port it as part of Phases 1-7. It's the one real,
+  playtested asset (active feedback-driven changes as recently as
+  2026-07-10, see above); its choreography (arrow-cue opening, arrival
+  flourish, Part A/B/C relabeling, concept-bank shuffle) is genuinely
+  bespoke enough that forcing it onto a same-day, unproven abstraction
+  risks regressing working behavior or bloating the step vocabulary to
+  serve one caller. Phase 4's step library is built *by extracting* the
+  pattern already proven in `phase0/10/20/30.ts` — those files stay the
+  reference spec even without literally depending on the new code. Revisit
+  after Phase 6, once the runner has real exercises under it and the
+  original's playtest churn has settled.
+
+**Explicitly not building as part of Phases 1-7:**
+- Declarative JSON/config schema + validator + interpreter — authoring
+  model is TS-first per Ben; step functions are already data-shaped enough
+  to add this later.
+- Auto-layout algorithms — manual/explicit positioning is the correct
+  default given evolution's fixed x-axis semantics, not a stopgap.
+- Non-mascot exercise UI — everything assumes the existing `Mascot`/`Panel`
+  guide.
+- Per-lesson/per-exercise bundle splitting — defer until bundle size is a
+  measured problem.
+- Generalizing Phase 30's concept-bank shuffle/settle mechanic — bespoke to
+  one caller today.
+
+**Verification for each phase above:** `npm test` (Vitest + happy-dom) after
+every phase, delegated to a subagent per this repo's testing convention,
+never inline — full suite green, especially `index.test.ts` unchanged. After
+Phase 6, `npm run dev` / `npm run build && npm run preview` and manually run
+all 3 validation exercises plus the existing demo through the browser,
+confirming no regressions to `userNeedDependency` and that each new exercise
+mounts, drags, and completes correctly end-to-end. New modules each get a
+co-located `*.test.ts`, matching the existing repo-wide convention.
