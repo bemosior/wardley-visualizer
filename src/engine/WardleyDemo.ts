@@ -5,6 +5,7 @@ import {
   buildFlowParticlePath,
   createAnnotation,
   createConnectionLine,
+  createDirectionalArrow,
   createEvolutionChevron,
   createFireworkShells,
   createFlowParticles,
@@ -340,6 +341,37 @@ export class WardleyDemo {
     labelEl.style.fontSize = "";
     labelEl.textContent = label;
     fitNodeLabel(labelEl);
+  }
+
+  /**
+   * appends a static directional-arrow cue (render.ts's `createDirectionalArrow`) into the marker
+   * layer, pointing from `from` to `to` (both viewBox coordinates) — Phase 0's opening beat uses
+   * this in place of a mascot explanation, pointing at the Need's destination before the visitor
+   * has dragged it there. Caller removes the returned element once the cue is no longer needed
+   * (e.g. right after the Need snaps into place).
+   */
+  addDirectionalArrow(from: Point, to: Point): SVGGElement {
+    const arrow = createDirectionalArrow(from, to);
+    this.markerLayer.appendChild(arrow);
+    return arrow;
+  }
+
+  /**
+   * hides every currently-registered node's label (`wd-node-label--hidden`, faded via CSS
+   * transition) — Phase 0's opening beat calls this right after mount, so a node's identity is
+   * revealed only once the visitor commits to learning ("Let's begin!"), not before.
+   */
+  hideNodeLabels(): void {
+    for (const group of this.nodeGroups.values()) {
+      group.querySelector<SVGTextElement>(".wd-node-label")?.classList.add("wd-node-label--hidden");
+    }
+  }
+
+  /** reveals every currently-registered node's label, undoing `hideNodeLabels` — fades in via the same CSS transition. */
+  revealNodeLabels(): void {
+    for (const group of this.nodeGroups.values()) {
+      group.querySelector<SVGTextElement>(".wd-node-label")?.classList.remove("wd-node-label--hidden");
+    }
   }
 
   /** wires drag-to-target interaction for an already-registered node; fires the snap celebration on success */

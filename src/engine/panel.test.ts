@@ -126,6 +126,25 @@ describe("Panel.showField", () => {
 
     expect(await result).toBe("A taxi to the airport");
   });
+
+  it("a 'choice' field renders only pill options, no text input, and resolves on click", async () => {
+    const container = makeContainer();
+    const panel = new Panel(container);
+    const result = panel.showField({
+      type: "choice",
+      prompt: "Who should we help today?",
+      options: ["Commuter", "Teenager", "Home Cook"],
+    });
+
+    expect(container.querySelector("input")).toBeNull();
+    expect(container.querySelector(".wd-panel-form-prompt")!.textContent).toBe("Who should we help today?");
+    const chips = container.querySelectorAll<HTMLButtonElement>(".wd-panel-form-example");
+    expect(chips.length).toBe(3);
+
+    chips[2].click();
+
+    expect(await result).toBe("Home Cook");
+  });
 });
 
 describe("Panel.clear", () => {

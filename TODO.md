@@ -116,87 +116,35 @@ superseded by the gate's node-cycling and shuffle.
 Five decisions made in response to a second playtest round —
 `feedback/v0.1/pablogil.txt` (his second walkthrough; compare
 `feedback/v0.0/pablogil.txt` for what changed) and `feedback/v0.1/henkoudman.txt`.
-Read those files for the full playtester quotes behind each item below. None of
-this is built yet — this section is written to be picked up cold in a fresh
-session.
+Read those files for the full playtester quotes behind each item below. Items 1
+and 2 are built (2026-07-10); items 3-5 are not yet — this section is written
+so either can be picked up cold in a fresh session.
 
-### 1. Opening frame — defer the mascot past the first celebration
+### 1. Opening frame — defer the mascot past the first celebration (done, 2026-07-10)
 
-Goal: stop explaining the opening ("Solve the puzzle. / Drag the missing piece
-into place.", `phase0.ts`'s `MASCOT_INTRO`) and instead remove the puzzle
-framing entirely — nothing to explain because there's only one visible thing
-to do. A fresh v0.1 tester still reported "no goal, no direction, thrown in a
-couple steps" despite the earlier opening-frame fix (see the `[x]` item below,
-which this supersedes in mechanism, not just copy).
+Built as specified below, with one mechanism swap: the plan's original phrasing said the reveal
+gate would be "a single link, or `showGate` with one option" — implemented as `Mascot.showGate`
+(`MASCOT_BEGIN_GATE`, `phase0.ts`) since that's the existing single-CTA mechanism and needed no new
+Panel method. `WardleyDemo` gained three new primitives for this: `addDirectionalArrow` (render.ts's
+`createDirectionalArrow`, a static arrow from the Need's `start` to its destination) and
+`hideNodeLabels`/`revealNodeLabels` (toggle `wd-node-label--hidden`, a CSS opacity transition). The
+mascot now mounts for the first time only after the Need snaps into place, in `phase0.ts`; `MASCOT_NEED_PLACED`
+("You made a Value Chain!") moved from `phase5.ts` into `phase0.ts`'s tail, right after the
+"Let's begin!" gate and `revealNodeLabels()` call. `phase5.ts` now starts directly with the User
+walkthrough. `src/dev/autopilot.ts` auto-clicks the new gate unconditionally (it's a `.wd-panel-
+question-option` button, not a `.wd-next-link`) and its `fillAndSubmit` helper now falls back to
+clicking a pill chip when a Phase 10 field has no text input (needed for item 2 below too).
 
-- `phase0.ts`: currently mounts `Mascot` and calls
-  `mascot.showPlaceholder(MASCOT_INTRO.heading, MASCOT_INTRO.subheading)`
-  *before* `WardleyDemo.mount()` (`phase0.ts:40-42`). New behavior: don't
-  mount or show the mascot yet at all. The Need node still renders
-  out-of-place and pulsing (`wd-node--beckon`, unchanged) — add a directional
-  arrow as the only affordance, pointing from its `start` position toward its
-  destination marker.
-- New engine primitive needed: `createEvolutionChevron` (`render.ts:54`) is
-  axis-bound (left/right only, tied to `attachAxisDrag`'s min/maxX, only ever
-  called from `runEvolutionDragStep`) — **not** directly reusable here, since
-  Phase 0's drag (`attachDrag`) moves freely toward an arbitrary target, not
-  along a fixed horizontal axis. Add a new one-off arrow primitive (e.g.
-  `createDirectionalArrow(fromPixel, toPixel)` in `render.ts`) oriented along
-  the vector from the Need's `start` position to its destination — both known
-  at mount time via `layoutValueChain`/`demo.getNodePixelPosition` — a static
-  orientation is fine, it doesn't need to track live drag position the way
-  the evolution chevrons do.
-- On drop/snap (today's `onNeedPlaced` callback path, `phase0.ts:59-63`):
-  *then* mount the mascot and show a one-button gate — heading "Want to learn
-  about Wardley Mapping?", single option "Let's begin!" (a single-CTA gate;
-  reuse whichever existing mechanism is cheaper — `confirmPlacement`-style
-  single link, or `showGate` with one option). No "No" path — it's a
-  rhetorical hype beat, not a real fork.
-- Once "Let's begin!" is clicked: node labels transition in (check whether
-  `layoutValueChain`-rendered nodes need their labels hidden pre-click, e.g.
-  via opacity/visibility, and only revealed at this beat), and the mascot
-  says heading "This is a value chain." / subheading "A value chain is a
-  recipe for delivering value." — **this exact copy already exists** as
-  `phase5.ts`'s `MASCOT_NEED_PLACED` (`phase5.ts:10-13`); move it here and
-  delete it from its current spot so it isn't said twice. `runPhase5` should
-  then start directly with the User/Need/Capability node-by-node walk
-  (`phase5.ts:76` onward).
+### 2. User/Need fields: pill-only, no free text — but keep pills, not a dropdown (done, 2026-07-10)
 
-### 2. User/Need fields: pill-only, no free text — but keep pills, not a dropdown
-
-Correction from an earlier back-and-forth: `PanelField` (`panel.ts:67-73`) has
-only one variant today (`type: "text"`) — a text `<input>` plus optional
-clickable `examples` chips rendered alongside it. Those chips **are** the
-"pills" — there's no `<select>` dropdown anywhere in this codebase. The fix
-is adding a new pill-only variant with no `<input>` at all, not swapping to a
-browser dropdown:
-
-- Add `{ type: "choice"; prompt: string; options: string[] }` to the
-  `PanelField` union in `panel.ts`.
-- `Panel.showField` (`panel.ts:186`): branch on `field.type`. The new
-  `"choice"` branch renders the prompt plus a row of chip buttons only (reuse
-  the `wd-panel-form-example` styling/click-to-resolve behavior at
-  `panel.ts:205-220`) — no input, no placeholder text, no "Confirm" submit
-  button.
-- `phase10.ts`: the User field call (`phase10.ts:21-26`) switches from
-  `type: "text"` to `type: "choice"` with
-  `options: NEED_CATALOG.map(n => n.userPlaceholder)` (6 unique values today:
-  Commuter, Teenager, Home Cook, Traveler, Contractor, Parent). The Need
-  field call (`phase10.ts:39-44`) switches to `type: "choice"` with
-  `options: relevantNeeds.map(n => n.label)` (already narrowed to the
-  matched user). Capability fields (`phase10.ts:74-79`) are **unchanged** —
-  stay `type: "text"` with free typing; that's the part nobody complained
-  about and Ben confirmed should stay editable.
-- Not required to fix now, but worth knowing: since User is always an exact
-  `NEED_CATALOG` value by construction, the fuzzy-match/fallback logic at
-  `phase10.ts:32-35` and `:51-52` can never actually miss anymore — those
-  "falls back to full catalog" branches become dead code. Fine to leave as
-  defensive code; simplify later if it's ever touched again.
-- Side benefit: this also tightens the still-open "audit assessment copy
-  against arbitrary user input" item below — locking User/Need to the
-  catalog means Phase 30's deep-dive questions (`domain/conceptBank.ts`) can
-  never again land against an unanticipated combination the way "messaging
-  with friends → deep commoditization" did in `feedback/v0.0/pablogil.txt`.
+Built as specified: `PanelField` (`panel.ts`) gained a `{ type: "choice"; prompt: string; options:
+string[] }` variant — `Panel.showField` branches on `field.type` and renders the `"choice"` branch
+as a prompt plus a row of `wd-panel-form-example` chips only, no input/placeholder/submit button.
+`phase10.ts`'s User field (`options: NEED_CATALOG.map(n => n.userPlaceholder)`) and Need field
+(`options: relevantNeeds.map(n => n.label)`) both switched to `type: "choice"`; Capability fields
+are unchanged (`type: "text"`, still free typing). Since User is now always an exact `NEED_CATALOG`
+value by construction (a pill choice, not free text), the `relevantNeeds` fuzzy-match/fallback logic
+in `phase10.ts` can never actually miss anymore — left as defensive dead code rather than removed.
 
 ### 3. Evolution intro beat — explain "everything evolves" right before the first drag
 

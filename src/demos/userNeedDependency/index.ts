@@ -15,15 +15,16 @@ import { runFinale } from "./finale";
 export interface ValueChainScenarioOptions {
   canvas: HTMLElement;
   /**
-   * host-supplied overlay the mascot mounts its avatar + speech bubble into, from the very
-   * start of the scenario (Phase 0's drag affordance onward). Must be a child of `canvas`
-   * itself (not a plain sibling element) — see the `.wd-mascot-host` doc comment in
+   * host-supplied overlay the mascot mounts its avatar + speech bubble into. Must be a child of
+   * `canvas` itself (not a plain sibling element) — see the `.wd-mascot-host` doc comment in
    * `engine/styles.ts` for why: the mascot's positioning math is measured relative to
    * `canvas`'s own top-left corner, the same coordinate space `WardleyDemo`'s firework bursts
-   * already render into.
+   * already render into. The mascot doesn't actually mount into this until the Need snaps into
+   * place (`onNeedPlaced`, below) — Phase 0's drag affordance is a directional-arrow cue on the
+   * canvas itself, not a mascot bubble.
    */
   mascotHost: HTMLElement;
-  /** fires as soon as the Need snaps into place (Phase 0 done); the scenario then shows a "Next" link inside the mascot's bubble and waits for the visitor to click it before the mascot walks into the Phase 10 form */
+  /** fires as soon as the Need snaps into place (Phase 0 done); the scenario then mounts the mascot for the first time and shows a single-CTA "Want to learn about Wardley Mapping?" gate before revealing every node's label and walking into Phase 5 */
   onNeedPlaced?: () => void;
   onCelebrate?: () => void;
   /** fires right after the canvas mounts, before the drag step resolves — lets a caller grab the `WardleyDemo` instance early enough to call `skipDrag()` (see `src/dev/autopilot.ts`) */
@@ -61,13 +62,15 @@ export interface ScenarioContext {
 
 /**
  * One continuous flow, guided by a single `Mascot` (`engine/mascot.ts`) — a node-anchored speech
- * bubble plus small avatar — from the moment it mounts through the closing recap. Each phase is
- * implemented in its own file and threads a shared `ScenarioContext` from one to the next:
+ * bubble plus small avatar — from the moment it first mounts (right after the Need snaps into
+ * place) through the closing recap. Each phase is implemented in its own file and threads a shared
+ * `ScenarioContext` from one to the next:
  *
- * - `phase0.ts` — drag the Need into place.
- * - `phase5.ts` — "You just made a Value Chain!" placeholder, then relabels the three Capability
- *   nodes to "Part A"/"Part B"/"Part C" and explains that a need can take multiple parts adding up
- *   together.
+ * - `phase0.ts` — a directional-arrow cue (no mascot yet) invites dragging the Need into place;
+ *   once it snaps, the mascot mounts for the first time with a single-CTA "Let's begin!" gate,
+ *   then reveals every node's label and shows the "You made a Value Chain!" placeholder.
+ * - `phase5.ts` — relabels the three Capability nodes to "Part A"/"Part B"/"Part C" and explains
+ *   that a need can take multiple parts adding up together.
  * - `phase7.ts` — the mascot steps back into open canvas whitespace to introduce itself ("I'm Ben,
  *   by the way.") before returning to the chain for Phase 10.
  * - `phase10.ts` — personalize the value chain via a 5-step form.
