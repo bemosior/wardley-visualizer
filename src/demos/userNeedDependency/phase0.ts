@@ -15,9 +15,10 @@ const seedValueChain = createValueChain({
   ],
 });
 
-/** the mascot's one-button gate shown right after the Need snaps into place — a rhetorical hype
- * beat, not a real fork, so it offers only a single option ("Let's begin!"), no "No" path */
-const MASCOT_BEGIN_GATE = { prompt: "Want to learn about Wardley Mapping?", options: [{ id: "begin", label: "Let's begin!" }] };
+/** the mascot's one-button beat shown right after the Need snaps into place — a rhetorical hype
+ * beat, not a real fork, so it renders as a heading + the shared "Next"-style CTA (`wd-next-link`)
+ * rather than `showGate`'s pale multiple-choice buttons, which are reserved for actual forks */
+const MASCOT_BEGIN_GATE = { prompt: "Want to learn about Wardley Mapping?", cta: "Let's begin!" };
 
 /** the mascot's Phase 0 -> Phase 5 "waiting for Next" pause, once labels are revealed. Carries the
  * "what's a Value Chain?" payoff (a one-shot "it's a recipe" summary); the User/Need/Capability
@@ -39,10 +40,10 @@ const MASCOT_NEED_PLACED = {
  *
  * Once the Need snaps into place, `onNeedPlaced` fires (Phase 0 done), the arrow cue is removed,
  * and *only then* does the `Mascot` mount for the first time — anchored beside the Need's settled
- * position (`"northeast"`, clear of the Capability row underneath). It shows a single-CTA gate
+ * position (`"northeast"`, clear of the Capability row underneath). It shows a single-CTA beat
  * (`MASCOT_BEGIN_GATE`, "Want to learn about Wardley Mapping?" / "Let's begin!") before revealing
  * every node's label (`WardleyDemo.revealNodeLabels`) and explaining what was just built
- * (`MASCOT_NEED_PLACED`) behind its own "Next" gate — the caller (`phase5.ts`) then starts directly
+ * (`MASCOT_NEED_PLACED`) behind its own "Next" beat — the caller (`phase5.ts`) then starts directly
  * with the User/Need/Capability walkthrough.
  */
 export async function runPhase0(options: ValueChainScenarioOptions): Promise<ScenarioContext> {
@@ -73,7 +74,8 @@ export async function runPhase0(options: ValueChainScenarioOptions): Promise<Sce
   const needPlacedPos = demo.getNodePixelPosition(chain.need.id);
   if (needPlacedPos) mascot.moveTo(chain.need.id, needPlacedPos, "northeast");
 
-  await mascot.showGate(MASCOT_BEGIN_GATE.prompt, "", MASCOT_BEGIN_GATE.options);
+  mascot.showPlaceholder(MASCOT_BEGIN_GATE.prompt, "");
+  await mascot.confirmPlacement(MASCOT_BEGIN_GATE.cta);
 
   demo.revealNodeLabels();
   mascot.showPlaceholder(MASCOT_NEED_PLACED.heading, MASCOT_NEED_PLACED.subheading);

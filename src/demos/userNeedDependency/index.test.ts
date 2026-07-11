@@ -41,11 +41,6 @@ function clickNext(mascotHost: HTMLElement): void {
   mascotHost.querySelector<HTMLButtonElement>(".wd-next-link")!.click();
 }
 
-/** Phase 0's post-drop single-CTA gate ("Want to learn about Wardley Mapping?" / "Let's begin!") -- a `showGate` button, not a `.wd-next-link` */
-function clickBegin(mascotHost: HTMLElement): void {
-  mascotHost.querySelector<HTMLButtonElement>(".wd-panel-question-option")!.click();
-}
-
 function buildScenario(onCelebrate: () => void) {
   const canvas = document.createElement("div");
   const mascotHost = document.createElement("div");
@@ -73,7 +68,7 @@ async function completeDragStep(canvas: HTMLElement, mascotHost: HTMLElement): P
   const needNode = canvas.querySelector('[data-node-id="need"]')!;
   drag(needNode, { x: 200, y: 76 });
   await flush();
-  clickBegin(mascotHost);
+  clickNext(mascotHost);
   await flush();
   for (let i = 0; i < 6; i++) {
     clickNext(mascotHost);
@@ -94,7 +89,7 @@ describe("runValueChainScenario", () => {
     expect(mascotHost.querySelector("form")).toBeNull();
   });
 
-  it("fires onNeedPlaced as soon as the Need snaps, mounts the mascot, removes the arrow cue, and shows a single-CTA gate", async () => {
+  it("fires onNeedPlaced as soon as the Need snaps, mounts the mascot, removes the arrow cue, and shows a single-CTA beat", async () => {
     const onNeedPlaced = vi.fn();
     const canvas = document.createElement("div");
     const mascotHost = document.createElement("div");
@@ -109,10 +104,9 @@ describe("runValueChainScenario", () => {
     expect(canvas.querySelector(".wd-direction-arrow")).toBeNull();
     expect(mascotHost.querySelector(".wd-mascot")).not.toBeNull();
     expect(mascotHost.querySelector("form")).toBeNull();
-    expect(mascotHost.querySelector(".wd-next-link")).toBeNull();
-    const gateOption = mascotHost.querySelector<HTMLButtonElement>(".wd-panel-question-option");
-    expect(gateOption).not.toBeNull();
-    expect(gateOption!.textContent).toBe("Let's begin!");
+    const gateLink = mascotHost.querySelector<HTMLButtonElement>(".wd-next-link");
+    expect(gateLink).not.toBeNull();
+    expect(gateLink!.textContent).toBe("Let's begin!");
     expect(needNode.querySelector(".wd-node-label")!.classList.contains("wd-node-label--hidden")).toBe(true);
   });
 
@@ -122,7 +116,7 @@ describe("runValueChainScenario", () => {
     drag(needNode, { x: 200, y: 76 });
     await flush();
 
-    clickBegin(mascotHost);
+    clickNext(mascotHost);
     await flush();
 
     expect(needNode.querySelector(".wd-node-label")!.classList.contains("wd-node-label--hidden")).toBe(false);
@@ -138,7 +132,7 @@ describe("runValueChainScenario", () => {
     const needNode = canvas.querySelector('[data-node-id="need"]')!;
     drag(needNode, { x: 200, y: 76 });
     await flush();
-    clickBegin(mascotHost);
+    clickNext(mascotHost);
     await flush();
     clickNext(mascotHost);
     await flush();
