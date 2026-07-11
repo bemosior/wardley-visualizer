@@ -1,11 +1,16 @@
 import { Panel, type EvolutionKind, type Finding, type GateOption, type PanelDragSlot, type PanelDragHandle, type PanelField } from "./panel";
 import { createMascotAvatar, type MascotState } from "./mascotAvatar";
+import { prefersReducedMotion } from "./animate";
 import type { WardleyDemo } from "./WardleyDemo";
 import type { EvolutionStage } from "../domain/evolution";
 import type { Question, QuestionOption } from "../domain/questionBank";
 
 /** how long the "talking" bob animation plays before the mascot settles back to idle */
 const TALK_DURATION_MS = 600;
+
+/** how long the mascot's one-time first-appearance "arrival" flourish (`arrive()`) holds before
+ * settling back to idle -- long enough for the pop-in plus the reused celebrate bounce to finish */
+const ARRIVE_DURATION_MS = 1000;
 
 /** matches `.wardley-demo-root .wd-mascot-avatar`'s width in styles.ts, so the avatar can be centered under a node */
 const AVATAR_WIDTH = 40;
@@ -140,6 +145,28 @@ export class Mascot {
   unmount(): void {
     this.root.remove();
     window.removeEventListener("resize", this.resizeHandler);
+  }
+
+  /**
+   * plays a one-time "arrival" flourish the moment the mascot first appears (Phase 0, right after
+   * the Need snaps into place): a pop-in plus the same celebratory bounce/glow `setState
+   * ("celebrating")` uses elsewhere (`wd-mascot--arriving` in styles.ts), so the very first
+   * appearance reads as "you unlocked this" rather than the mascot just flatly existing at its
+   * spawn point. The speech bubble stays hidden for the same span -- an empty bubble box would
+   * otherwise flash beside the avatar before the caller's next `showPlaceholder` gives it any
+   * content -- then fades in once this resolves and that content renders. Skips straight to idle
+   * with no delay under `prefers-reduced-motion`, same as `animateTo`.
+   */
+  async arrive(): Promise<void> {
+    if (prefersReducedMotion()) {
+      this.setState("idle");
+      return;
+    }
+    this.root.classList.add("wd-mascot--arriving");
+    this.setState("celebrating");
+    await new Promise<void>((resolve) => setTimeout(resolve, ARRIVE_DURATION_MS));
+    this.root.classList.remove("wd-mascot--arriving");
+    this.setState("idle");
   }
 
   /**

@@ -829,6 +829,32 @@ const CSS = `
   }
 }
 
+/* fires only while the mascot's first-appearance arrival flourish is playing (Mascot.arrive) --
+   a higher-specificity 3-class selector so it wins over the plain celebrating rule above instead
+   of fighting it for the animation shorthand, letting the pop-in and the reused celebrate
+   bounce/glow run together. */
+.wd-mascot--arriving .wd-mascot-avatar.wd-mascot--celebrating {
+  animation:
+    wd-mascot-arrive 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+    wd-node-charged 2.4s ease-in-out infinite,
+    wd-mascot-celebrate 0.8s ease-in-out 0.2s;
+}
+
+@keyframes wd-mascot-arrive {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.wd-mascot--arriving .wd-mascot-bubble {
+  opacity: 0;
+}
+
 .wd-mascot-bubble {
   position: relative;
   background: #fff;
@@ -838,6 +864,8 @@ const CSS = `
   padding: 0.75rem 1rem;
   max-width: 280px;
   pointer-events: auto;
+  opacity: 1;
+  transition: opacity 0.4s ease;
 }
 
 .wd-mascot-bubble::before {
@@ -924,7 +952,13 @@ const CSS = `
   .wd-mascot-avatar.wd-mascot--celebrating {
     animation: none;
   }
+  .wd-mascot--arriving .wd-mascot-avatar.wd-mascot--celebrating {
+    animation: none;
+  }
   .wd-mascot {
+    transition-duration: 0.01s;
+  }
+  .wd-mascot-bubble {
     transition-duration: 0.01s;
   }
 }
