@@ -35,22 +35,16 @@ function awaitEvolutionConfirm(
   });
 }
 
-const MASCOT_EVOLUTION_INTRO = {
-  heading: "Everything evolves.",
-  subheading: "As things evolve, how you build, buy, and lead around them changes too.",
-};
-
 /**
  * Phase 20: turn the value chain into a Wardley Map. Waits for the visitor to click the second
  * "Next" link (the Phase 10 -> Phase 20 gate, rendered inside the mascot's own bubble via
- * `Mascot.confirmPlacement`), then shows one more mascot beat introducing the evolution axis
- * itself (`MASCOT_EVOLUTION_INTRO`) gated behind its own "Next", before firing `onEvolutionReady`
- * and revealing the map backdrop and the Need's label, its starting evolution stage ("Genesis"),
- * and the matching characteristics text from `domain/evolution.ts` — updating live
- * (`Mascot.updateInstrumentPanel`) and tracking the node's on-screen position (`Mascot.moveTo`) as
- * the visitor drags the Need along the evolution axis (`demo.runEvolutionDragStep`). A "Confirm
- * placement" link (`Mascot.confirmPlacement`, rendered inside the bubble) appears the first time
- * the Need is dropped, and resolves once clicked. The same drag-confirm pattern then repeats for
+ * `Mascot.confirmPlacement`), fires `onEvolutionReady`, then shows the map
+ * backdrop and the Need's label, its starting evolution stage ("Genesis"), and the matching
+ * characteristics text from `domain/evolution.ts` — updating live (`Mascot.updateInstrumentPanel`)
+ * and tracking the node's on-screen position (`Mascot.moveTo`) as the visitor drags the Need along
+ * the evolution axis (`demo.runEvolutionDragStep`). A "Confirm placement" link
+ * (`Mascot.confirmPlacement`, rendered inside the bubble) appears the first time the Need is
+ * dropped, and resolves once clicked. The same drag-confirm pattern then repeats for
  * Capability-1/2/3 in turn (each slides into the Genesis column, beckons, and gets its own bubble
  * heading/subheading, the mascot re-anchoring to each in turn), and once all four nodes are placed
  * the scenario fires `demo.celebrateAll()` (with the mascot celebrating alongside it) for the
@@ -61,10 +55,6 @@ export async function runPhase20(ctx: ScenarioContext): Promise<void> {
   const { demo, mascot, chain, options } = ctx;
 
   await mascot.confirmPlacement("Next");
-
-  mascot.showPlaceholder(MASCOT_EVOLUTION_INTRO.heading, MASCOT_EVOLUTION_INTRO.subheading);
-  await mascot.confirmPlacement("Let's see it →");
-
   const scale = demo.captureScale();
   options.onEvolutionReady?.();
 
