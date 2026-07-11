@@ -721,7 +721,7 @@ describe("runValueChainScenario", () => {
     await flush();
 
     expect(mascotHost.querySelector(".wd-panel-form-prompt")!.textContent).toBe(
-      `What's something they depend on to get "${NEED_CATALOG[0].label}" met? \r\n(1 of 3)`,
+      `What's something they depend on to get their "${NEED_CATALOG[0].label}" need met? \r\n(1 of 3)`,
     );
   });
 });
