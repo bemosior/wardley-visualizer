@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { Mascot } from "./mascot";
 import { WardleyDemo } from "./WardleyDemo";
 import type { Question } from "../domain/questionBank";
@@ -501,5 +501,47 @@ describe("Mascot talking/celebrating state", () => {
 
     expect(host.querySelector(".wd-mascot-avatar")!.classList.contains("wd-mascot--celebrating")).toBe(true);
     vi.useRealTimers();
+  });
+});
+
+describe("Mascot.arrive", () => {
+  const originalMatchMedia = window.matchMedia;
+
+  afterEach(() => {
+    window.matchMedia = originalMatchMedia;
+  });
+
+  it("plays a pop-in + celebrate flourish, then settles back to idle", async () => {
+    // src/test/setup.ts shims matchMedia to always report reduced motion -- disable that here to
+    // exercise arrive()'s real animated path.
+    window.matchMedia = (() => ({ matches: false })) as unknown as typeof window.matchMedia;
+    vi.useFakeTimers();
+    const host = makeHost();
+    const mascot = new Mascot(host);
+    mascot.mount();
+
+    const arrived = mascot.arrive();
+
+    expect(host.querySelector(".wd-mascot")!.classList.contains("wd-mascot--arriving")).toBe(true);
+    expect(host.querySelector(".wd-mascot-avatar")!.classList.contains("wd-mascot--celebrating")).toBe(true);
+
+    await vi.advanceTimersByTimeAsync(1000);
+    await arrived;
+
+    expect(host.querySelector(".wd-mascot")!.classList.contains("wd-mascot--arriving")).toBe(false);
+    expect(host.querySelector(".wd-mascot-avatar")!.classList.contains("wd-mascot--idle")).toBe(true);
+    vi.useRealTimers();
+  });
+
+  it("skips the flourish and delay under prefers-reduced-motion", async () => {
+    window.matchMedia = (() => ({ matches: true })) as unknown as typeof window.matchMedia;
+    const host = makeHost();
+    const mascot = new Mascot(host);
+    mascot.mount();
+
+    await mascot.arrive();
+
+    expect(host.querySelector(".wd-mascot")!.classList.contains("wd-mascot--arriving")).toBe(false);
+    expect(host.querySelector(".wd-mascot-avatar")!.classList.contains("wd-mascot--idle")).toBe(true);
   });
 });

@@ -40,8 +40,11 @@ const MASCOT_NEED_PLACED = {
  *
  * Once the Need snaps into place, `onNeedPlaced` fires (Phase 0 done), the arrow cue is removed,
  * and *only then* does the `Mascot` mount for the first time — anchored beside the Need's settled
- * position (`"northeast"`, clear of the Capability row underneath). It shows a single-CTA beat
- * (`MASCOT_BEGIN_GATE`, "Want to learn about Wardley Mapping?" / "Let's begin!") before revealing
+ * position (`"northeast"`, clear of the Capability row underneath). Before saying anything, it
+ * plays a one-time "arrival" flourish (`Mascot.arrive`) — a pop-in plus the reused celebrating
+ * bounce/glow — so this first appearance reads as a small reward rather than the mascot just
+ * flatly existing. It then shows a single-CTA beat (`MASCOT_BEGIN_GATE`, "Want to learn about
+ * Wardley Mapping?" / "Let's begin!") before revealing
  * every node's label (`WardleyDemo.revealNodeLabels`) and explaining what was just built
  * (`MASCOT_NEED_PLACED`) behind its own "Next" beat — the caller (`phase5.ts`) then starts directly
  * with the User/Need/Capability walkthrough.
@@ -74,6 +77,7 @@ export async function runPhase0(options: ValueChainScenarioOptions): Promise<Sce
   const needPlacedPos = demo.getNodePixelPosition(chain.need.id);
   if (needPlacedPos) mascot.moveTo(chain.need.id, needPlacedPos, "northeast");
 
+  await mascot.arrive();
   mascot.showPlaceholder(MASCOT_BEGIN_GATE.prompt, "");
   await mascot.confirmPlacement(MASCOT_BEGIN_GATE.cta);
 
