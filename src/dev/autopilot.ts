@@ -83,12 +83,12 @@ export function attachAutopilot({ mascotHost, target }: AutopilotOptions): Autop
    * slots, form, instrument panel, confirm/gate links, questions) into the same root.
    */
   function handleContentMutation(): void {
-    // Phase 0's post-drop single-CTA gate ("Want to learn about Wardley Mapping?" / "Let's
-    // begin!") -- a `showGate` button (`.wd-panel-question-option`, not `.wd-next-link`), auto-
-    // clicked unconditionally since every target is downstream of it.
-    const beginOption = mascotHost.querySelector<HTMLButtonElement>(".wd-panel-question-option");
-    if (beginOption?.textContent === "Let's begin!") {
-      beginOption.click();
+    // Phase 0's post-drop single-CTA beat ("Want to learn about Wardley Mapping?" / "Let's
+    // begin!") -- the shared "Next"-style CTA (`.wd-next-link`), auto-clicked unconditionally
+    // since every target is downstream of it.
+    const beginLink = mascotHost.querySelector<HTMLButtonElement>(".wd-next-link");
+    if (beginLink?.textContent === "Let's begin!") {
+      beginLink.click();
       return;
     }
 
