@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
 import { runValueChainScenario } from "./index";
-import { MAP_CAPTION_FADE_MS } from "../../engine/WardleyDemo";
 import { NEED_CATALOG } from "../../domain/needCatalog";
 import { METHOD_QUESTION } from "../../domain/questionBank";
 import { CONCEPT_BANK } from "../../domain/conceptBank";
@@ -252,7 +251,7 @@ describe("runValueChainScenario", () => {
     expect(onCelebrate).toHaveBeenCalledOnce();
   });
 
-  it("shows a second Next link after celebrating, reveals the map backdrop only once it's clicked, and fires onEvolutionReady", async () => {
+  it("shows a second Next link after celebrating, reveals the map backdrop and fires onEvolutionReady once it's clicked, then gates the first drag behind an evolution-intro beat", async () => {
     const onEvolutionReady = vi.fn();
     const canvas = document.createElement("div");
     const mascotHost = document.createElement("div");
@@ -275,32 +274,28 @@ describe("runValueChainScenario", () => {
     expect(onEvolutionReady).not.toHaveBeenCalled();
     expect(canvas.querySelector(".wd-backdrop")).toBeNull();
 
-    vi.useFakeTimers();
     clickNext(mascotHost);
     await flush();
 
-    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Everything evolves.");
-    expect(onEvolutionReady).not.toHaveBeenCalled();
-    expect(canvas.querySelector(".wd-backdrop")).toBeNull();
-
-    clickNext(mascotHost);
-    await flush();
-
+    // the map backdrop and onEvolutionReady both land on this first click -- the evolution-intro
+    // beat below is shown once the map is already visible, not gating the reveal itself
     expect(canvas.querySelector(".wd-backdrop")).not.toBeNull();
-
     expect(onEvolutionReady).toHaveBeenCalledOnce();
-    expect(mascotHost.querySelector(".wd-next-link")).toBeNull();
-
     expect(canvas.querySelector('[data-node-id="user"]')!.classList.contains("wd-node--charged")).toBe(false);
     expect(canvas.querySelector('[data-node-id="need"]')!.classList.contains("wd-node--charged")).toBe(false);
-    expect(canvas.querySelector('[data-node-id="need"]')!.classList.contains("wd-node--beckon")).toBe(true);
 
-    // the slide to Genesis is staggered behind the mascot bubble's own fade-in delay
-    // (MAP_CAPTION_FADE_MS), not immediate
+    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Everything evolves.");
+    // the Need doesn't beckon or slide to Genesis until this beat is confirmed
+    expect(canvas.querySelector('[data-node-id="need"]')!.classList.contains("wd-node--beckon")).toBe(false);
     expect(canvas.querySelector('[data-node-id="need"]')!.getAttribute("transform")).not.toMatch(/^translate\(50,/);
-    vi.advanceTimersByTime(MAP_CAPTION_FADE_MS);
+
+    clickNext(mascotHost);
+    await flush();
+
+    expect(mascotHost.querySelector(".wd-next-link")).toBeNull();
+    expect(canvas.querySelector('[data-node-id="need"]')!.classList.contains("wd-node--beckon")).toBe(true);
+    // no artificial stagger anymore -- the Need settles into Genesis as soon as this gate resolves
     expect(canvas.querySelector('[data-node-id="need"]')!.getAttribute("transform")).toMatch(/^translate\(50,/);
-    vi.useRealTimers();
   });
 
   it("does not mount the mascot until the Need is placed, then swaps in a Need-label/Genesis bubble once Phase 20 begins", async () => {
@@ -354,7 +349,6 @@ describe("runValueChainScenario", () => {
     await flush();
     clickNext(mascotHost);
     await flush();
-    vi.advanceTimersByTime(MAP_CAPTION_FADE_MS);
   }
 
   it("doesn't show a confirm link until the Need is dragged at least once", async () => {

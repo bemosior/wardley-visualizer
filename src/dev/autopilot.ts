@@ -132,9 +132,10 @@ export function attachAutopilot({ mascotHost, target }: AutopilotOptions): Autop
         link!.click();
         if (target === "phase10") disconnect();
       }
-    } else if (linkText === "Let's see it →") {
-      // Phase 20's evolution-intro gate ("Everything evolves.") -- phase20 stops right after
-      // clicking through this one, landing at today's frontier (the map, Need beckoning)
+    } else if (linkText === "Let's try it →") {
+      // Phase 20's evolution-intro gate ("Everything evolves.", shown after the map backdrop
+      // itself is already visible) -- phase20 stops right after clicking through this one,
+      // landing at today's frontier (the map, Need beckoning)
       if (target === "phase20" || target === "finale" || target === "thinking" || target === "recap") link!.click();
       if (target === "phase20") disconnect();
     } else if (linkText === "Confirm placement" && (target === "finale" || target === "thinking" || target === "recap")) {

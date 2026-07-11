@@ -1,4 +1,3 @@
-import { MAP_CAPTION_FADE_MS } from "../../engine/WardleyDemo";
 import type { WardleyDemo } from "../../engine/WardleyDemo";
 import type { Mascot } from "../../engine/mascot";
 import { PANEL_CONTENT_MIN_HEIGHT } from "../../engine/styles";
@@ -43,35 +42,35 @@ const MASCOT_EVOLUTION_INTRO = {
 /**
  * Phase 20: turn the value chain into a Wardley Map. Waits for the visitor to click the second
  * "Next" link (the Phase 10 -> Phase 20 gate, rendered inside the mascot's own bubble via
- * `Mascot.confirmPlacement`), then shows one more mascot beat introducing the evolution axis
- * itself (`MASCOT_EVOLUTION_INTRO`) gated behind its own "Next", before firing `onEvolutionReady`
- * and revealing the map backdrop and the Need's label, its starting evolution stage ("Genesis"),
- * and the matching characteristics text from `domain/evolution.ts` — updating live
- * (`Mascot.updateInstrumentPanel`) and tracking the node's on-screen position (`Mascot.moveTo`) as
- * the visitor drags the Need along the evolution axis (`demo.runEvolutionDragStep`). A "Confirm
- * placement" link (`Mascot.confirmPlacement`, rendered inside the bubble) appears the first time
- * the Need is dropped, and resolves once clicked. The same drag-confirm pattern then repeats for
- * Capability-1/2/3 in turn (each slides into the Genesis column, beckons, and gets its own bubble
- * heading/subheading, the mascot re-anchoring to each in turn), and once all four nodes are placed
- * the scenario fires `demo.celebrateAll()` (with the mascot celebrating alongside it) for the
- * placement finale — the caller then waits on a "Next" link that gates the move into Phase 25
- * (`phase25.ts`).
+ * `Mascot.confirmPlacement`), fires `onEvolutionReady`, and reveals the map backdrop -- then, once
+ * the map itself is visible, shows one more mascot beat introducing the evolution axis
+ * (`MASCOT_EVOLUTION_INTRO`) gated behind its own "Let's try it →", before showing the Need's
+ * label, its starting evolution stage ("Genesis"), and the matching characteristics text from
+ * `domain/evolution.ts` — updating live (`Mascot.updateInstrumentPanel`) and tracking the node's
+ * on-screen position (`Mascot.moveTo`) as the visitor drags the Need along the evolution axis
+ * (`demo.runEvolutionDragStep`). A "Confirm placement" link (`Mascot.confirmPlacement`, rendered
+ * inside the bubble) appears the first time the Need is dropped, and resolves once clicked. The
+ * same drag-confirm pattern then repeats for Capability-1/2/3 in turn (each slides into the
+ * Genesis column, beckons, and gets its own bubble heading/subheading, the mascot re-anchoring to
+ * each in turn), and once all four nodes are placed the scenario fires `demo.celebrateAll()` (with
+ * the mascot celebrating alongside it) for the placement finale — the caller then waits on a
+ * "Next" link that gates the move into Phase 25 (`phase25.ts`).
  */
 export async function runPhase20(ctx: ScenarioContext): Promise<void> {
   const { demo, mascot, chain, options } = ctx;
 
   await mascot.confirmPlacement("Next");
 
-  mascot.showPlaceholder(MASCOT_EVOLUTION_INTRO.heading, MASCOT_EVOLUTION_INTRO.subheading);
-  await mascot.confirmPlacement("Let's see it →");
-
   const scale = demo.captureScale();
   options.onEvolutionReady?.();
 
   demo.stopCharging([chain.user.id, chain.need.id, ...chain.capabilities.map((c) => c.id)]);
   demo.markPending(chain.capabilities.map((c) => c.id));
-  mascot.showInstrumentPanel(chain.need.label, "need", "Genesis", MAP_CAPTION_FADE_MS);
   demo.showMapBackdrop(scale, PANEL_CONTENT_MIN_HEIGHT);
+
+  mascot.showPlaceholder(MASCOT_EVOLUTION_INTRO.heading, MASCOT_EVOLUTION_INTRO.subheading);
+  await mascot.confirmPlacement("Let's try it →");
+
   // guards every delayed mascot.moveTo below (the Need's slide, and each capability's, further
   // down): a real visitor always takes longer than these animations' own delay/duration to place
   // all four nodes, so those callbacks naturally fire long before `allPlaced` flips -- but the dev
@@ -80,21 +79,18 @@ export async function runPhase20(ctx: ScenarioContext): Promise<void> {
   // `mascot.moveToTopRight()` below and drag the mascot back onto the map instead of leaving it in
   // the corner.
   let allPlaced = false;
-  // staggered by the same delay as the mascot bubble's fade-in (mascot.showInstrumentPanel
-  // above), so the Need visibly settles into Genesis in step with the rest of Phase 20's reveal
-  // rather than sliding immediately while the caption/bubble are still fading in.
-  setTimeout(
-    () =>
-      demo.slideToGenesis(chain.need.id, undefined, () => {
-        if (allPlaced) return;
-        const pos = demo.getNodePixelPosition(chain.need.id);
-        // "pinned", not "northeast": the Need is about to drag freely along the evolution axis
-        // below while the mascot stays put -- it needs the hard "never end up in the drag's path"
-        // guarantee, not just the cosmetic beside-the-node lift. See `MascotPlacement`'s doc comment.
-        if (pos) mascot.moveTo(chain.need.id, pos, "pinned");
-      }),
-    MAP_CAPTION_FADE_MS,
-  );
+  mascot.showInstrumentPanel(chain.need.label, "need", "Genesis");
+  // the map backdrop and the "Everything evolves." beat above already gave the visitor a moment
+  // before this point, so the Need can settle into Genesis immediately -- no extra staggering
+  // delay needed here the way an artificial reveal timer would have needed one.
+  demo.slideToGenesis(chain.need.id, undefined, () => {
+    if (allPlaced) return;
+    const pos = demo.getNodePixelPosition(chain.need.id);
+    // "pinned", not "northeast": the Need is about to drag freely along the evolution axis
+    // below while the mascot stays put -- it needs the hard "never end up in the drag's path"
+    // guarantee, not just the cosmetic beside-the-node lift. See `MascotPlacement`'s doc comment.
+    if (pos) mascot.moveTo(chain.need.id, pos, "pinned");
+  });
   demo.beckonNode(chain.need.id);
 
   await awaitEvolutionConfirm(demo, mascot, chain.need.id, options.onEvolutionStep);
