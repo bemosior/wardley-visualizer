@@ -43,6 +43,33 @@ describe("Mascot.mount / unmount", () => {
   });
 });
 
+describe("Mascot first-position transition suppression", () => {
+  it("spawns at its destination instantly (no left/top transition), then re-enables the transition for later moves", () => {
+    const callbacks: FrameRequestCallback[] = [];
+    const originalRaf = window.requestAnimationFrame;
+    window.requestAnimationFrame = ((cb: FrameRequestCallback) => {
+      callbacks.push(cb);
+      return callbacks.length;
+    }) as typeof requestAnimationFrame;
+
+    try {
+      const mascot = new Mascot(makeHost());
+      const root = (mascot as any).root as HTMLElement;
+
+      mascot.moveTo("need", { x: 10, y: 20, radius: 50 });
+      expect(root.style.transition).toBe("none");
+
+      callbacks.splice(0, callbacks.length).forEach((cb) => cb(0));
+      expect(root.style.transition).toBe("");
+
+      mascot.moveTo("need", { x: 30, y: 40, radius: 50 });
+      expect(root.style.transition).toBe("");
+    } finally {
+      window.requestAnimationFrame = originalRaf;
+    }
+  });
+});
+
 describe("Mascot.moveTo", () => {
   it("plants the root below-and-centered on the given node, clear of its radius", () => {
     const mascot = new Mascot(makeHost());
