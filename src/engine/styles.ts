@@ -152,7 +152,7 @@ const CSS = `
   transition: opacity 0.5s ease;
 }
 
-/** hides a node's label (Phase 0's opening beat, before the visitor commits via "Let's begin!") — opacity, not visibility, so the fade transition above applies */
+/** hides a node's label (Phase 0's opening beat, before the Need is dragged into place) — opacity, not visibility, so the fade transition above applies */
 .wd-node-label--hidden {
   opacity: 0;
 }

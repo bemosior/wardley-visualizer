@@ -2,10 +2,10 @@ import type { WardleyDemo, EvolutionDragHandle } from "../engine/WardleyDemo";
 
 /**
  * named moments in the demo's current (built-so-far) flow that `index.html?skipTo=` can land on.
- * `intro`: skip the Phase 0 drag, its post-drop "Let's begin!" gate, and all five of the resulting
- * "Next" gates (Phase 0's "You made a Value Chain!" placeholder, then Phase 5's User/Need/
- * Capability walkthrough and Part A/B/C explanation), landing at Phase 7's "I'm Ben, by the way"
- * introduction (its own "Nice to meet you!" gate is left for a real click).
+ * `intro`: skip the Phase 0 drag and all five of the resulting "Next" gates (Phase 0's "You made a
+ * Value Chain!" placeholder, then Phase 5's User/Need/Capability walkthrough and Part A/B/C
+ * explanation), landing at Phase 7's "I'm Ben, by the way" introduction (its own "Nice to meet
+ * you!" gate is left for a real click).
  * `phase10`: also click past Phase 7's "I'm Ben" introduction gate, land at the start of
  * Phase 10's form.
  * `celebrate`: also auto-fill all 5 form fields, land right after the Phase 10 celebration.
@@ -84,15 +84,6 @@ export function attachAutopilot({ mascotHost, target }: AutopilotOptions): Autop
    * slots, form, instrument panel, confirm/gate links, questions) into the same root.
    */
   function handleContentMutation(): void {
-    // Phase 0's post-drop single-CTA beat ("Want to learn about Wardley Mapping?" / "Let's
-    // begin!") -- the shared "Next"-style CTA (`.wd-next-link`), auto-clicked unconditionally
-    // since every target is downstream of it.
-    const beginLink = mascotHost.querySelector<HTMLButtonElement>(".wd-next-link");
-    if (beginLink?.textContent === "Let's begin!") {
-      beginLink.click();
-      return;
-    }
-
     const form = mascotHost.querySelector<HTMLElement>(".wd-panel-form");
     if (form) fillAndSubmit(form);
 

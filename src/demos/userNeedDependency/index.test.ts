@@ -62,12 +62,10 @@ async function passCelebrateDelay(): Promise<void> {
   }
 }
 
-/** drags the Need into place (default layout's target is centerX=200, needY=76 for the default 400x300 viewBox), clicks past Phase 0's post-drop "Let's begin!" gate, then clicks past its six "Next" gates ("You made a Value Chain!", the User/Need/Capability walkthrough, and the Part A/B/C explanation) and Phase 7's single "I'm Ben" introduction gate into the form */
+/** drags the Need into place (default layout's target is centerX=200, needY=76 for the default 400x300 viewBox), then clicks past its six "Next" gates ("You made a Value Chain!", the User/Need/Capability walkthrough, and the Part A/B/C explanation) and Phase 7's single "I'm Ben" introduction gate into the form */
 async function completeDragStep(canvas: HTMLElement, mascotHost: HTMLElement): Promise<void> {
   const needNode = canvas.querySelector('[data-node-id="need"]')!;
   drag(needNode, { x: 200, y: 76 });
-  await flush();
-  clickNext(mascotHost);
   await flush();
   for (let i = 0; i < 6; i++) {
     clickNext(mascotHost);
@@ -88,7 +86,7 @@ describe("runValueChainScenario", () => {
     expect(mascotHost.querySelector("form")).toBeNull();
   });
 
-  it("fires onNeedPlaced as soon as the Need snaps, mounts the mascot, removes the arrow cue, and shows a single-CTA beat", async () => {
+  it("fires onNeedPlaced as soon as the Need snaps, mounts the mascot, removes the arrow cue, reveals every node's label, and shows the Value Chain placeholder", async () => {
     const onNeedPlaced = vi.fn();
     const canvas = document.createElement("div");
     const mascotHost = document.createElement("div");
@@ -103,35 +101,20 @@ describe("runValueChainScenario", () => {
     expect(canvas.querySelector(".wd-direction-arrow")).toBeNull();
     expect(mascotHost.querySelector(".wd-mascot")).not.toBeNull();
     expect(mascotHost.querySelector("form")).toBeNull();
-    const gateLink = mascotHost.querySelector<HTMLButtonElement>(".wd-next-link");
-    expect(gateLink).not.toBeNull();
-    expect(gateLink!.textContent).toBe("Let's begin!");
-    expect(needNode.querySelector(".wd-node-label")!.classList.contains("wd-node-label--hidden")).toBe(true);
-  });
-
-  it("clicking 'Let's begin!' reveals every node's label and shows the Value Chain placeholder", async () => {
-    const { canvas, mascotHost } = buildScenario(vi.fn());
-    const needNode = canvas.querySelector('[data-node-id="need"]')!;
-    drag(needNode, { x: 200, y: 76 });
-    await flush();
-
-    clickNext(mascotHost);
-    await flush();
-
     expect(needNode.querySelector(".wd-node-label")!.classList.contains("wd-node-label--hidden")).toBe(false);
     expect(canvas.querySelector('[data-node-id="user"] .wd-node-label')!.classList.contains("wd-node-label--hidden")).toBe(
       false,
     );
     expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("You just made a Value Chain!");
-    expect(mascotHost.querySelector(".wd-next-link")).not.toBeNull();
+    const gateLink = mascotHost.querySelector<HTMLButtonElement>(".wd-next-link");
+    expect(gateLink).not.toBeNull();
+    expect(gateLink!.textContent).toBe("Next");
   });
 
   it("walks the user through User/Need/Capability, relabels the three Capability nodes to Part A/B/C, explains multi-part needs, then has the mascot introduce itself before the form", async () => {
     const { canvas, mascotHost } = buildScenario(vi.fn());
     const needNode = canvas.querySelector('[data-node-id="need"]')!;
     drag(needNode, { x: 200, y: 76 });
-    await flush();
-    clickNext(mascotHost);
     await flush();
     clickNext(mascotHost);
     await flush();
