@@ -542,7 +542,7 @@ export class Mascot {
 
   showFindings(findings: Finding[], heading: string): void {
     this.talk();
-    this.panel.showFindings(findings, heading);
+    this.panel.showFindings(findings, heading, () => this.reposition());
     this.reposition();
   }
 
