@@ -487,7 +487,7 @@ describe("runValueChainScenario", () => {
     mascotHost.querySelectorAll<HTMLButtonElement>(".wd-panel-question-option")[index].click();
   }
 
-  /** gate buttons always render exactly Yes/No/"Try something else", in that order */
+  /** the concept/node pairing gate always renders Yes/No/"Try something else" first, in that order (plus a trailing "Finish Up" once a finding exists) */
   function clickYes(mascotHost: HTMLElement): void {
     clickOption(mascotHost, 0);
   }
@@ -603,6 +603,42 @@ describe("runValueChainScenario", () => {
     expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(
       gatePrompt("inertia", NEED_CATALOG[0].label),
     );
+    vi.useRealTimers();
+  });
+
+  it("adds a 'Finish Up' option to the concept/node pairing gate once an annotation has landed, and clicking it ends the phase", async () => {
+    vi.useFakeTimers();
+    const canvas = document.createElement("div");
+    const mascotHost = document.createElement("div");
+    document.body.append(canvas, mascotHost);
+    let resolved = false;
+    runValueChainScenario({ canvas, mascotHost }).then(() => {
+      resolved = true;
+    });
+    await reachThinkingStep(canvas, mascotHost);
+
+    expect(optionLabels(mascotHost)).toEqual(["Yes", "No", "Try something else"]);
+
+    clickYes(mascotHost);
+    await flush();
+    clickOption(mascotHost); // "Using the Right Methods" -> Agile, annotation "Methods: Agile"
+    await flush();
+    clickOption(mascotHost, 0); // "Keep Going" past the "Nice insight!" pause
+    await flush();
+
+    // back on a concept/node pairing gate ("organizational inertia" x Need); now that a finding
+    // exists, "Finish Up" is offered alongside Yes/No/Try something else
+    expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(
+      gatePrompt("inertia", NEED_CATALOG[0].label),
+    );
+    expect(optionLabels(mascotHost)).toEqual(["Yes", "No", "Try something else", "Finish Up"]);
+
+    clickOption(mascotHost, 3); // "Finish Up"
+    await flush();
+
+    const findingsHeading = mascotHost.querySelector(".wd-panel-findings")!.querySelector(".wd-panel-placeholder-heading");
+    expect(findingsHeading!.textContent).toBe("Here's what you found, and you're barely scratching the surface!");
+    expect(resolved).toBe(false); // still waiting on the Finale's own "What's next →" link
     vi.useRealTimers();
   });
 

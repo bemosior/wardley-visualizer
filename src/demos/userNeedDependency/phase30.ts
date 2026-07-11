@@ -36,9 +36,11 @@ const samePairing = (a: Pairing, b: Pairing): boolean =>
  * node.label]` as `showGate`'s `emphasize` list so both names stand out from the surrounding
  * prose (`Panel.renderWithEmphasis`) — with subtitle "Choosing is how you
  * learn!" on the very first gate of the phase,
- * "Keep going!" on every one after. Exactly three options are always offered: Yes, No, and
- * "Try something else" (shuffle) — abandons the current pairing and jumps to a uniformly random
- * other still-unresolved pairing anywhere in the bank.
+ * "Keep going!" on every one after. Yes, No, and "Try something else" (shuffle — abandons the
+ * current pairing and jumps to a uniformly random other still-unresolved pairing anywhere in the
+ * bank) are always offered; once at least one annotation has been placed, a fourth "Finish Up"
+ * option is added so a visitor who keeps choosing to continue isn't stuck clicking No/shuffle
+ * forever to end the phase.
  *
  * Yes leads into that concept's fixed deep-dive multiple-choice question (`Mascot.showQuestion`,
  * unchanged). If the chosen answer carries an `annotation`, it's anchored permanently near that
@@ -75,6 +77,9 @@ export async function runPhase30(ctx: ScenarioContext): Promise<void> {
       { id: "no", label: "No" },
       { id: "shuffle", label: "Try something else" },
     ];
+    if (findings.length > 0) {
+      gateOptions.push({ id: "finishUp", label: "Finish Up" });
+    }
 
     const choice = await mascot.showGate(
       `${current.concept.definition}\n\nDo you think we could learn something from exploring ${current.concept.label} with ${current.node.label}?`,
@@ -82,6 +87,8 @@ export async function runPhase30(ctx: ScenarioContext): Promise<void> {
       gateOptions,
       [current.concept.label, current.node.label],
     );
+
+    if (choice === "finishUp") break;
 
     if (choice === "yes") {
       const answer = await mascot.showQuestion(current.node.label, current.concept.question);
