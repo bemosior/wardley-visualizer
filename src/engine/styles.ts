@@ -484,6 +484,51 @@ const CSS = `
   flex: none;
 }
 
+.wd-panel-findings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.wd-panel-findings-label {
+  font-family: var(--wd-font-ui);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #999;
+}
+
+.wd-panel-collapse-toggle {
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--wd-color-border);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--wd-color-ink);
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.wd-panel-collapse-toggle:hover {
+  background: #f2f2f2;
+}
+
+.wd-panel-findings-body {
+  margin-top: 0.5rem;
+}
+
+.wd-panel-findings-body--collapsed {
+  display: none;
+}
+
 .wd-panel-findings-list {
   font-family: var(--wd-font-ui);
   font-size: 0.85rem;

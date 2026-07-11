@@ -475,16 +475,45 @@ export class Panel {
    * `showEmpty` whenever at least one concept produced an annotation, right before Phase 30 hands
    * off to the Finale — reuses the same `.wd-panel-content` container so the Finale's
    * `confirmPlacement` "What's next →" link appends directly beneath the list.
+   *
+   * The report sits parked over the map's corner (`Mascot.moveToTopRight`) for as long as the
+   * visitor lingers on their finished map, so a persistent `.wd-panel-findings-header` bar (a
+   * short "Report (N findings)" label + toggle button) stays visible above a collapsible
+   * `.wd-panel-findings-body` holding the actual heading + list — collapsing that body is what
+   * lets the visitor get the map back unobstructed without losing the report, and re-expand it
+   * later. `onToggle`, if given, fires after each collapse/expand so `Mascot.showFindings` can
+   * re-run its own bubble-position math (`reposition`) against the now-different bubble height.
    */
-  showFindings(findings: Finding[], heading: string): void {
+  showFindings(findings: Finding[], heading: string, onToggle?: () => void): void {
     this.clear();
     const content = document.createElement("div");
     content.classList.add("wd-panel-content", "wd-panel-content--top", "wd-panel-findings");
 
+    const header = document.createElement("div");
+    header.classList.add("wd-panel-findings-header");
+
+    const label = document.createElement("span");
+    label.classList.add("wd-panel-findings-label");
+    label.textContent = `Report (${findings.length} finding${findings.length === 1 ? "" : "s"})`;
+    header.appendChild(label);
+
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.classList.add("wd-panel-collapse-toggle");
+    toggle.textContent = "–";
+    toggle.title = "Collapse report";
+    toggle.setAttribute("aria-expanded", "true");
+    header.appendChild(toggle);
+
+    content.appendChild(header);
+
+    const body = document.createElement("div");
+    body.classList.add("wd-panel-findings-body");
+
     const headingEl = document.createElement("div");
     headingEl.classList.add("wd-panel-placeholder-heading");
     headingEl.textContent = heading;
-    content.appendChild(headingEl);
+    body.appendChild(headingEl);
 
     const list = document.createElement("ul");
     list.classList.add("wd-panel-findings-list");
@@ -496,7 +525,17 @@ export class Panel {
       li.append(conceptEl, document.createTextNode(` at ${finding.node}`));
       list.appendChild(li);
     }
-    content.appendChild(list);
+    body.appendChild(list);
+
+    content.appendChild(body);
+
+    toggle.addEventListener("click", () => {
+      const collapsed = body.classList.toggle("wd-panel-findings-body--collapsed");
+      toggle.textContent = collapsed ? "+" : "–";
+      toggle.title = collapsed ? "Show report" : "Collapse report";
+      toggle.setAttribute("aria-expanded", String(!collapsed));
+      onToggle?.();
+    });
 
     this.container.appendChild(content);
   }
