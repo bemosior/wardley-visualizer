@@ -786,6 +786,28 @@ export class WardleyDemo {
     return this.nodesById.has(nodeId);
   }
 
+  /**
+   * every currently-registered node's circle and every rendered connection's line segment, all in
+   * the same container-pixel space `getNodePixelPosition` uses — for a caller (the mascot's
+   * positioner) that needs to steer clear of the whole scene, not just the one node it's anchored
+   * to. Nodes still mid-drag report their stored target position, same caveat as
+   * `getNodePixelPosition`.
+   */
+  getObstacles(): { nodes: (Point & { radius: number })[]; edges: { a: Point; b: Point }[] } {
+    const nodes: (Point & { radius: number })[] = [];
+    for (const id of this.nodesById.keys()) {
+      const pos = this.getNodePixelPosition(id);
+      if (pos) nodes.push(pos);
+    }
+    const edges: { a: Point; b: Point }[] = [];
+    for (const { conn } of this.lines) {
+      const from = this.getNodePixelPosition(conn.from);
+      const to = this.getNodePixelPosition(conn.to);
+      if (from && to) edges.push({ a: { x: from.x, y: from.y }, b: { x: to.x, y: to.y } });
+    }
+    return { nodes, edges };
+  }
+
   /** current viewBox dimensions, in viewBox units — for a caller (e.g. a phase choosing a node-independent whitespace spot for the mascot) that needs to reason about the canvas's own bounds rather than any node's position */
   getViewBoxSize(): { width: number; height: number } {
     return { width: this.viewBox.width, height: this.viewBox.height };

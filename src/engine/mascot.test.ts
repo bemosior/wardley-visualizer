@@ -83,7 +83,7 @@ describe("Mascot.moveTo", () => {
 
     const avatarRoot = (mascot as any).avatarRoot as HTMLElement;
     expect(avatarRoot.style.left).toBe("-10px"); // 10 - AVATAR_WIDTH / 2 (40 / 2)
-    expect(avatarRoot.style.top).toBe("82px"); // 20 + radius(50) + NODE_CLEARANCE(12)
+    expect(avatarRoot.style.top).toBe("83px"); // 20 + radius(50) + NODE_CLEARANCE(12) + 1px self-clearance epsilon
   });
 
   it("re-tracks the last-moved node's position on window resize", () => {
@@ -102,7 +102,7 @@ describe("Mascot.moveTo", () => {
     expect(spy).toHaveBeenCalledWith("need");
     const avatarRoot = (mascot as any).avatarRoot as HTMLElement;
     expect(avatarRoot.style.left).toBe("22px"); // 42 - AVATAR_WIDTH / 2
-    expect(avatarRoot.style.top).toBe("55px"); // 43 + radius(0) + NODE_CLEARANCE(12)
+    expect(avatarRoot.style.top).toBe("56px"); // 43 + radius(0) + NODE_CLEARANCE(12) + 1px self-clearance epsilon
   });
 
   it("flips the avatar above the node when it doesn't fit below, based on its own fixed size", () => {
@@ -114,8 +114,9 @@ describe("Mascot.moveTo", () => {
     mascot.moveTo("need", { x: 250, y: 270, radius: 20 });
 
     // below (270+20+12=302) plus the avatar's own 60px height would overflow a 300px-tall host;
-    // above (270-20-12-60=178) fits, so the avatar should flip there instead.
-    expect(avatarRoot.style.top).toBe("178px");
+    // above (270-20-12-1-60=177, the extra 1px a self-clearance epsilon) fits, so the avatar
+    // should flip there instead.
+    expect(avatarRoot.style.top).toBe("177px");
   });
 
   it("keeps the avatar below the node when it comfortably fits there", () => {
@@ -126,7 +127,7 @@ describe("Mascot.moveTo", () => {
 
     mascot.moveTo("need", { x: 250, y: 200, radius: 20 });
 
-    expect(avatarRoot.style.top).toBe("232px"); // 200 + radius(20) + NODE_CLEARANCE(12)
+    expect(avatarRoot.style.top).toBe("233px"); // 200 + radius(20) + NODE_CLEARANCE(12) + 1px self-clearance epsilon
   });
 
   it("never lets the avatar cross back above the page's own top edge", () => {
@@ -164,42 +165,75 @@ describe("Mascot.moveTo", () => {
 describe("Mascot caption horizontal clamp", () => {
   it("leaves the caption at its default (right-of-avatar) position when there's room", () => {
     const { avatarHost, dialogHost } = makeHosts();
-    vi.spyOn(avatarHost, "getBoundingClientRect").mockReturnValue({ width: 300, left: 0 } as DOMRect);
+    vi.spyOn(avatarHost, "getBoundingClientRect").mockReturnValue({ width: 300, height: 300, left: 0, top: 0 } as DOMRect);
     const mascot = new Mascot(avatarHost, dialogHost);
     const captionEl = (mascot as any).captionEl as HTMLElement;
-    vi.spyOn(captionEl, "getBoundingClientRect").mockReturnValue({ width: 100, right: 250 } as DOMRect);
+    vi.spyOn(captionEl, "getBoundingClientRect").mockReturnValue({ width: 100, height: 32 } as DOMRect);
 
-    mascot.moveTo("need", { x: 50, y: 20 });
+    mascot.moveTo("need", { x: 50, y: 150 });
 
     expect(captionEl.classList.contains("wd-mascot-caption--flip")).toBe(false);
   });
 
   it("flips the caption to the avatar's left when there's no room on the right but there is on the left", () => {
     const { avatarHost, dialogHost } = makeHosts();
-    vi.spyOn(avatarHost, "getBoundingClientRect").mockReturnValue({ width: 300, left: 0 } as DOMRect);
+    vi.spyOn(avatarHost, "getBoundingClientRect").mockReturnValue({ width: 300, height: 300, left: 0, top: 0 } as DOMRect);
     const mascot = new Mascot(avatarHost, dialogHost);
     const captionEl = (mascot as any).captionEl as HTMLElement;
-    const avatarEl = (mascot as any).avatar.element as HTMLElement;
-    vi.spyOn(captionEl, "getBoundingClientRect").mockReturnValue({ width: 200, right: 350 } as DOMRect);
-    vi.spyOn(avatarEl, "getBoundingClientRect").mockReturnValue({ left: 260, width: 40 } as DOMRect);
+    vi.spyOn(captionEl, "getBoundingClientRect").mockReturnValue({ width: 150, height: 32 } as DOMRect);
 
-    mascot.moveTo("need", { x: 280, y: 20 });
+    // anchored near the host's right edge -- a rightward caption would spill well past x=300
+    mascot.moveTo("need", { x: 280, y: 150 });
 
     expect(captionEl.classList.contains("wd-mascot-caption--flip")).toBe(true);
   });
 
-  it("leaves the caption unflipped (spilling past the edge) when neither side fully fits", () => {
+  it("still produces a finite, on-page placement when the caption can't fully fit on either side", () => {
     const { avatarHost, dialogHost } = makeHosts();
-    vi.spyOn(avatarHost, "getBoundingClientRect").mockReturnValue({ width: 300, left: 0 } as DOMRect);
+    // a host too narrow for the caption to fit anywhere without some overflow -- there's no
+    // perfect answer here, but the search (see mascotPlacement.test.ts for the full scoring
+    // rules) must still land on *something* usable rather than producing NaN/undefined styles.
+    vi.spyOn(avatarHost, "getBoundingClientRect").mockReturnValue({ width: 100, height: 300, left: 0, top: 0 } as DOMRect);
     const mascot = new Mascot(avatarHost, dialogHost);
     const captionEl = (mascot as any).captionEl as HTMLElement;
-    const avatarEl = (mascot as any).avatar.element as HTMLElement;
-    vi.spyOn(captionEl, "getBoundingClientRect").mockReturnValue({ width: 200, right: 350 } as DOMRect);
-    vi.spyOn(avatarEl, "getBoundingClientRect").mockReturnValue({ left: 50, width: 40 } as DOMRect);
+    vi.spyOn(captionEl, "getBoundingClientRect").mockReturnValue({ width: 200, height: 32 } as DOMRect);
 
-    mascot.moveTo("need", { x: 50, y: 20 });
+    mascot.moveTo("need", { x: 50, y: 150 });
 
-    expect(captionEl.classList.contains("wd-mascot-caption--flip")).toBe(false);
+    const avatarRoot = (mascot as any).avatarRoot as HTMLElement;
+    expect(Number.isFinite(parseFloat(avatarRoot.style.left))).toBe(true);
+    expect(Number.isFinite(parseFloat(avatarRoot.style.top))).toBe(true);
+  });
+});
+
+describe("Mascot obstacle avoidance (via attached demo)", () => {
+  it("steers the avatar clear of a sibling node instead of just the anchor", () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const demo = WardleyDemo.mount(container, {
+      viewBox: { width: 400, height: 300 },
+      nodes: [
+        { id: "need", label: "Need", x: 200, y: 100, draggable: false },
+        // sits right where the default "below" placement would otherwise land
+        { id: "capability", label: "Capability", x: 200, y: 220, draggable: false },
+      ],
+      connections: [],
+      snapThreshold: 30,
+    });
+    vi.spyOn(demo, "getNodePixelPosition").mockImplementation((id: string) =>
+      id === "need" ? { x: 200, y: 100, radius: 40 } : { x: 200, y: 220, radius: 40 },
+    );
+    const { avatarHost, dialogHost } = makeHosts();
+    const mascot = new Mascot(avatarHost, dialogHost);
+    mascot.attachDemo(demo);
+
+    mascot.moveTo("need", { x: 200, y: 100, radius: 40 });
+
+    const avatarRoot = (mascot as any).avatarRoot as HTMLElement;
+    const top = parseFloat(avatarRoot.style.top);
+    // below (100 + 40 + 12 = 152) would run straight into the Capability node's circle
+    // (top 220 - radius 40 = 180); the mascot must have picked a different direction instead
+    expect(top === 152).toBe(false);
   });
 });
 

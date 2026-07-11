@@ -2,6 +2,8 @@ import { Panel, type EvolutionKind, type Finding, type GateOption, type PanelDra
 import { createMascotAvatar, type MascotState } from "./mascotAvatar";
 import { showNextLink } from "./nextLink";
 import { prefersReducedMotion } from "./animate";
+import { shiftRect } from "./geometry";
+import { pickMascotPlacement } from "./mascotPlacement";
 import type { WardleyDemo } from "./WardleyDemo";
 import type { EvolutionStage } from "../domain/evolution";
 import type { Question, QuestionOption } from "../domain/questionBank";
@@ -210,42 +212,46 @@ export class Mascot {
   }
 
   /**
-   * (re)computes the avatar's left/top from `lastPos`, then re-clamps the caption horizontally.
-   * No-ops the bounds math (but still sets left/top) when the host has no real layout yet (e.g.
-   * unit tests). Measures which side (below or above the node) has less real overflow against the
-   * host's actual bounds, based purely on the avatar's own fixed `AVATAR_HEIGHT` -- unlike the
-   * bubble this used to also carry, a 40x60px avatar (plus its small, capped-width caption)
-   * occasionally dipping a few pixels into a neighboring row is an acceptable cosmetic cost now
-   * that nothing readable lives there to actually cover.
+   * (re)computes the avatar's (and caption's) position from `lastPos` by searching every compass
+   * direction around the anchor -- see `pickMascotPlacement` for the full scoring rules. In short:
+   * never overlap a node (any node, not just the one anchored to), avoid crossing an edge unless
+   * every direction does, avoid spilling outside the host, and otherwise prefer the most natural
+   * reading order (below, then above, then beside). Obstacle data comes from `this.demo`; without
+   * one attached (e.g. unit tests that never call `attachDemo`), the search still runs but sees an
+   * empty scene, so it just falls back to the direction-priority/overflow tie-break.
    */
   private reposition(): void {
     if (!this.lastPos) return;
-    const { x, y, radius = 0 } = this.lastPos;
+    const anchor = { x: this.lastPos.x, y: this.lastPos.y, radius: this.lastPos.radius ?? 0 };
     const hostRect = this.avatarHost.getBoundingClientRect();
+    const bounds = hostRect.width && hostRect.height ? { width: hostRect.width, height: hostRect.height } : null;
+    const obstacles = this.demo?.getObstacles() ?? { nodes: [], edges: [] };
+    const captionSize = this.measureCaption();
 
-    const clearBelow = y + radius + NODE_CLEARANCE;
-    const clearAbove = y - radius - NODE_CLEARANCE;
+    const placement = pickMascotPlacement(
+      anchor,
+      { width: AVATAR_WIDTH, height: AVATAR_HEIGHT },
+      captionSize,
+      obstacles,
+      bounds,
+      CAPTION_GAP,
+      NODE_CLEARANCE,
+    );
+    let { avatarRect, captionRect } = placement;
 
-    let side: "below" | "above" = "below";
-    if (hostRect.height) {
-      const belowOverflow = Math.max(0, clearBelow + AVATAR_HEIGHT - hostRect.height);
-      const aboveOverflow = Math.max(0, AVATAR_HEIGHT - clearAbove);
-      if (aboveOverflow < belowOverflow) side = "above";
-    }
-
-    // host-local overflow past its own origin is normally fine (a host embedded with headroom
-    // above it can absorb it harmlessly), but past the actual page's top edge there's nothing left
-    // to scroll to -- floor `clearAbove` at whatever keeps the avatar's top on the page. Skipped
-    // when that isn't measurable (unit tests mock the host's rect without a real `top`).
-    let effectiveClearAbove = clearAbove;
-    if (side === "above") {
-      const hostDocTop = hostRect.top + window.scrollY;
-      if (Number.isFinite(hostDocTop)) {
-        effectiveClearAbove = Math.max(clearAbove, AVATAR_HEIGHT - hostDocTop);
+    // host-local overflow past the host's own origin is normally fine (a host embedded with
+    // headroom above it can absorb it harmlessly), but past the actual page's top edge there's
+    // nothing left to scroll to -- shift the whole placement down by whatever it takes to keep the
+    // avatar's top on the page. Skipped when that isn't measurable (unit tests mock the host's rect
+    // without a real `top`).
+    const hostDocTop = hostRect.top + window.scrollY;
+    if (Number.isFinite(hostDocTop)) {
+      const deficit = -(avatarRect.top + hostDocTop);
+      if (deficit > 0) {
+        avatarRect = shiftRect(avatarRect, 0, deficit);
+        if (captionRect) captionRect = shiftRect(captionRect, 0, deficit);
       }
     }
-
-    const avatarTop = side === "below" ? clearBelow : effectiveClearAbove - AVATAR_HEIGHT;
 
     // `.wd-mascot`'s CSS gives it a resting `top: 0; left: 0` (styles.ts) plus a `left`/`top`
     // transition meant for *later* re-anchors (e.g. jumping between nodes). Without this guard,
@@ -256,8 +262,8 @@ export class Mascot {
     // frame) keeps every later re-anchor animated as intended.
     const isFirstPosition = !this.hasPositioned;
     if (isFirstPosition) this.avatarRoot.style.transition = "none";
-    this.avatarRoot.style.left = `${x - AVATAR_WIDTH / 2}px`;
-    this.avatarRoot.style.top = `${avatarTop}px`;
+    this.avatarRoot.style.left = `${avatarRect.left}px`;
+    this.avatarRoot.style.top = `${avatarRect.top}px`;
     if (isFirstPosition) {
       this.hasPositioned = true;
       void this.avatarRoot.offsetHeight;
@@ -265,26 +271,13 @@ export class Mascot {
         this.avatarRoot.style.transition = "";
       });
     }
-    this.clampCaptionHorizontally();
+    this.captionEl.classList.toggle("wd-mascot-caption--flip", placement.flip);
   }
 
-  /**
-   * flips the caption to the avatar's left side when it doesn't have room on the right (and the
-   * left has more) -- a much smaller version of the geometry the old floating bubble needed, since
-   * the caption is capped to a small fixed width instead of growing with arbitrary panel content.
-   * No-ops when the host or caption have no real layout yet (e.g. unit tests, or before any text
-   * has been set).
-   */
-  private clampCaptionHorizontally(): void {
-    const hostRect = this.avatarHost.getBoundingClientRect();
-    if (!hostRect.width) return;
-    const captionRect = this.captionEl.getBoundingClientRect();
-    if (!captionRect.width) return;
-
-    const overflowsRight = captionRect.right > hostRect.left + hostRect.width;
-    const avatarRect = this.avatar.element.getBoundingClientRect();
-    const fitsLeft = avatarRect.left - CAPTION_GAP - captionRect.width >= hostRect.left;
-    this.captionEl.classList.toggle("wd-mascot-caption--flip", overflowsRight && fitsLeft);
+  /** the caption's real rendered size, independent of which side it's currently drawn on (its CSS width is `max-content` capped by `max-width`, never a function of its own `left`/`right`) -- null before any text/content has been set, so callers can skip caption-avoidance entirely rather than scoring against a phantom 0x0 box */
+  private measureCaption(): { width: number; height: number } | null {
+    const rect = this.captionEl.getBoundingClientRect();
+    return rect.width && rect.height ? { width: rect.width, height: rect.height } : null;
   }
 
   setState(state: MascotState): void {
