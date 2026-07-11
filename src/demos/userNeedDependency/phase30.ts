@@ -31,8 +31,8 @@ const samePairing = (a: Pairing, b: Pairing): boolean =>
  * confirmed Phase 20 placement (`Concept.applicableStages`, `WardleyDemo.getNodeStage`).
  *
  * For each (concept, candidate node) pairing, in bank order: the mascot re-anchors to that node
- * and asks a gate question (`Mascot.showGate`) — "{concept.definition} Could we learn something
- * from exploring this with {node}?" — passing `[concept.label,
+ * and asks a gate question (`Mascot.showGate`) — "{concept.definition} Do you think we could learn
+ * something from exploring {concept.label} with {node}?" — passing `[concept.label,
  * node.label]` as `showGate`'s `emphasize` list so both names stand out from the surrounding
  * prose (`Panel.renderWithEmphasis`) — with subtitle "Choosing is how you
  * learn!" on the very first gate of the phase,
@@ -77,7 +77,7 @@ export async function runPhase30(ctx: ScenarioContext): Promise<void> {
     ];
 
     const choice = await mascot.showGate(
-      `${current.concept.definition}\n\nCould we learn something from exploring this with ${current.node.label}?`,
+      `${current.concept.definition}\n\nDo you think we could learn something from exploring ${current.concept.label} with ${current.node.label}?`,
       subtitle,
       gateOptions,
       [current.concept.label, current.node.label],

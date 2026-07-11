@@ -96,8 +96,8 @@ each restricted to the node kinds it meaningfully applies to
 (`Concept.applicableKinds`, resolved via `candidateNodesForConcept`). For each
 (concept, node) pairing, `Panel.showGate`/`Mascot.showGate` leads with a
 one-sentence definition of the concept ("In Wardley Mapping,
-{concept.definition}.") followed by "Could we learn something from exploring
-this with {node}?" (subtitle "Choosing is how you learn!" on the very first
+{concept.definition}.") followed by "Do you think we could learn something
+from exploring {concept.label} with {node}?" (subtitle "Choosing is how you learn!" on the very first
 gate of the phase, "Keep going!" after) with
 Yes/No plus a "Try something else" shuffle (jumps to a random other
 unresolved pairing) and, once at least 3 concepts have settled, a "Done"
