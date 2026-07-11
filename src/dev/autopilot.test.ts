@@ -76,15 +76,26 @@ async function flushAll(mascotHost: HTMLElement): Promise<void> {
   await settle(mascotHost);
 }
 
+/**
+ * `mascotHost` here is a synthetic wrapper around the two real hosts (`avatarHost`/`dialogHost`),
+ * not something passed to the scenario directly -- every assertion/settle-poll below just needs
+ * *a* container whose `.querySelector`/`.innerHTML` covers whichever of the two subtrees the
+ * mascot's current content actually landed in, and a shared wrapper does that without every
+ * call site needing to know or care which host a given render targets.
+ */
 function buildScenario(target: Parameters<typeof attachAutopilot>[0]["target"], callbacks: Record<string, () => void> = {}) {
   const canvas = document.createElement("div");
   const mascotHost = document.createElement("div");
+  const avatarHost = document.createElement("div");
+  const dialogHost = document.createElement("div");
+  mascotHost.append(avatarHost, dialogHost);
   document.body.append(canvas, mascotHost);
 
-  const autopilot = attachAutopilot({ mascotHost, target });
+  const autopilot = attachAutopilot({ avatarHost, dialogHost, target });
   runValueChainScenario({
     canvas,
-    mascotHost,
+    avatarHost,
+    dialogHost,
     onMount: autopilot.onMount,
     onEvolutionStep: autopilot.onEvolutionStep,
     ...callbacks,
@@ -100,7 +111,9 @@ describe("attachAutopilot", () => {
     await flushAll(mascotHost);
 
     expect(onNeedPlaced).toHaveBeenCalledOnce();
-    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("I'm Ben, by the way.");
+    expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe(
+      "I'm Ben, by the way. I'm here to help you learn Wardley Mapping!",
+    );
     const gateLink = mascotHost.querySelector<HTMLButtonElement>(".wd-next-link");
     expect(gateLink).not.toBeNull();
     expect(gateLink!.textContent).toBe("Nice to meet you!");
@@ -143,7 +156,7 @@ describe("attachAutopilot", () => {
     const { mascotHost } = buildScenario("finale");
     await flushAll(mascotHost);
 
-    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("You made a Wardley Map!");
+    expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe("You made a Wardley Map!");
     const gateLink = mascotHost.querySelector<HTMLButtonElement>(".wd-next-link");
     expect(gateLink).not.toBeNull();
     expect(gateLink!.textContent).toBe("Next");

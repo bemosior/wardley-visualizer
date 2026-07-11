@@ -53,14 +53,14 @@
 
       .wd-instance {
         display: flex;
-        align-items: flex-start;
+        flex-direction: column;
         gap: 0.75rem;
         flex: 1;
         min-width: 280px;
       }
 
       .wd-instance .wd-canvas {
-        flex: 1;
+        width: 100%;
       }
 
       /* dev-only chrome, not part of the simulated host embed */
@@ -104,8 +104,9 @@
         <div class="demo-row">
           <div class="wd-instance">
             <div id="demo-a" class="wd-canvas">
-              <div id="mascot-host-a" class="wd-mascot-host"></div>
+              <div id="mascot-avatar-host-a" class="wd-mascot-avatar-host"></div>
             </div>
+            <div id="mascot-dialog-host-a" class="wd-mascot-dialog-host"></div>
           </div>
         </div>
       </div>
@@ -113,7 +114,8 @@
 
     <script src="./dist/wardley-demo.js"></script>
     <script>
-      var mascotHost = document.getElementById("mascot-host-a");
+      var avatarHost = document.getElementById("mascot-avatar-host-a");
+      var dialogHost = document.getElementById("mascot-dialog-host-a");
 
       // Dev-only test shortcut: pick a moment from the dropdown (or load with
       // ?skipTo=intro|phase10|celebrate|phase20|finale|thinking|recap) to jump straight past earlier phases
@@ -131,12 +133,13 @@
         location.href = url.toString();
       });
       var autopilot = skipTarget
-        ? WardleyDemo.dev.attachAutopilot({ mascotHost: mascotHost, target: skipTarget })
+        ? WardleyDemo.dev.attachAutopilot({ avatarHost: avatarHost, dialogHost: dialogHost, target: skipTarget })
         : undefined;
 
       WardleyDemo.demos.userNeedDependency({
         canvas: document.getElementById("demo-a"),
-        mascotHost: mascotHost,
+        avatarHost: avatarHost,
+        dialogHost: dialogHost,
         onMount: autopilot && autopilot.onMount,
         onEvolutionStep: autopilot && autopilot.onEvolutionStep,
         config: {

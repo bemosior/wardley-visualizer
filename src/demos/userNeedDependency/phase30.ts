@@ -73,13 +73,7 @@ export async function runPhase30(ctx: ScenarioContext): Promise<void> {
 
   while (current) {
     const pos = demo.getNodePixelPosition(current.node.id);
-    // hide before the re-anchor + gate-content swap below, same flash-then-teleport concern as
-    // phase20.ts's evolution placements -- here there's no separate slide animation to hang the
-    // reveal off, so `revealBubbleAfterMove` just waits out `moveTo`'s own CSS transition instead.
-    if (pos) {
-      mascot.hideBubbleInstantly();
-      mascot.moveTo(current.node.id, pos);
-    }
+    if (pos) mascot.moveTo(current.node.id, pos);
 
     const subtitle = gatesShown++ === 0 ? "Choosing is how you learn!" : "Keep going!";
     const gateOptions: GateOption[] = [
@@ -91,14 +85,12 @@ export async function runPhase30(ctx: ScenarioContext): Promise<void> {
       gateOptions.push({ id: "finishUp", label: "Finish Up" });
     }
 
-    const gatePromise = mascot.showGate(
+    const choice = await mascot.showGate(
       `${current.concept.definition}\n\nDo you think we could learn something from exploring ${current.concept.label} with ${current.node.label}?`,
       subtitle,
       gateOptions,
       [current.concept.label, current.node.label],
     );
-    if (pos) mascot.revealBubbleAfterMove();
-    const choice = await gatePromise;
 
     if (choice === "finishUp") break;
 
@@ -136,7 +128,6 @@ export async function runPhase30(ctx: ScenarioContext): Promise<void> {
   }
 
   if (findings.length > 0) {
-    mascot.moveToTopRight();
     mascot.showFindings(findings, "Here's what you found, and you're barely scratching the surface!");
   } else {
     mascot.showEmpty();

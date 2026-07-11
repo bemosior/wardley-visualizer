@@ -17,7 +17,7 @@ export async function runPhase10(ctx: ScenarioContext): Promise<void> {
   const { demo, mascot, options } = ctx;
 
   const userPos = demo.getNodePixelPosition(ctx.chain.user.id);
-  if (userPos) mascot.moveTo(ctx.chain.user.id, userPos, "northeast");
+  if (userPos) mascot.moveTo(ctx.chain.user.id, userPos);
   const userLabel = await mascot.showField({
     type: "choice",
     prompt: "Who should we help today?",
@@ -37,7 +37,7 @@ export async function runPhase10(ctx: ScenarioContext): Promise<void> {
   const relevantNeeds = matchingUserNeeds.length ? matchingUserNeeds : NEED_CATALOG;
 
   const needPos = demo.getNodePixelPosition(ctx.chain.need.id);
-  if (needPos) mascot.moveTo(ctx.chain.need.id, needPos, "northeast");
+  if (needPos) mascot.moveTo(ctx.chain.need.id, needPos);
   const needLabel = await mascot.showField({
     type: "choice",
     prompt: "What does " + userLabel + " need?",
@@ -64,20 +64,15 @@ export async function runPhase10(ctx: ScenarioContext): Promise<void> {
   const capabilityCount = capabilitiesByScreenX.length;
   const usedCapabilityLabels = new Set<string>();
 
-  // stays anchored beside the Need node (the same "northeast" spot the question above already
-  // used) for all `capabilityCount` sub-questions, rather than re-anchoring beside each Capability
-  // node in turn (this used to be "south"). Each capability's example list runs up to 10 catalog
-  // options (`needCatalog.ts`), which makes for a bubble far wider than the ~140px gap between
-  // adjacent Capability nodes -- anchoring "above" any one of them, even an outer one, bridges
-  // clean across into the Need node's own column and hides it behind the bubble (tried and
-  // measured live: the bubble ends up wide enough to fully cover Need regardless of which
-  // Capability it's meant to hover above). "South" avoided that by never going above at all, but
-  // forced the bubble below the bottom-most row on the page, tall enough with 10 examples to push
-  // the page's height past the viewport and force a jarring auto-scroll on every capability.
-  // Staying at Need's already-safe, already-visible spot avoids both: nothing forces the page to
-  // grow, and nothing sits low enough to need scrolling into view.
+  // stays anchored beside the Need node for all `capabilityCount` sub-questions, rather than
+  // re-anchoring beside each Capability node in turn. This used to be load-bearing: the old
+  // floating speech bubble grew wide enough (up to 10 catalog example chips) to bridge clean
+  // across into Need's own column if anchored above any individual Capability. Now that the actual
+  // question content renders in the permanent dialog panel below the canvas (not a bubble beside
+  // the avatar), that constraint no longer applies -- anchoring the avatar per-Capability instead
+  // would be a viable, arguably nicer content choice, just not one this pass makes.
   const needPosForCapabilities = demo.getNodePixelPosition(ctx.chain.need.id);
-  if (needPosForCapabilities) mascot.moveTo(ctx.chain.need.id, needPosForCapabilities, "northeast");
+  if (needPosForCapabilities) mascot.moveTo(ctx.chain.need.id, needPosForCapabilities);
 
   for (let i = 0; i < capabilityCount; i++) {
     const capability = capabilitiesByScreenX[i];
@@ -97,8 +92,7 @@ export async function runPhase10(ctx: ScenarioContext): Promise<void> {
     demo.relabelNode(capability.id, capabilityLabel);
   }
   
-  mascot.moveToTopRight();
-  mascot.showPlaceholder(MASCOT_CHAIN_COMPLETE.heading, MASCOT_CHAIN_COMPLETE.subheading);
+  mascot.say(`${MASCOT_CHAIN_COMPLETE.heading} ${MASCOT_CHAIN_COMPLETE.subheading}`);
   demo.celebrateAll();
   options.onCelebrate?.();
 }

@@ -15,15 +15,22 @@ import { runFinale } from "./finale";
 export interface ValueChainScenarioOptions {
   canvas: HTMLElement;
   /**
-   * host-supplied overlay the mascot mounts its avatar + speech bubble into. Must be a child of
-   * `canvas` itself (not a plain sibling element) — see the `.wd-mascot-host` doc comment in
-   * `engine/styles.ts` for why: the mascot's positioning math is measured relative to
+   * host-supplied overlay the mascot mounts its avatar (plus its small caption) into. Must be a
+   * child of `canvas` itself (not a plain sibling element) — see the `.wd-mascot-avatar-host` doc
+   * comment in `engine/styles.ts` for why: the avatar's positioning math is measured relative to
    * `canvas`'s own top-left corner, the same coordinate space `WardleyDemo`'s firework bursts
    * already render into. The mascot doesn't actually mount into this until the Need snaps into
    * place (`onNeedPlaced`, below) — Phase 0's drag affordance is a directional-arrow cue on the
-   * canvas itself, not a mascot bubble.
+   * canvas itself, not a mascot avatar.
    */
-  mascotHost: HTMLElement;
+  avatarHost: HTMLElement;
+  /**
+   * host-supplied region the mascot's dialog panel renders into — forms, multi-option questions,
+   * live readouts, findings, recap. Unlike `avatarHost`, this has no coordinate-alignment
+   * requirement with `canvas` at all; it's a permanent, page-flow region (today, a sibling strip
+   * below the canvas) so the dialog can never end up covering the map/value-chain.
+   */
+  dialogHost: HTMLElement;
   /** fires as soon as the Need snaps into place (Phase 0 done); the scenario then mounts the mascot for the first time, reveals every node's label, and shows the "You just made a Value Chain!" placeholder before walking into Phase 5 */
   onNeedPlaced?: () => void;
   onCelebrate?: () => void;
@@ -61,9 +68,10 @@ export interface ScenarioContext {
 }
 
 /**
- * One continuous flow, guided by a single `Mascot` (`engine/mascot.ts`) — a node-anchored speech
- * bubble plus small avatar — from the moment it first mounts (right after the Need snaps into
- * place) through the closing recap. Each phase is implemented in its own file and threads a shared
+ * One continuous flow, guided by a single `Mascot` (`engine/mascot.ts`) — a node-anchored avatar
+ * with a small caption, plus a permanent dialog panel for anything structural — from the moment
+ * it first mounts (right after the Need snaps into place) through the closing recap. Each phase is
+ * implemented in its own file and threads a shared
  * `ScenarioContext` from one to the next:
  *
  * - `phase0.ts` — a directional-arrow cue (no mascot yet) invites dragging the Need into place;

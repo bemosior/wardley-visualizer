@@ -111,19 +111,6 @@ Open/deferred items only — completed items from this batch are in
 
 Open items only. See `feedback/v0.2/tristanslominski.txt` for full reviewer context.
 
-- [ ] **Reconsider mascot bubble placement so it never covers the map.**
-      `tristanslominski.txt`: the dialog covers up the main artifact — he never gets to see the
-      value chain he's building while a question is on screen. Wants every dialog to render off
-      the map so the visitor is never taken out of the context of seeing it. Today's
-      `Mascot.moveTo` (`auto`/`northeast`/`pinned`, see
-      [[project_wardley_demo_mascot_placement_vocabulary]]) always anchors the bubble beside the
-      relevant node, which is why `phase10.ts`'s capability sub-questions already had to be tuned
-      to stay anchored at Need rather than each Capability (see comment at phase10.ts:67-78) — a
-      symptom of the same underlying tension, not a one-off layout bug. A durable fix likely means
-      either a dedicated off-canvas panel area (screen real estate reserved permanently, instead of
-      contested per-anchor) or an explicit rule that the bubble always leaves the whole value chain
-      unobstructed, not just its anchor node's row. This is a design decision to make deliberately,
-      not another anchor-position tweak.
 - [ ] **Make capability entry pill-first, de-emphasize free typing.** `tristanslominski.txt`:
       glad he no longer has to type a component name and instead chooses from precreated ones —
       wants the precreated pills to be the primary interaction, with the type-your-own box removed

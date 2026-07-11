@@ -3,6 +3,47 @@
 Historical record of completed work, pulled out of [TODO.md](TODO.md) to keep
 that file focused on what's still open. Newest first.
 
+## 2026-07-11 — Mascot bubble no longer covers the map
+
+Response to `feedback/v0.2/tristanslominski.txt`'s core complaint: the mascot's dialog covered the
+value chain/map while a question was on screen. Rather than another anchor-position tweak (the
+`auto`/`northeast`/`pinned` placement vocabulary had already been patched repeatedly for this same
+class of bug — `"south"` added then retired, `"pinned"`'s corner-fallback, Phase 10's capability
+sub-questions parked at Need instead of each Capability), this was a deliberate architecture change:
+
+- `Mascot` (`src/engine/mascot.ts`) now splits into two surfaces: a small on-canvas **avatar**
+  that still tracks whichever node it's discussing (reusing the existing node-position math, much
+  simplified now that there's no wide/tall bubble to dodge neighboring rows for), paired with a
+  **caption** (`Mascot.say(text)`) for brief single-line asides — and a permanent **dialog panel**
+  below the canvas (unchanged `Panel`/`showX` methods: forms, questions, instrument panel,
+  findings, recap) for anything structural. The dialog panel can never overlap the map since it's
+  a fixed region in the page's own flow, not a bubble anchored over the canvas.
+- `say()` is a sequenceable surface — a phase can `await mascot.say(...)` two or three times in a
+  row (each gated behind its own `confirmPlacement`) for a short multi-beat exchange, an
+  alternative to escalating to the panel for borderline-length content (see `phase5.ts`'s
+  "recipe" beat, the one deliberate example of this pattern).
+- Whenever a panel-hosted method renders, the avatar's caption auto-switches to a short "Take a
+  look below ↓" pointer line (`pointToPanel`), so the visitor's attention follows the mascot down
+  to the panel instead of the caption going stale.
+- `confirmPlacement` targets whichever surface (caption or panel) most recently rendered content,
+  using a new compact button style (`.wd-next-link--compact`) distinct from the full-size "big
+  button" treatment kept for genuinely standalone commitments (the form submit, the recap CTA).
+- Deleted entirely: `MascotPlacement`/`"auto"`/`"northeast"`/`"pinned"`, `moveToTopRight()`,
+  `hideBubbleInstantly()`/`revealBubble()`/`revealBubbleAfterMove()` — all existed only to manage
+  the old floating bubble's geometry against neighboring nodes, moot once dialog content no longer
+  overlays the canvas at all.
+- `index.html`/`preview.html`: `.wd-instance` flips from a row to a column so the new
+  `.wd-mascot-dialog-host` stacks below `.wd-canvas` within the existing 740px-max-width layout.
+  The dialog panel hugs its own content (no fixed reserved height) and caps growth with
+  `max-height`/`overflow-y: auto`, rather than reserving a permanent block that would push an
+  already-tall canvas past the viewport on hosts already close to the fold.
+- Two real CSS bugs only surfaced in a live browser (not jsdom/happy-dom, which never computes
+  real layout): an absolutely-positioned flex container with `flex-wrap` and no explicit width
+  shrink-to-fits to its narrowest content line instead of respecting `max-width` (fixed with
+  `width: max-content`), and a flex item inside a `flex-direction: column` panel stretches to the
+  container's full width by default regardless of its own `width`/`display` (fixed with
+  `align-self: flex-start` on the compact button).
+
 ## 2026-07-10 — v0.1 feedback response
 
 Five decisions made in response to a second playtest round —

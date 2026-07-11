@@ -43,8 +43,8 @@ export async function runPhase7(ctx: ScenarioContext): Promise<void> {
   const { mascot } = ctx;
 
   const { x, y } = stepBackPoint(ctx);
-  mascot.moveToViewBoxPoint(x, y, "auto");
-  mascot.showPlaceholder(MASCOT_INTRO.heading, MASCOT_INTRO.subheading);
+  mascot.moveToViewBoxPoint(x, y);
+  mascot.say(`${MASCOT_INTRO.heading} ${MASCOT_INTRO.subheading}`);
   await mascot.confirmPlacement("Nice to meet you!");
   mascot.setState("celebrating");
   await new Promise((resolve) => setTimeout(resolve, CELEBRATE_DURATION_MS));

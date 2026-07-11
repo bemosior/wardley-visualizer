@@ -17,5 +17,5 @@ export async function runPhase25(ctx: ScenarioContext): Promise<void> {
 
   await mascot.confirmPlacement("Next");
   mascot.setState("idle");
-  mascot.showPlaceholder(MASCOT_THINKING_STRATEGICALLY.heading, MASCOT_THINKING_STRATEGICALLY.subheading);
+  mascot.say(`${MASCOT_THINKING_STRATEGICALLY.heading} ${MASCOT_THINKING_STRATEGICALLY.subheading}`);
 }

@@ -2,9 +2,9 @@ import type { WardleyDemo, EvolutionDragHandle } from "../engine/WardleyDemo";
 
 /**
  * named moments in the demo's current (built-so-far) flow that `index.html?skipTo=` can land on.
- * `intro`: skip the Phase 0 drag and all five of the resulting "Next" gates (Phase 0's "You made a
- * Value Chain!" placeholder, then Phase 5's User/Need/Capability walkthrough and Part A/B/C
- * explanation), landing at Phase 7's "I'm Ben, by the way" introduction (its own "Nice to meet
+ * `intro`: skip the Phase 0 drag and all six of the resulting "Next" gates (Phase 0's "You made a
+ * Value Chain!" caption, then Phase 5's User/Need/Capability walkthrough and its two-caption
+ * "recipe" beat), landing at Phase 7's "I'm Ben, by the way" introduction (its own "Nice to meet
  * you!" gate is left for a real click).
  * `phase10`: also click past Phase 7's "I'm Ben" introduction gate, land at the start of
  * Phase 10's form.
@@ -28,13 +28,15 @@ export function parseSkipTarget(search: string): SkipTarget | null {
 }
 
 export interface AutopilotOptions {
+  /** the scenario's avatar-caption host — watched for the mascot's small-caption "Next" links (brief narrative beats, simple gates) */
+  avatarHost: HTMLElement;
   /**
-   * the scenario's mascot host container — watched for every auto-fillable/auto-clickable
-   * control the mascot renders, from Phase 0's drag affordance through the Phase 30 Q&A: forms,
-   * every "Next"/"Confirm placement"/gate link, and question buttons. The mascot renders all of
-   * it into this one root for the whole scenario, so a single observer covers every `target`.
+   * the scenario's dialog-panel host — watched for everything else the mascot renders: forms,
+   * "Confirm placement"/gate links, question buttons. Split across two hosts now that the avatar's
+   * caption and the dialog panel are two different DOM regions (see `engine/mascot.ts`); every
+   * mutation handler below checks both.
    */
-  mascotHost: HTMLElement;
+  dialogHost: HTMLElement;
   target: SkipTarget;
 }
 
@@ -68,39 +70,46 @@ function fillAndSubmit(field: HTMLElement): void {
  * manual interaction from that moment forward. Dev/testing convenience; see
  * the-more-of-the-peaceful-sky plan for why this exists instead of a resumable step machine.
  */
-export function attachAutopilot({ mascotHost, target }: AutopilotOptions): Autopilot {
-  // counts only the plain "Next" links -- Phase 0's "You made a Value Chain!" placeholder, Phase
-  // 5's four remaining gates (the User/Need/Capability walkthrough and the Part A/B/C
-  // explanation), and the Phase 10->20 gate all share identical link text, so they can't be told
-  // apart by content the way every other gate below is (by its own distinct label).
+export function attachAutopilot({ avatarHost, dialogHost, target }: AutopilotOptions): Autopilot {
+  // counts only the plain "Next" links -- Phase 0's opening caption, Phase 5's five gates (the
+  // User/Need/Capability walkthrough, plus its "recipe" beat which runs long enough to need two
+  // captions in a row), and the Phase 10->20 gate all share identical link text, so they can't be
+  // told apart by content the way every other gate below is (by its own distinct label).
   let plainNextCount = 0;
 
   function disconnect(): void {
-    observer.disconnect();
+    avatarObserver.disconnect();
+    dialogObserver.disconnect();
+  }
+
+  /** a "Next"-labeled link can render in either host depending on whether the mascot's last
+   * content was a small caption or a dialog-panel render -- check both. */
+  function findLink(): HTMLButtonElement | null {
+    return (
+      avatarHost.querySelector<HTMLButtonElement>(".wd-next-link") ??
+      dialogHost.querySelector<HTMLButtonElement>(".wd-next-link")
+    );
   }
 
   /**
-   * one handler covering the whole scenario — the mascot renders every phase's content (drag
-   * slots, form, instrument panel, confirm/gate links, questions) into the same root.
+   * one handler covering the whole scenario — the mascot renders drag slots/forms/instrument
+   * panels/gate links/questions into `dialogHost`, and brief captions/simple confirms into
+   * `avatarHost`.
    */
   function handleContentMutation(): void {
-    const form = mascotHost.querySelector<HTMLElement>(".wd-panel-form");
+    const form = dialogHost.querySelector<HTMLElement>(".wd-panel-form");
     if (form) fillAndSubmit(form);
 
-    const link = mascotHost.querySelector<HTMLButtonElement>(".wd-next-link");
+    const link = findLink();
     const linkText = link?.textContent?.trim();
 
     if (linkText === "Next") {
       plainNextCount++;
-      if (plainNextCount <= 4) {
-        // Phase 0's "You made a Value Chain!" gate, then Phase 5's User/Need/Capability
-        // walkthrough gates -- always skip past them, no target stops here
+      if (plainNextCount <= 6) {
+        // Phase 0's opening caption, then Phase 5's five gates (User/Need/Capability, and the
+        // two-caption "recipe" beat) -- always skip past them, no target stops here
         link!.click();
-      } else if (plainNextCount === 5) {
-        // Phase 5's Part A/B/C explanation gate -- always skip past it too, into Phase 7's
-        // introduction gate
-        link!.click();
-      } else if (plainNextCount === 6) {
+      } else if (plainNextCount === 7) {
         // Phase 10 -> Phase 20 gate -- click through it for every target that reaches Phase 20.
         // Every target that stops here for good (celebrate/intro/phase10 never reach this count,
         // they disconnect earlier) still disconnects immediately, same as before this gate got a
@@ -108,7 +117,7 @@ export function attachAutopilot({ mascotHost, target }: AutopilotOptions): Autop
         // evolution-intro gate below before it lands at today's frontier
         if (target === "phase20" || target === "finale" || target === "thinking" || target === "recap") link!.click();
         if (target !== "finale" && target !== "thinking" && target !== "recap" && target !== "phase20") disconnect();
-      } else if (plainNextCount === 7) {
+      } else if (plainNextCount === 8) {
         // Phase 20 -> Phase 25 gate (right after "You made a Wardley Map!") -- finale stops at
         // the placement celebration itself, so only thinking/recap click through into Phase 25's
         // explanation before Phase 30's own "Let's get strategic →" gate
@@ -145,13 +154,15 @@ export function attachAutopilot({ mascotHost, target }: AutopilotOptions): Autop
     }
 
     if (target === "thinking" || target === "recap") {
-      const option = mascotHost.querySelector<HTMLButtonElement>(".wd-panel-question-option");
+      const option = dialogHost.querySelector<HTMLButtonElement>(".wd-panel-question-option");
       if (option) option.click();
     }
   }
 
-  const observer = new MutationObserver(handleContentMutation);
-  observer.observe(mascotHost, { childList: true, subtree: true });
+  const avatarObserver = new MutationObserver(handleContentMutation);
+  avatarObserver.observe(avatarHost, { childList: true, subtree: true });
+  const dialogObserver = new MutationObserver(handleContentMutation);
+  dialogObserver.observe(dialogHost, { childList: true, subtree: true });
 
   return {
     onMount: (demo) => demo.skipDrag(),

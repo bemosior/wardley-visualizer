@@ -1,10 +1,12 @@
 const STYLE_ID = "wardley-demo-styles";
 
 /**
- * shared floor for both `.wd-panel-content`'s CSS min-height and `showMapBackdrop`'s
- * `targetHeightPx` argument (see `userNeedDependency.ts`) — keeps the map's reserved height in
- * sync with the panel/mascot-bubble content it needs to avoid overlapping, without either side
- * reading the other's live DOM size.
+ * the base floor for `.wd-panel-content`'s CSS min-height (used by the mascot's own dialog panel
+ * only where that panel needs to reserve real vertical space up front, e.g. `showDragHandles`'s
+ * intro) and a `targetHeightPx` a host page can still pass to `WardleyDemo.growToFillContainer`/
+ * `showMapBackdrop` if it independently wants a taller map canvas -- no longer tied to reserving
+ * room for a floating mascot bubble, since the dialog panel lives below the canvas now and sizes
+ * to its own content instead.
  */
 export const PANEL_CONTENT_MIN_HEIGHT = 360;
 
@@ -408,9 +410,13 @@ const CSS = `
   justify-content: center;
 }
 
-/* the floating mascot bubble should hug its content rather than reserve a fixed height across
-   mode switches, unlike the base .wd-panel-content rule above */
-.wd-mascot-bubble .wd-panel-content {
+/* the mascot's dialog panel should hug its content rather than reserve a fixed height across mode
+   switches, unlike the base .wd-panel-content rule above -- a permanent min-height block below an
+   already-tall canvas risks pushing the whole embed past the viewport on hosts that are already
+   close to the fold. See .wd-mascot-dialog's own max-height/overflow rule below for the matching
+   cap on the other direction (a very long piece of content shouldn't grow the page unbounded
+   either). */
+.wd-mascot-dialog .wd-panel-content {
   min-height: 0;
 }
 
@@ -569,6 +575,23 @@ const CSS = `
 .wd-next-link:hover {
   background: var(--wd-color-link-hover, #003d6b);
   border-color: var(--wd-color-link-hover, #003d6b);
+}
+
+/* an in-context "go ahead" click (Mascot.confirmPlacement) rather than a standalone commitment
+   like a form submit or the recap CTA -- smaller footprint so it sits comfortably beside the
+   mascot's small caption, or inline within an in-progress panel readout. Declared after the base
+   rule above so it overrides display/width/padding/font-size while still inheriting border/
+   background/color/border-radius/cursor from it. align-self: flex-start is needed too -- this
+   button renders as a flex item inside .wd-panel-content's column flex layout, which stretches
+   items to the full cross-axis width by default (align-items: stretch) regardless of the item's
+   own display/width. */
+.wd-next-link--compact {
+  display: inline-block;
+  align-self: flex-start;
+  width: auto;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+  line-height: 1.2rem;
 }
 
 .wd-panel-placeholder .wd-next-link {
@@ -742,17 +765,16 @@ const CSS = `
 }
 
 /*
- * host-supplied overlay a Mascot mounts into -- must be a child of the same element passed to
- * WardleyDemo.mount as its container (not a sibling positioned elsewhere in the page), sized to
- * cover it exactly, so WardleyDemo.getNodePixelPosition's coordinates (measured relative to
- * that same container's top-left, the same space fireworkAt already renders into) line up
+ * host-supplied overlay the mascot's avatar mounts into -- must be a child of the same element
+ * passed to WardleyDemo.mount as its container (not a sibling positioned elsewhere in the page),
+ * sized to cover it exactly, so WardleyDemo.getNodePixelPosition's coordinates (measured relative
+ * to that same container's top-left, the same space fireworkAt already renders into) line up
  * pixel-for-pixel with .wd-mascot's left/top. pointer-events: none lets clicks fall through to
- * the map/nodes underneath everywhere. .wd-mascot itself stays pointer-events: none too (its flex
- * box spans avatar-to-bubble, including the empty gap between them, which would otherwise sit on
- * top of and block dragging any node that box happens to cover) -- only .wd-mascot-bubble
- * re-enables pointer events, since it's the one piece that's actually interactive.
+ * the map/nodes underneath everywhere. .wd-mascot itself stays pointer-events: none too -- only
+ * .wd-mascot-caption re-enables pointer events, since it's the one piece that's actually
+ * interactive (a confirm button, when one is showing).
  */
-.wd-mascot-host {
+.wd-mascot-avatar-host {
   position: absolute;
   top: 0;
   left: 0;
@@ -766,20 +788,8 @@ const CSS = `
   top: 0;
   left: 0;
   z-index: 3;
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
   pointer-events: none;
   transition: left 0.4s ease, top 0.4s ease;
-  /* an absolutely-positioned box with only 'left' set (no 'width'/'right') shrink-to-fits against
-     containing-block-width-minus-left -- fine when 'left' sits well inside the canvas, but once
-     it's near the host's right edge (mascot.ts's moveToTopRight) that leaves almost no room,
-     forcing the bubble to wrap its text into a narrow column before its own flip/left offset
-     (which doesn't feed back into this box's size) shifts it back out, stranding the tail on that
-     now-narrow box far from the avatar. An explicit max-content width instead sizes this row off
-     its children's own natural widths, independent of where 'left' puts it -- the bubble's own
-     280px max-width still caps how wide it can grow. */
-  width: max-content;
 }
 
 /* higher specificity than ".wardley-demo-root svg" above, which would otherwise stretch this
@@ -851,81 +861,91 @@ const CSS = `
   }
 }
 
-.wd-mascot--arriving .wd-mascot-bubble {
+.wd-mascot--arriving .wd-mascot-caption {
   opacity: 0;
 }
 
-.wd-mascot-bubble {
-  position: relative;
+/*
+ * the small caption beside the avatar -- a single-line, fixed-max-width tag for brief narrative
+ * beats and simple confirmations (Mascot.say/confirmPlacement), positioned relative to the avatar
+ * rather than in normal flow so it never affects the avatar's own layout. Deliberately much
+ * smaller and simpler than the old floating bubble it replaces: capped small enough that its only
+ * geometry concern is a left/right flip (clampCaptionHorizontally), not the multi-row vertical
+ * clearance math a wide, tall, arbitrary-content bubble used to need.
+ */
+.wd-mascot-caption {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 8px); /* matches mascot.ts's CAPTION_GAP */
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  /* an absolutely-positioned flex container with no explicit width computes its shrink-to-fit
+     size from the *narrowest* line its content can wrap to (effectively its widest single word)
+     when combined with flex-wrap: wrap, not from max-width -- same shrink-to-fit gotcha the old
+     .wd-mascot flex row used to hit (see git history). width: max-content forces it to prefer its
+     natural (unwrapped) content width instead, still capped by max-width below. */
+  width: max-content;
+  max-width: 200px;
+  background: #fff;
+  border: 1px solid var(--wd-color-border);
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 0.35rem 0.6rem;
+  pointer-events: auto;
+  font-family: var(--wd-font-ui);
+  font-size: 0.78rem;
+  line-height: 1.25;
+  color: var(--wd-color-ink);
+  opacity: 1;
+  transition: opacity 0.4s ease;
+}
+
+/* mascot.ts's clampCaptionHorizontally adds this when the caption doesn't have room on the
+   avatar's right side but does on its left */
+.wd-mascot-caption--flip {
+  left: auto;
+  right: calc(100% + 8px); /* matches mascot.ts's CAPTION_GAP */
+}
+
+.wd-mascot-caption-action:empty {
+  display: none;
+}
+
+/*
+ * the mascot's permanent dialog panel -- lives in its own host below the canvas (see
+ * .wd-mascot-dialog-host, wired via WardleyDemo.mount's sibling markup in index.html/preview.html),
+ * not overlaid on top of it, so it can never cover the map/value-chain. Hugs its own content
+ * (.wd-mascot-dialog .wd-panel-content above overrides the base min-height) rather than reserving
+ * a fixed height across every mode switch -- a permanent tall block below an already-tall canvas
+ * risks pushing the whole embed past the viewport on hosts that are already close to the fold.
+ * max-height + overflow-y caps the other direction: one long piece of content (a long findings
+ * list, a wide capability chip grid) scrolls inside the panel instead of growing the page's total
+ * height without bound.
+ */
+.wd-mascot-dialog-host {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.wd-mascot-dialog {
   background: #fff;
   border: 1px solid var(--wd-color-border);
   border-radius: 12px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
   padding: 0.75rem 1rem;
-  max-width: 280px;
-  pointer-events: auto;
+  width: 100%;
+  box-sizing: border-box;
+  max-height: 45vh;
+  overflow-y: auto;
   opacity: 1;
   transition: opacity 0.4s ease;
 }
 
-/* set right before a panel-content change that's immediately followed by a moveTo elsewhere
-   (Mascot.hideBubbleInstantly) -- transition: none makes the hide itself instant, unlike the
-   base rule's opacity 0.4s ease above, which would otherwise fade the *old* content out at the
-   *old* position instead of just disappearing. Removing this class (Mascot.revealBubble) falls
-   back to that base transition, fading the *new* content in at the *new* position. */
-.wd-mascot-bubble--instant-hide {
+.wd-mascot-dialog--arriving {
   opacity: 0;
-  transition: none;
-}
-
-/* a prompt with a long tail of example/option chips (Phase 10's capability step, offering up to
-   10 catalog options) wraps into so many rows at the base 280px max-width that the bubble grows
-   too tall to fit "above" its anchor without spilling into the row above -- widening it lets the
-   same chips wrap into far fewer rows instead. Panel.showField toggles this on/off per render
-   (see its doc comment), so it never lingers onto a later, short-content render. */
-.wd-mascot-bubble--wide {
-  max-width: 440px;
-}
-
-.wd-mascot-bubble::before {
-  content: "";
-  position: absolute;
-  left: -8px;
-  top: var(--wd-tail-top, 20px);
-  width: 0;
-  height: 0;
-  border-top: 8px solid transparent;
-  border-bottom: 8px solid transparent;
-  border-right: 8px solid var(--wd-color-border);
-}
-
-.wd-mascot-bubble::after {
-  content: "";
-  position: absolute;
-  left: -7px;
-  top: var(--wd-tail-top, 20px);
-  width: 0;
-  height: 0;
-  border-top: 8px solid transparent;
-  border-bottom: 8px solid transparent;
-  border-right: 8px solid #fff;
-}
-
-/* mascot.ts's clampBubbleHorizontally adds this once the bubble has flipped to the avatar's left side (no
-   room on the right) — moves the speech-bubble tail to the opposite edge so it still points at
-   the avatar instead of out into empty canvas */
-.wd-mascot-bubble--flip::before {
-  left: auto;
-  right: -8px;
-  border-right: none;
-  border-left: 8px solid var(--wd-color-border);
-}
-
-.wd-mascot-bubble--flip::after {
-  left: auto;
-  right: -7px;
-  border-right: none;
-  border-left: 8px solid #fff;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -977,7 +997,8 @@ const CSS = `
   .wd-mascot {
     transition-duration: 0.01s;
   }
-  .wd-mascot-bubble {
+  .wd-mascot-caption,
+  .wd-mascot-dialog {
     transition-duration: 0.01s;
   }
 }

@@ -10,11 +10,6 @@ export type EvolutionKind = "need" | "capability";
 const SVG_NS = "http://www.w3.org/2000/svg";
 const ICON_RADIUS = 26;
 
-/** `showField` widens the bubble (`wd-mascot-bubble--wide`, styles.ts) once a chip list exceeds
- * this -- picked to sit above every other field's chip count (the "who should we help" choice
- * list tops out at 6) and below Phase 10's capability step, whose catalog options run to 10 */
-const WIDE_BUBBLE_CHIP_THRESHOLD = 6;
-
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -201,19 +196,9 @@ export class Panel {
    * value once the visitor submits a non-empty answer, plus an optional row of clickable
    * `examples` chips that confirm immediately) or a pill-only row of clickable `options` chips
    * with no input at all (`type: "choice"`, for a question where free typing isn't wanted).
-   *
-   * Toggles `wd-mascot-bubble--wide` (styles.ts) on the bubble itself based on how many chips this
-   * particular render has, rather than leaving it permanently on: a long chip list (Phase 10's
-   * capability step, offering up to 10 catalog options) wraps into far fewer rows at the wider
-   * max-width, which keeps that step's bubble shorter -- see `phase10.ts`'s doc comment on why its
-   * capability sub-questions stay anchored beside the Need node instead of re-anchoring beside
-   * each Capability in turn. Re-set on every call (not just added once) so a later render with few
-   * chips isn't left stuck wide.
    */
   showField(field: PanelField): Promise<string> {
     this.clear();
-    const chipCount = field.type === "choice" ? field.options.length : (field.examples?.length ?? 0);
-    this.container.classList.toggle("wd-mascot-bubble--wide", chipCount > WIDE_BUBBLE_CHIP_THRESHOLD);
     if (field.type === "choice") {
       return new Promise((resolve) => {
         const content = document.createElement("div");
@@ -364,13 +349,14 @@ export class Panel {
   }
 
   /**
-   * appends a confirm link (the same `showNextLink` control) into the currently-rendered
-   * `.wd-panel-content`, so it shows up inside the panel's own container instead of a
-   * host-page element; resolves once clicked, then removes itself.
+   * appends a confirm link (the same `showNextLink` control, in its `compact` treatment -- an
+   * in-context "go ahead" click, not a standalone commitment like a form submit or the recap CTA)
+   * into the currently-rendered `.wd-panel-content`, so it shows up inside the panel's own
+   * container instead of a host-page element; resolves once clicked, then removes itself.
    */
   confirmPlacement(label = "Confirm placement"): Promise<void> {
     const content = this.container.querySelector<HTMLElement>(".wd-panel-content") ?? this.container;
-    return showNextLink(content, label);
+    return showNextLink(content, label, { compact: true });
   }
 
   /**
@@ -488,13 +474,12 @@ export class Panel {
    * off to the Finale — reuses the same `.wd-panel-content` container so the Finale's
    * `confirmPlacement` "What's next →" link appends directly beneath the list.
    *
-   * The report sits parked over the map's corner (`Mascot.moveToTopRight`) for as long as the
-   * visitor lingers on their finished map, so a persistent `.wd-panel-findings-header` bar (a
-   * short "Report (N findings)" label + toggle button) stays visible above a collapsible
-   * `.wd-panel-findings-body` holding the actual heading + list — collapsing that body is what
-   * lets the visitor get the map back unobstructed without losing the report, and re-expand it
-   * later. `onToggle`, if given, fires after each collapse/expand so `Mascot.showFindings` can
-   * re-run its own bubble-position math (`reposition`) against the now-different bubble height.
+   * The report renders in the dialog panel below the canvas for as long as the visitor lingers on
+   * their finished map, so a persistent `.wd-panel-findings-header` bar (a short "Report (N
+   * findings)" label + toggle button) stays visible above a collapsible `.wd-panel-findings-body`
+   * holding the actual heading + list — collapsing that body just shrinks the panel back down
+   * without losing the report, and re-expands it later. `onToggle`, if given, fires after each
+   * collapse/expand.
    */
   showFindings(findings: Finding[], heading: string, onToggle?: () => void): void {
     this.clear();

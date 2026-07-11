@@ -2,7 +2,6 @@ import { WardleyDemo } from "../../engine/WardleyDemo";
 import { Mascot } from "../../engine/mascot";
 import { createValueChain } from "../../domain/valueChain";
 import { layoutValueChain } from "../../application/valueChainLayout";
-import { PANEL_CONTENT_MIN_HEIGHT } from "../../engine/styles";
 import type { ValueChainScenarioOptions, ScenarioContext } from "./index";
 
 const seedValueChain = createValueChain({
@@ -34,13 +33,13 @@ const MASCOT_NEED_PLACED = {
  * animate; see `createNodeGroup`'s doc comment) so there's only one visible thing to do.
  *
  * Once the Need snaps into place, `onNeedPlaced` fires (Phase 0 done), the arrow cue is removed,
- * and *only then* does the `Mascot` mount for the first time — anchored beside the Need's settled
- * position (`"northeast"`, clear of the Capability row underneath). Before saying anything, it
- * plays a one-time "arrival" flourish (`Mascot.arrive`) — a pop-in plus the reused celebrating
- * bounce/glow — so this first appearance reads as a small reward rather than the mascot just
- * flatly existing. It then reveals every node's label (`WardleyDemo.revealNodeLabels`) and
- * explains what was just built (`MASCOT_NEED_PLACED`) behind its own "Next" beat — the caller
- * (`phase5.ts`) then starts directly with the User/Need/Capability walkthrough.
+ * and *only then* does the `Mascot` mount for the first time — its avatar anchored beside the
+ * Need's settled position. Before saying anything, it plays a one-time "arrival" flourish
+ * (`Mascot.arrive`) — a pop-in plus the reused celebrating bounce/glow — so this first appearance
+ * reads as a small reward rather than the mascot just flatly existing. It then reveals every
+ * node's label (`WardleyDemo.revealNodeLabels`) and explains what was just built
+ * (`MASCOT_NEED_PLACED`, one short caption) behind its own "Next" beat — the caller (`phase5.ts`)
+ * then starts directly with the User/Need/Capability walkthrough.
  */
 export async function runPhase0(options: ValueChainScenarioOptions): Promise<ScenarioContext> {
   const chain = seedValueChain;
@@ -56,7 +55,7 @@ export async function runPhase0(options: ValueChainScenarioOptions): Promise<Sce
     // grows the viewBox to fill the container right away, so the canvas is already the same size
     // it'll be in Phase 20 (see `growToFillContainer`'s doc comment) instead of visibly widening
     // later at the Phase 20 transition.
-    demo.growToFillContainer(PANEL_CONTENT_MIN_HEIGHT);
+    demo.growToFillContainer();
     arrow = demo.addDirectionalArrow(needStart, needTarget);
     options.onMount?.(demo);
   });
@@ -64,14 +63,14 @@ export async function runPhase0(options: ValueChainScenarioOptions): Promise<Sce
   arrow.remove();
   options.onNeedPlaced?.();
 
-  const mascot = new Mascot(options.mascotHost);
+  const mascot = new Mascot(options.avatarHost, options.dialogHost);
   mascot.mount();
   mascot.attachDemo(demo);
   const needPlacedPos = demo.getNodePixelPosition(chain.need.id);
-  if (needPlacedPos) mascot.moveTo(chain.need.id, needPlacedPos, "northeast");
+  if (needPlacedPos) mascot.moveTo(chain.need.id, needPlacedPos);
 
   demo.revealNodeLabels();
-  await mascot.arrive(() => mascot.showPlaceholder(MASCOT_NEED_PLACED.heading, MASCOT_NEED_PLACED.subheading));
+  await mascot.arrive(() => mascot.say(`${MASCOT_NEED_PLACED.heading} ${MASCOT_NEED_PLACED.subheading}`));
   await mascot.confirmPlacement("Next");
 
   return { demo, mascot, chain, options };

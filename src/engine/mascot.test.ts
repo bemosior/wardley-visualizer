@@ -3,10 +3,11 @@ import { Mascot } from "./mascot";
 import { WardleyDemo } from "./WardleyDemo";
 import type { Question } from "../domain/questionBank";
 
-function makeHost(): HTMLElement {
-  const el = document.createElement("div");
-  document.body.appendChild(el);
-  return el;
+function makeHosts(): { avatarHost: HTMLElement; dialogHost: HTMLElement } {
+  const avatarHost = document.createElement("div");
+  const dialogHost = document.createElement("div");
+  document.body.append(avatarHost, dialogHost);
+  return { avatarHost, dialogHost };
 }
 
 function buildDemo(): WardleyDemo {
@@ -21,25 +22,27 @@ function buildDemo(): WardleyDemo {
 }
 
 describe("Mascot.mount / unmount", () => {
-  it("appends the mascot root into the host on mount", () => {
-    const host = makeHost();
-    const mascot = new Mascot(host);
+  it("appends the avatar into avatarHost and the dialog into dialogHost on mount", () => {
+    const { avatarHost, dialogHost } = makeHosts();
+    const mascot = new Mascot(avatarHost, dialogHost);
 
     mascot.mount();
 
-    expect(host.querySelector(".wd-mascot")).not.toBeNull();
-    expect(host.querySelector(".wd-mascot-avatar")).not.toBeNull();
-    expect(host.querySelector(".wd-mascot-bubble")).not.toBeNull();
+    expect(avatarHost.querySelector(".wd-mascot")).not.toBeNull();
+    expect(avatarHost.querySelector(".wd-mascot-avatar")).not.toBeNull();
+    expect(avatarHost.querySelector(".wd-mascot-caption")).not.toBeNull();
+    expect(dialogHost.querySelector(".wd-mascot-dialog")).not.toBeNull();
   });
 
-  it("removes the mascot root on unmount", () => {
-    const host = makeHost();
-    const mascot = new Mascot(host);
+  it("removes both the avatar and the dialog on unmount", () => {
+    const { avatarHost, dialogHost } = makeHosts();
+    const mascot = new Mascot(avatarHost, dialogHost);
     mascot.mount();
 
     mascot.unmount();
 
-    expect(host.querySelector(".wd-mascot")).toBeNull();
+    expect(avatarHost.querySelector(".wd-mascot")).toBeNull();
+    expect(dialogHost.querySelector(".wd-mascot-dialog")).toBeNull();
   });
 });
 
@@ -53,17 +56,18 @@ describe("Mascot first-position transition suppression", () => {
     }) as typeof requestAnimationFrame;
 
     try {
-      const mascot = new Mascot(makeHost());
-      const root = (mascot as any).root as HTMLElement;
+      const { avatarHost, dialogHost } = makeHosts();
+      const mascot = new Mascot(avatarHost, dialogHost);
+      const avatarRoot = (mascot as any).avatarRoot as HTMLElement;
 
       mascot.moveTo("need", { x: 10, y: 20, radius: 50 });
-      expect(root.style.transition).toBe("none");
+      expect(avatarRoot.style.transition).toBe("none");
 
       callbacks.splice(0, callbacks.length).forEach((cb) => cb(0));
-      expect(root.style.transition).toBe("");
+      expect(avatarRoot.style.transition).toBe("");
 
       mascot.moveTo("need", { x: 30, y: 40, radius: 50 });
-      expect(root.style.transition).toBe("");
+      expect(avatarRoot.style.transition).toBe("");
     } finally {
       window.requestAnimationFrame = originalRaf;
     }
@@ -71,21 +75,22 @@ describe("Mascot first-position transition suppression", () => {
 });
 
 describe("Mascot.moveTo", () => {
-  it("plants the root below-and-centered on the given node, clear of its radius", () => {
-    const mascot = new Mascot(makeHost());
+  it("plants the avatar below-and-centered on the given node, clear of its radius", () => {
+    const { avatarHost, dialogHost } = makeHosts();
+    const mascot = new Mascot(avatarHost, dialogHost);
 
     mascot.moveTo("need", { x: 10, y: 20, radius: 50 });
 
-    const root = (mascot as any).root as HTMLElement;
-    expect(root.style.left).toBe("-10px"); // 10 - AVATAR_WIDTH / 2 (40 / 2)
-    expect(root.style.top).toBe("82px"); // 20 + radius(50) + NODE_CLEARANCE(12)
+    const avatarRoot = (mascot as any).avatarRoot as HTMLElement;
+    expect(avatarRoot.style.left).toBe("-10px"); // 10 - AVATAR_WIDTH / 2 (40 / 2)
+    expect(avatarRoot.style.top).toBe("82px"); // 20 + radius(50) + NODE_CLEARANCE(12)
   });
 
   it("re-tracks the last-moved node's position on window resize", () => {
     const demo = buildDemo();
     const spy = vi.spyOn(demo, "getNodePixelPosition").mockReturnValue({ x: 5, y: 6, radius: 0 });
-    const host = makeHost();
-    const mascot = new Mascot(host);
+    const { avatarHost, dialogHost } = makeHosts();
+    const mascot = new Mascot(avatarHost, dialogHost);
     mascot.attachDemo(demo);
     mascot.mount();
     mascot.moveTo("need", { x: 1, y: 1, radius: 0 });
@@ -95,235 +100,55 @@ describe("Mascot.moveTo", () => {
     window.dispatchEvent(new Event("resize"));
 
     expect(spy).toHaveBeenCalledWith("need");
-    const root = (mascot as any).root as HTMLElement;
-    expect(root.style.left).toBe("22px"); // 42 - AVATAR_WIDTH / 2
-    expect(root.style.top).toBe("55px"); // 43 + radius(0) + NODE_CLEARANCE(12)
-  });
-
-  it("leaves the bubble at its default (right-of-avatar) position when there's room", () => {
-    const host = makeHost();
-    vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 300 } as DOMRect);
-    const mascot = new Mascot(host);
-    const bubble = (mascot as any).bubbleEl as HTMLElement;
-    vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 100 } as DOMRect);
-
-    mascot.moveTo("need", { x: 50, y: 20 });
-
-    expect(bubble.style.left).toBe("0px");
-    expect(bubble.classList.contains("wd-mascot-bubble--flip")).toBe(false);
-  });
-
-  it("flips the bubble to the avatar's left when there's no room on the right", () => {
-    const host = makeHost();
-    vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 300 } as DOMRect);
-    const mascot = new Mascot(host);
-    const bubble = (mascot as any).bubbleEl as HTMLElement;
-    vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 200 } as DOMRect);
-
-    // avatarLeft = 280 - 20 = 260; natural right-side placement (260+40+8=308, +200=508) overflows
-    // a 300px-wide host, but the left side (260-8-200=52) fits, so it should flip there.
-    mascot.moveTo("need", { x: 280, y: 20 });
-
-    expect(bubble.style.left).toBe("-256px");
-    expect(bubble.classList.contains("wd-mascot-bubble--flip")).toBe(true);
-  });
-
-  it("lets the bubble overflow the host rather than sliding it back over the avatar when neither side fully fits", () => {
-    const host = makeHost();
-    vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 100 } as DOMRect);
-    const mascot = new Mascot(host);
-    const bubble = (mascot as any).bubbleEl as HTMLElement;
-    vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 150 } as DOMRect);
-
-    mascot.moveTo("need", { x: 50, y: 20 });
-
-    const root = (mascot as any).root as HTMLElement;
-    const avatarLeft = parseFloat(root.style.left);
-    const bubbleOffset = parseFloat(bubble.style.left);
-    // the bubble's near edge stays exactly at its clearance line from the avatar (unmoved from
-    // the unclamped right-side placement) even though its far edge now overflows the 100px-wide
-    // host by 128px (150px bubble, only 78px of clearance-respecting room) — spilling past the
-    // canvas edge is preferable to sliding the bubble back over the avatar it's meant to clear
-    expect(bubbleOffset).toBe(0);
-    expect(avatarLeft + 40 + 8 + bubbleOffset + 150).toBe(228);
-    expect(bubble.classList.contains("wd-mascot-bubble--flip")).toBe(false);
+    const avatarRoot = (mascot as any).avatarRoot as HTMLElement;
+    expect(avatarRoot.style.left).toBe("22px"); // 42 - AVATAR_WIDTH / 2
+    expect(avatarRoot.style.top).toBe("55px"); // 43 + radius(0) + NODE_CLEARANCE(12)
   });
 
   it("flips the avatar above the node when it doesn't fit below, based on its own fixed size", () => {
-    const host = makeHost();
-    vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 500, height: 300 } as DOMRect);
-    const mascot = new Mascot(host);
-    const root = (mascot as any).root as HTMLElement;
+    const { avatarHost, dialogHost } = makeHosts();
+    vi.spyOn(avatarHost, "getBoundingClientRect").mockReturnValue({ width: 500, height: 300 } as DOMRect);
+    const mascot = new Mascot(avatarHost, dialogHost);
+    const avatarRoot = (mascot as any).avatarRoot as HTMLElement;
 
     mascot.moveTo("need", { x: 250, y: 270, radius: 20 });
 
     // below (270+20+12=302) plus the avatar's own 60px height would overflow a 300px-tall host;
     // above (270-20-12-60=178) fits, so the avatar should flip there instead.
-    expect(root.style.top).toBe("178px");
+    expect(avatarRoot.style.top).toBe("178px");
   });
 
-  it("keeps the avatar and bubble together, below the node, when the bubble comfortably fits there", () => {
-    const host = makeHost();
-    vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 500, height: 300 } as DOMRect);
-    const mascot = new Mascot(host);
-    const root = (mascot as any).root as HTMLElement;
-    const bubble = (mascot as any).bubbleEl as HTMLElement;
-    vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 80, height: 68 } as DOMRect);
+  it("keeps the avatar below the node when it comfortably fits there", () => {
+    const { avatarHost, dialogHost } = makeHosts();
+    vi.spyOn(avatarHost, "getBoundingClientRect").mockReturnValue({ width: 500, height: 300 } as DOMRect);
+    const mascot = new Mascot(avatarHost, dialogHost);
+    const avatarRoot = (mascot as any).avatarRoot as HTMLElement;
 
     mascot.moveTo("need", { x: 250, y: 200, radius: 20 });
 
-    expect(root.style.top).toBe("232px");
-    expect(bubble.style.top).toBe("0px"); // same row as the avatar -- no independent shift needed
+    expect(avatarRoot.style.top).toBe("232px"); // 200 + radius(20) + NODE_CLEARANCE(12)
   });
 
-  it("moves the avatar and bubble above the node together when the bubble is too tall to fit below", () => {
-    const host = makeHost();
-    vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 500, height: 300 } as DOMRect);
-    const mascot = new Mascot(host);
-    const root = (mascot as any).root as HTMLElement;
-    const bubble = (mascot as any).bubbleEl as HTMLElement;
-    vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 80, height: 250 } as DOMRect);
-
-    mascot.moveTo("need", { x: 250, y: 200, radius: 20 });
-
-    // below (232 + 250 = 482) would badly overflow a 300px host; above fits the 250px bubble
-    // (200 - 20 - 12 - 250 = -82, only 82px short of the top) far better, so *both* the avatar and
-    // the bubble move there together, each flush against the node's clearance line (168) from
-    // above -- the avatar's bottom edge at 168, the taller bubble's bottom edge also at 168.
-    expect(root.style.top).toBe("108px"); // 168 - AVATAR_HEIGHT(60)
-    expect(bubble.style.top).toBe("-190px"); // bubble top -82, minus avatar top 108
-    // the tail tracks the avatar's real center (108 + 30 = 138) relative to the bubble's new top (-82)
-    expect(bubble.style.getPropertyValue("--wd-tail-top")).toBe("220px");
-  });
-
-  it("never lets the bubble cross back toward the node, even if that leaves it overflowing the canvas", () => {
-    const host = makeHost();
-    vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 500, height: 150 } as DOMRect);
-    const mascot = new Mascot(host);
-    const root = (mascot as any).root as HTMLElement;
-    const bubble = (mascot as any).bubbleEl as HTMLElement;
-    vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 80, height: 200 } as DOMRect);
-
-    mascot.moveTo("need", { x: 250, y: 50, radius: 0 });
-
-    // a 200px-tall bubble can never fit a 150px host either above or below, so "below" wins as the
-    // lesser overflow -- but rather than shrinking the gap to the node to compensate (the old,
-    // buggy behavior), the avatar and bubble both plant flush on the node's clearance line (62)
-    // and simply run past the host's bottom edge instead, since that's the harmless direction.
-    expect(root.style.top).toBe("62px");
-    expect(bubble.style.top).toBe("0px");
-  });
-
-  it("moves the avatar along with the bubble when a later content change forces a side flip", () => {
-    const host = makeHost();
-    vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 500, height: 300 } as DOMRect);
-    const mascot = new Mascot(host);
-    const root = (mascot as any).root as HTMLElement;
-    const bubble = (mascot as any).bubbleEl as HTMLElement;
-    const bubbleRect = vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 80, height: 40 } as DOMRect);
-
-    mascot.moveTo("need", { x: 250, y: 200, radius: 20 });
-    expect(root.style.top).toBe("232px");
-    expect(bubble.style.top).toBe("0px"); // fits fine below while the bubble is short
-
-    bubbleRect.mockReturnValue({ width: 80, height: 150 } as DOMRect); // e.g. showQuestion renders taller content
-    mascot.showPlaceholder("Wardley Map", "All placed!");
-
-    // the taller bubble no longer fits below, so the whole group -- avatar included -- flips
-    // above the node together, rather than the bubble alone drifting back toward it.
-    expect(root.style.top).toBe("108px");
-    expect(bubble.style.top).toBe("-90px");
-  });
-
-  it("lets a northeast-shifted bubble settle below the shifted anchor when that's where the real room is", () => {
-    const host = makeHost();
-    vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 500, height: 500 } as DOMRect);
-    const mascot = new Mascot(host);
-    const root = (mascot as any).root as HTMLElement;
-    const bubble = (mascot as any).bubbleEl as HTMLElement;
-    vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 200, height: 130 } as DOMRect);
-
-    // "northeast" only shifts the anchor up-and-right before the normal, measured below/above pick
-    // runs -- it doesn't force a side. The shifted anchor (180, 120) has plenty of room to grow
-    // "below" within a 500px-tall host, so that's where it settles; static re-anchors like this one
-    // (a mascot beat beside a node that isn't about to be dragged) don't need a harder guarantee
-    // than "wherever there's real room" -- see `"pinned"` below for the one placement that does.
-    mascot.moveTo("need", { x: 100, y: 200, radius: 48 }, "northeast");
-
-    expect(root.style.top).toBe("132px"); // clearBelow: shifted y(120) + NODE_CLEARANCE(12)
-  });
-
-  it("forces a pinned bubble above the node when there's real, unclipped room for it", () => {
-    const host = makeHost();
-    vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 500, height: 500 } as DOMRect);
-    const mascot = new Mascot(host);
-    const root = (mascot as any).root as HTMLElement;
-    const bubble = (mascot as any).bubbleEl as HTMLElement;
-    vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 200, height: 130 } as DOMRect);
-
-    // same anchor as the "northeast" test above, where letting the normal pick run would settle
-    // "below" the shifted anchor -- fine for a static re-anchor, but wrong for a node about to drag
-    // freely along its own row (Phase 20's evolution axis) with the mascot not chasing it: growing
-    // "below" the shifted anchor still reaches back down into the node's own row, which the node's
-    // horizontal drag would then pass right back underneath. "pinned" forces "above" instead, since
-    // there's real room for it here (no real `top` mocked, so the page-edge check no-ops and can't
-    // veto it).
-    mascot.moveTo("need", { x: 100, y: 200, radius: 48 }, "pinned");
-
-    expect(root.style.top).toBe("48px"); // clearAbove(108) - AVATAR_HEIGHT(60)
-    const bubbleBottom = parseFloat(bubble.style.top) + parseFloat(root.style.top) + 130;
-    expect(bubbleBottom).toBeLessThanOrEqual(152); // clear of the node's own top edge
-  });
-
-  it("falls back off a pinned node with no room above it instead of pushing the mascot off-screen", () => {
-    const host = makeHost();
-    vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 500, height: 500 } as DOMRect);
-    const mascot = new Mascot(host);
-    const root = (mascot as any).root as HTMLElement;
-    const bubble = (mascot as any).bubbleEl as HTMLElement;
-    vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 200, height: 130 } as DOMRect);
-
-    // the value chain's User node is rendered tangent to the canvas's own top edge (y = -radius),
-    // so a northeast shift (up and to the right) has no real room to move into -- `northeastPoint`
-    // reports this as `clamped`, which skips "pinned"'s force-above attempt entirely (there's
-    // nothing to verify room for) and falls through to the same measured pick every other
-    // placement uses, landing "below" (a mostly-horizontal shift) instead of off-screen.
-    mascot.moveTo("user", { x: 200, y: -20, radius: 20 }, "pinned");
-
-    expect(parseFloat(root.style.top)).toBeGreaterThanOrEqual(0);
-    const bubbleTop = parseFloat(bubble.style.top) + parseFloat(root.style.top);
-    expect(bubbleTop).toBeGreaterThanOrEqual(0);
-  });
-
-  it("falls back to the out-of-the-way corner when a pinned node has some room above it but not enough to be a hard guarantee", () => {
-    const host = makeHost();
-    // the host sits only 20px into the real document (e.g. a host page with little headroom above
-    // its canvas) -- mocking a real `top` (unlike most tests here) is what turns on the page-aware
-    // room check at all.
-    vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ width: 500, height: 500, top: 20 } as DOMRect);
+  it("never lets the avatar cross back above the page's own top edge", () => {
+    const { avatarHost, dialogHost } = makeHosts();
+    vi.spyOn(avatarHost, "getBoundingClientRect").mockReturnValue({ width: 500, height: 90, top: 20 } as DOMRect);
     vi.spyOn(window, "scrollY", "get").mockReturnValue(0);
-    const mascot = new Mascot(host);
-    const root = (mascot as any).root as HTMLElement;
-    const bubble = (mascot as any).bubbleEl as HTMLElement;
-    vi.spyOn(bubble, "getBoundingClientRect").mockReturnValue({ width: 200, height: 130 } as DOMRect);
+    const mascot = new Mascot(avatarHost, dialogHost);
+    const avatarRoot = (mascot as any).avatarRoot as HTMLElement;
 
-    // node at y=100, radius=48 has *some* room above it (unlike the tangent User node above), so
-    // `northeastPoint` isn't `clamped` -- but forcing "above" here would still land the group 122px
-    // short of fitting before the real document's top edge (only 8px of local clearance against a
-    // 130px group). Rather than clip it against the page edge (the old, buggy behavior), "pinned"
-    // recognizes there's no *real* guarantee available and anchors to the same corner
-    // `moveToTopRight` uses instead -- clear of every row, node-drag hazard or not.
-    mascot.moveTo("need", { x: 200, y: 100, radius: 48 }, "pinned");
+    // below (50+20+12=82, +60=142) badly overflows a 90px-tall host; a naive "above" pick
+    // (50-20-12-60=-42) would land 42px above the host's own origin, but the host itself only
+    // sits 20px into the real page -- floored at the page's top edge instead of clipping past it.
+    mascot.moveTo("need", { x: 250, y: 50, radius: 20 });
 
-    expect(root.style.left).toBe("416px"); // topRightPoint: (500 - CORNER_MARGIN(64)) - AVATAR_WIDTH/2(20)
-    expect(root.style.top).toBe("26px"); // topRightPoint's y(CORNER_MARGIN_TOP=14) + NODE_CLEARANCE(12): plenty of room below it
+    expect(parseFloat(avatarRoot.style.top)).toBeGreaterThanOrEqual(-20);
   });
 
   it("stops tracking resizes after unmount", () => {
     const demo = buildDemo();
     const spy = vi.spyOn(demo, "getNodePixelPosition");
-    const host = makeHost();
-    const mascot = new Mascot(host);
+    const { avatarHost, dialogHost } = makeHosts();
+    const mascot = new Mascot(avatarHost, dialogHost);
     mascot.attachDemo(demo);
     mascot.mount();
     mascot.moveTo("need", { x: 1, y: 1 });
@@ -336,10 +161,118 @@ describe("Mascot.moveTo", () => {
   });
 });
 
+describe("Mascot caption horizontal clamp", () => {
+  it("leaves the caption at its default (right-of-avatar) position when there's room", () => {
+    const { avatarHost, dialogHost } = makeHosts();
+    vi.spyOn(avatarHost, "getBoundingClientRect").mockReturnValue({ width: 300, left: 0 } as DOMRect);
+    const mascot = new Mascot(avatarHost, dialogHost);
+    const captionEl = (mascot as any).captionEl as HTMLElement;
+    vi.spyOn(captionEl, "getBoundingClientRect").mockReturnValue({ width: 100, right: 250 } as DOMRect);
+
+    mascot.moveTo("need", { x: 50, y: 20 });
+
+    expect(captionEl.classList.contains("wd-mascot-caption--flip")).toBe(false);
+  });
+
+  it("flips the caption to the avatar's left when there's no room on the right but there is on the left", () => {
+    const { avatarHost, dialogHost } = makeHosts();
+    vi.spyOn(avatarHost, "getBoundingClientRect").mockReturnValue({ width: 300, left: 0 } as DOMRect);
+    const mascot = new Mascot(avatarHost, dialogHost);
+    const captionEl = (mascot as any).captionEl as HTMLElement;
+    const avatarEl = (mascot as any).avatar.element as HTMLElement;
+    vi.spyOn(captionEl, "getBoundingClientRect").mockReturnValue({ width: 200, right: 350 } as DOMRect);
+    vi.spyOn(avatarEl, "getBoundingClientRect").mockReturnValue({ left: 260, width: 40 } as DOMRect);
+
+    mascot.moveTo("need", { x: 280, y: 20 });
+
+    expect(captionEl.classList.contains("wd-mascot-caption--flip")).toBe(true);
+  });
+
+  it("leaves the caption unflipped (spilling past the edge) when neither side fully fits", () => {
+    const { avatarHost, dialogHost } = makeHosts();
+    vi.spyOn(avatarHost, "getBoundingClientRect").mockReturnValue({ width: 300, left: 0 } as DOMRect);
+    const mascot = new Mascot(avatarHost, dialogHost);
+    const captionEl = (mascot as any).captionEl as HTMLElement;
+    const avatarEl = (mascot as any).avatar.element as HTMLElement;
+    vi.spyOn(captionEl, "getBoundingClientRect").mockReturnValue({ width: 200, right: 350 } as DOMRect);
+    vi.spyOn(avatarEl, "getBoundingClientRect").mockReturnValue({ left: 50, width: 40 } as DOMRect);
+
+    mascot.moveTo("need", { x: 50, y: 20 });
+
+    expect(captionEl.classList.contains("wd-mascot-caption--flip")).toBe(false);
+  });
+});
+
+describe("Mascot.say", () => {
+  it("sets the caption text and plays the talking animation", () => {
+    const { avatarHost, dialogHost } = makeHosts();
+    const mascot = new Mascot(avatarHost, dialogHost);
+    mascot.mount();
+
+    mascot.say("This is a Need.");
+
+    expect(avatarHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe("This is a Need.");
+    expect(avatarHost.querySelector(".wd-mascot-avatar")!.classList.contains("wd-mascot--talking")).toBe(true);
+  });
+
+  it("warns when the caption text exceeds the char guard, but still renders it", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const { avatarHost, dialogHost } = makeHosts();
+    const mascot = new Mascot(avatarHost, dialogHost);
+    mascot.mount();
+
+    mascot.say("a".repeat(90));
+
+    expect(warn).toHaveBeenCalledOnce();
+    expect(avatarHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe("a".repeat(90));
+    warn.mockRestore();
+  });
+
+  it("does not warn for text within the char guard", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const { avatarHost, dialogHost } = makeHosts();
+    const mascot = new Mascot(avatarHost, dialogHost);
+    mascot.mount();
+
+    mascot.say("Short and sweet.");
+
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+});
+
+describe("Mascot.confirmPlacement", () => {
+  it("appends a compact confirm control to the caption when it was the last surface used", async () => {
+    const { avatarHost, dialogHost } = makeHosts();
+    const mascot = new Mascot(avatarHost, dialogHost);
+    mascot.mount();
+    mascot.say("This is a Need.");
+
+    const result = mascot.confirmPlacement("Next");
+    const button = avatarHost.querySelector<HTMLButtonElement>(".wd-next-link")!;
+    expect(button.classList.contains("wd-next-link--compact")).toBe(true);
+    button.click();
+
+    await expect(result).resolves.toBeUndefined();
+  });
+
+  it("appends a confirm control to the dialog panel when it was the last surface used", async () => {
+    const { avatarHost, dialogHost } = makeHosts();
+    const mascot = new Mascot(avatarHost, dialogHost);
+    mascot.mount();
+    mascot.showEmpty();
+
+    const result = mascot.confirmPlacement("Let's think about it →");
+    dialogHost.querySelector<HTMLButtonElement>(".wd-next-link")!.click();
+
+    await expect(result).resolves.toBeUndefined();
+  });
+});
+
 describe("Mascot delegation to the composed Panel", () => {
-  it("showDragHandles renders the intro heading/subheading and the active slot", () => {
-    const host = makeHost();
-    const mascot = new Mascot(host);
+  it("panel-hosted methods render into the dialog host and point the caption at it", () => {
+    const { avatarHost, dialogHost } = makeHosts();
+    const mascot = new Mascot(avatarHost, dialogHost);
     mascot.mount();
 
     const handle = mascot.showDragHandles([{ id: "need", iconText: "User Need", label: "What They Get", active: true }], {
@@ -347,67 +280,56 @@ describe("Mascot delegation to the composed Panel", () => {
       subheading: "Drag the glowing circle onto the canvas to begin.",
     });
 
-    expect(host.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Hi, I'm here to help!");
-    expect(host.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe(
+    expect(dialogHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Hi, I'm here to help!");
+    expect(dialogHost.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe(
       "Drag the glowing circle onto the canvas to begin.",
     );
-    const active = host.querySelector(".wd-panel-slot--active");
+    const active = dialogHost.querySelector(".wd-panel-slot--active");
     expect(active).not.toBeNull();
     expect(handle.activeElement).toBe(active);
+    expect(avatarHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe("Take a look below ↓");
   });
 
   it("showField renders the prompt and resolves with the submitted value", async () => {
-    const host = makeHost();
-    const mascot = new Mascot(host);
+    const { avatarHost, dialogHost } = makeHosts();
+    const mascot = new Mascot(avatarHost, dialogHost);
     mascot.mount();
 
     const result = mascot.showField({ type: "text", prompt: "Who needs this?", placeholder: "e.g. commuters" });
 
-    expect(host.querySelector(".wd-panel-form-prompt")!.textContent).toBe("Who needs this?");
-    const input = host.querySelector<HTMLInputElement>(".wd-panel-form-input")!;
+    expect(dialogHost.querySelector(".wd-panel-form-prompt")!.textContent).toBe("Who needs this?");
+    const input = dialogHost.querySelector<HTMLInputElement>(".wd-panel-form-input")!;
     input.value = "Busy parents";
-    host.querySelector("form")!.dispatchEvent(new Event("submit", { cancelable: true }));
+    dialogHost.querySelector("form")!.dispatchEvent(new Event("submit", { cancelable: true }));
 
     expect(await result).toBe("Busy parents");
   });
 
-  it("showInstrumentPanel renders the heading/stage inside the bubble", () => {
-    const host = makeHost();
-    const mascot = new Mascot(host);
+  it("showInstrumentPanel renders the heading/stage inside the dialog panel", () => {
+    const { avatarHost, dialogHost } = makeHosts();
+    const mascot = new Mascot(avatarHost, dialogHost);
     mascot.mount();
 
     mascot.showInstrumentPanel("User Need", "need", "Genesis");
 
-    expect(host.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Is User Need in Genesis?");
-    expect(host.querySelector(".wd-panel-instrument-characteristics")!.textContent).not.toBe("");
+    expect(dialogHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Is User Need in Genesis?");
+    expect(dialogHost.querySelector(".wd-panel-instrument-characteristics")!.textContent).not.toBe("");
   });
 
   it("updateInstrumentPanel updates the live stage text", () => {
-    const host = makeHost();
-    const mascot = new Mascot(host);
+    const { avatarHost, dialogHost } = makeHosts();
+    const mascot = new Mascot(avatarHost, dialogHost);
     mascot.mount();
     mascot.showInstrumentPanel("User Need", "need", "Genesis");
 
     mascot.updateInstrumentPanel("Product");
 
-    expect(host.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Is User Need in Product?");
-  });
-
-  it("confirmPlacement resolves once its link is clicked", async () => {
-    const host = makeHost();
-    const mascot = new Mascot(host);
-    mascot.mount();
-    mascot.showPlaceholder("Wardley Map", "All placed!");
-
-    const result = mascot.confirmPlacement("Let's think about it →");
-    host.querySelector<HTMLButtonElement>(".wd-next-link")!.click();
-
-    await expect(result).resolves.toBeUndefined();
+    expect(dialogHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Is User Need in Product?");
   });
 
   it("showQuestion renders options and resolves with the clicked one", async () => {
-    const host = makeHost();
-    const mascot = new Mascot(host);
+    const { avatarHost, dialogHost } = makeHosts();
+    const mascot = new Mascot(avatarHost, dialogHost);
     mascot.mount();
     const question: Question = {
       id: "q1",
@@ -419,87 +341,98 @@ describe("Mascot delegation to the composed Panel", () => {
     };
 
     const result = mascot.showQuestion("Capability", question);
-    const buttons = host.querySelectorAll<HTMLButtonElement>(".wd-panel-question-option");
+    const buttons = dialogHost.querySelectorAll<HTMLButtonElement>(".wd-panel-question-option");
     buttons[1].click();
 
     expect(await result).toEqual(question.options[1]);
   });
 
   it("showGate renders the prompt/subtitle/options and resolves with the clicked option's id", async () => {
-    const host = makeHost();
-    const mascot = new Mascot(host);
+    const { avatarHost, dialogHost } = makeHosts();
+    const mascot = new Mascot(avatarHost, dialogHost);
     mascot.mount();
 
     const result = mascot.showGate("Could exploring bias with A kettle teach us something?", "Keep going!", [
       { id: "yes", label: "Yes" },
       { id: "no", label: "No" },
     ]);
-    const buttons = host.querySelectorAll<HTMLButtonElement>(".wd-panel-question-option");
+    const buttons = dialogHost.querySelectorAll<HTMLButtonElement>(".wd-panel-question-option");
     buttons[0].click();
 
     expect(await result).toBe("yes");
   });
 
   it("showRecap renders the CTA link", () => {
-    const host = makeHost();
-    const mascot = new Mascot(host);
+    const { avatarHost, dialogHost } = makeHosts();
+    const mascot = new Mascot(avatarHost, dialogHost);
     mascot.mount();
 
     mascot.showRecap(["Step one"], { label: "Take your next step →", href: "https://learnwardleymapping.com" });
 
-    const cta = host.querySelector<HTMLAnchorElement>(".wd-panel-recap-cta")!;
+    const cta = dialogHost.querySelector<HTMLAnchorElement>(".wd-panel-recap-cta")!;
     expect(cta.href).toBe("https://learnwardleymapping.com/");
     expect(cta.textContent).toBe("Take your next step →");
   });
 
   it("showEmpty clears prior content down to an empty placeholder", () => {
-    const host = makeHost();
-    const mascot = new Mascot(host);
+    const { avatarHost, dialogHost } = makeHosts();
+    const mascot = new Mascot(avatarHost, dialogHost);
     mascot.mount();
-    mascot.showPlaceholder("Wardley Map", "All placed!");
+    mascot.showRecap(["Step one"], { label: "Next", href: "https://example.com" });
 
     mascot.showEmpty();
 
-    const content = host.querySelector(".wd-panel-content")!;
+    const content = dialogHost.querySelector(".wd-panel-content")!;
     expect(content.children.length).toBe(0);
+  });
+
+  it("showPlaceholder renders the heading/subheading inside the dialog panel", () => {
+    const { avatarHost, dialogHost } = makeHosts();
+    const mascot = new Mascot(avatarHost, dialogHost);
+    mascot.mount();
+
+    mascot.showPlaceholder("Wardley Map", "All placed!");
+
+    expect(dialogHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Wardley Map");
+    expect(dialogHost.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe("All placed!");
   });
 });
 
 describe("Mascot talking/celebrating state", () => {
-  it("plays the talking state immediately when new bubble content renders", () => {
-    const host = makeHost();
-    const mascot = new Mascot(host);
+  it("plays the talking state immediately when new caption content renders", () => {
+    const { avatarHost, dialogHost } = makeHosts();
+    const mascot = new Mascot(avatarHost, dialogHost);
     mascot.mount();
 
-    mascot.showPlaceholder("Wardley Map", "All placed!");
+    mascot.say("Wardley Map, all placed!");
 
-    expect(host.querySelector(".wd-mascot-avatar")!.classList.contains("wd-mascot--talking")).toBe(true);
+    expect(avatarHost.querySelector(".wd-mascot-avatar")!.classList.contains("wd-mascot--talking")).toBe(true);
   });
 
   it("settles back to idle after the talking animation finishes", () => {
     vi.useFakeTimers();
-    const host = makeHost();
-    const mascot = new Mascot(host);
+    const { avatarHost, dialogHost } = makeHosts();
+    const mascot = new Mascot(avatarHost, dialogHost);
     mascot.mount();
-    mascot.showPlaceholder("Wardley Map", "All placed!");
+    mascot.say("Wardley Map, all placed!");
 
     vi.advanceTimersByTime(700);
 
-    expect(host.querySelector(".wd-mascot-avatar")!.classList.contains("wd-mascot--idle")).toBe(true);
+    expect(avatarHost.querySelector(".wd-mascot-avatar")!.classList.contains("wd-mascot--idle")).toBe(true);
     vi.useRealTimers();
   });
 
   it("does not stomp a caller-triggered celebrating state once the talking animation finishes", () => {
     vi.useFakeTimers();
-    const host = makeHost();
-    const mascot = new Mascot(host);
+    const { avatarHost, dialogHost } = makeHosts();
+    const mascot = new Mascot(avatarHost, dialogHost);
     mascot.mount();
-    mascot.showPlaceholder("Wardley Map", "All placed!");
+    mascot.say("Wardley Map, all placed!");
     mascot.setState("celebrating");
 
     vi.advanceTimersByTime(700);
 
-    expect(host.querySelector(".wd-mascot-avatar")!.classList.contains("wd-mascot--celebrating")).toBe(true);
+    expect(avatarHost.querySelector(".wd-mascot-avatar")!.classList.contains("wd-mascot--celebrating")).toBe(true);
     vi.useRealTimers();
   });
 });
@@ -516,67 +449,79 @@ describe("Mascot.arrive", () => {
     // exercise arrive()'s real animated path.
     window.matchMedia = (() => ({ matches: false })) as unknown as typeof window.matchMedia;
     vi.useFakeTimers();
-    const host = makeHost();
-    const mascot = new Mascot(host);
+    const { avatarHost, dialogHost } = makeHosts();
+    const mascot = new Mascot(avatarHost, dialogHost);
     mascot.mount();
 
     const arrived = mascot.arrive();
 
-    expect(host.querySelector(".wd-mascot")!.classList.contains("wd-mascot--arriving")).toBe(true);
-    expect(host.querySelector(".wd-mascot-avatar")!.classList.contains("wd-mascot--celebrating")).toBe(true);
+    expect(avatarHost.querySelector(".wd-mascot")!.classList.contains("wd-mascot--arriving")).toBe(true);
+    expect(avatarHost.querySelector(".wd-mascot-avatar")!.classList.contains("wd-mascot--celebrating")).toBe(true);
 
     await vi.advanceTimersByTimeAsync(1000);
     await arrived;
 
-    expect(host.querySelector(".wd-mascot")!.classList.contains("wd-mascot--arriving")).toBe(false);
-    expect(host.querySelector(".wd-mascot-avatar")!.classList.contains("wd-mascot--idle")).toBe(true);
+    expect(avatarHost.querySelector(".wd-mascot")!.classList.contains("wd-mascot--arriving")).toBe(false);
+    expect(avatarHost.querySelector(".wd-mascot-avatar")!.classList.contains("wd-mascot--idle")).toBe(true);
     vi.useRealTimers();
   });
 
   it("skips the flourish and delay under prefers-reduced-motion", async () => {
     window.matchMedia = (() => ({ matches: true })) as unknown as typeof window.matchMedia;
-    const host = makeHost();
-    const mascot = new Mascot(host);
+    const { avatarHost, dialogHost } = makeHosts();
+    const mascot = new Mascot(avatarHost, dialogHost);
     mascot.mount();
 
     await mascot.arrive();
 
-    expect(host.querySelector(".wd-mascot")!.classList.contains("wd-mascot--arriving")).toBe(false);
-    expect(host.querySelector(".wd-mascot-avatar")!.classList.contains("wd-mascot--idle")).toBe(true);
+    expect(avatarHost.querySelector(".wd-mascot")!.classList.contains("wd-mascot--arriving")).toBe(false);
+    expect(avatarHost.querySelector(".wd-mascot-avatar")!.classList.contains("wd-mascot--idle")).toBe(true);
   });
 
-  it("keeps the bubble empty and hidden until reveal fires, right before it's unhidden", async () => {
+  it("keeps the caption and dialog empty and hidden until reveal fires, right before they're unhidden", async () => {
     window.matchMedia = (() => ({ matches: false })) as unknown as typeof window.matchMedia;
     vi.useFakeTimers();
-    const host = makeHost();
-    const mascot = new Mascot(host);
+    const { avatarHost, dialogHost } = makeHosts();
+    const mascot = new Mascot(avatarHost, dialogHost);
     mascot.mount();
 
     let revealedWhileHidden = false;
     const arrived = mascot.arrive(() => {
-      revealedWhileHidden = host.querySelector(".wd-mascot")!.classList.contains("wd-mascot--arriving");
-      mascot.showPlaceholder("Want to build a Wardley Map?", "");
+      revealedWhileHidden = avatarHost.querySelector(".wd-mascot")!.classList.contains("wd-mascot--arriving");
+      mascot.say("Want to build a Wardley Map?");
     });
 
-    expect(host.querySelector(".wd-mascot-bubble")!.textContent).toBe("");
+    expect(avatarHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe("");
 
     await vi.advanceTimersByTimeAsync(1000);
     await arrived;
 
     expect(revealedWhileHidden).toBe(true);
-    expect(host.querySelector(".wd-mascot")!.classList.contains("wd-mascot--arriving")).toBe(false);
-    expect(host.querySelector(".wd-mascot-bubble")!.textContent).toContain("Want to build a Wardley Map?");
+    expect(avatarHost.querySelector(".wd-mascot")!.classList.contains("wd-mascot--arriving")).toBe(false);
+    expect(avatarHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe("Want to build a Wardley Map?");
     vi.useRealTimers();
   });
 
   it("invokes reveal immediately under prefers-reduced-motion, before returning", async () => {
     window.matchMedia = (() => ({ matches: true })) as unknown as typeof window.matchMedia;
-    const host = makeHost();
-    const mascot = new Mascot(host);
+    const { avatarHost, dialogHost } = makeHosts();
+    const mascot = new Mascot(avatarHost, dialogHost);
+    mascot.mount();
+
+    await mascot.arrive(() => mascot.say("Want to build a Wardley Map?"));
+
+    expect(avatarHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe("Want to build a Wardley Map?");
+  });
+
+  it("also hides the dialog panel until reveal fires, when the caller reveals dialog content instead", async () => {
+    window.matchMedia = (() => ({ matches: true })) as unknown as typeof window.matchMedia;
+    const { avatarHost, dialogHost } = makeHosts();
+    const mascot = new Mascot(avatarHost, dialogHost);
     mascot.mount();
 
     await mascot.arrive(() => mascot.showPlaceholder("Want to build a Wardley Map?", ""));
 
-    expect(host.querySelector(".wd-mascot-bubble")!.textContent).toContain("Want to build a Wardley Map?");
+    expect(dialogHost.querySelector(".wd-mascot-dialog")!.classList.contains("wd-mascot-dialog--arriving")).toBe(false);
+    expect(dialogHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Want to build a Wardley Map?");
   });
 });

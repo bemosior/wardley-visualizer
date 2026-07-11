@@ -29,12 +29,13 @@ const MASCOT_MULTIPLE_PARTS = {
 
 /**
  * Phase 5: between Phase 0 (drag the Need into place) and Phase 10 (personalize via the form).
- * Starts right where `phase0.ts` leaves off (its own "You made a Value Chain!" placeholder
- * already shown and confirmed there), walking the visitor through the chain node by node instead
- * of summarizing it all in one placeholder: re-anchoring the mascot to the User node ("This is a
+ * Starts right where `phase0.ts` leaves off (its own "You made a Value Chain!" caption already
+ * shown and confirmed there), walking the visitor through the chain node by node instead of
+ * summarizing it all in one beat: re-anchoring the mascot's avatar to the User node ("This is a
  * user."), then the Need ("This is a user need."), then a single Capability node ("This is a
- * capability."), each gated behind its own "Next" — before the Part A/B/C beat below generalizes
- * from that one capability to "the recipe often calls for many parts."
+ * capability."), each a short caption gated behind its own "Next" — before the Part A/B/C beat
+ * below generalizes from that one capability to "the recipe often calls for many parts" (long
+ * enough to need two captions in a row instead of one).
  *
  * For the Capability stop, Phase 0's config is allowed to render only *one* Capability node (e.g.
  * `preview.html`'s hand-tuned host-embed config, which deliberately shows a single "How their need
@@ -50,31 +51,30 @@ const MASCOT_MULTIPLE_PARTS = {
  *
  * Once all three exist, relabels them "Part A"/"Part B"/"Part C" *by final left-to-right screen
  * position* (not by domain id order, since a host config's pre-existing node isn't necessarily
- * `dependency-1`), re-anchors the mascot below the visually-centered one (the middle of the sorted
- * row — see `[[project_wardley_demo_mascot_bubble_geometry]]` memory on why the mascot anchors
- * *below the whole row* here rather than beside one node), and explains that a need is sometimes
- * met by multiple parts adding up together. Waits for a final "Next" gate before returning, so the
- * caller (`phase10.ts`) can start directly with "What does the user need?" instead of also showing
- * the "Need placed" placeholder itself.
+ * `dependency-1`), re-anchors the mascot's avatar to the rightmost of the sorted row, and explains
+ * (two captions in a row -- this one runs long enough that a single caption would exceed
+ * `Mascot.say`'s char guard) that a need is sometimes met by multiple parts adding up together.
+ * Waits for a final "Next" gate before returning, so the caller (`phase10.ts`) can start directly
+ * with "What does the user need?" instead of also showing its own opening caption.
  */
 export async function runPhase5(ctx: ScenarioContext): Promise<void> {
   const { demo, mascot } = ctx;
 
   const userPos = demo.getNodePixelPosition(ctx.chain.user.id);
-  if (userPos) mascot.moveTo(ctx.chain.user.id, userPos, "northeast");
-  mascot.showPlaceholder(MASCOT_USER.heading, MASCOT_USER.subheading);
+  if (userPos) mascot.moveTo(ctx.chain.user.id, userPos);
+  mascot.say(`${MASCOT_USER.heading} ${MASCOT_USER.subheading}`);
   await mascot.confirmPlacement("Next");
 
   const needPos = demo.getNodePixelPosition(ctx.chain.need.id);
-  if (needPos) mascot.moveTo(ctx.chain.need.id, needPos, "northeast");
-  mascot.showPlaceholder(MASCOT_USER_NEED.heading, MASCOT_USER_NEED.subheading);
+  if (needPos) mascot.moveTo(ctx.chain.need.id, needPos);
+  mascot.say(`${MASCOT_USER_NEED.heading} ${MASCOT_USER_NEED.subheading}`);
   await mascot.confirmPlacement("Next");
 
   const capabilities = ctx.chain.capabilities;
   const anchor = capabilities.find((capability) => demo.hasNode(capability.id))!;
   const anchorPixelPos = demo.getNodePixelPosition(anchor.id);
-  if (anchorPixelPos) mascot.moveTo(anchor.id, anchorPixelPos, "northeast");
-  mascot.showPlaceholder(MASCOT_CAPABILITY.heading, MASCOT_CAPABILITY.subheading);
+  if (anchorPixelPos) mascot.moveTo(anchor.id, anchorPixelPos);
+  mascot.say(`${MASCOT_CAPABILITY.heading} ${MASCOT_CAPABILITY.subheading}`);
   await mascot.confirmPlacement("Next");
 
   const missing = capabilities.filter((capability) => !demo.hasNode(capability.id));
@@ -109,6 +109,8 @@ export async function runPhase5(ctx: ScenarioContext): Promise<void> {
   const rightPos = demo.getNodePixelPosition(right.id);
   if (rightPos) mascot.moveTo(right.id, rightPos);
 
-  mascot.showPlaceholder(MASCOT_MULTIPLE_PARTS.heading, MASCOT_MULTIPLE_PARTS.subheading);
+  mascot.say(MASCOT_MULTIPLE_PARTS.heading);
+  await mascot.confirmPlacement("Next");
+  mascot.say(MASCOT_MULTIPLE_PARTS.subheading);
   await mascot.confirmPlacement("Next");
 }
