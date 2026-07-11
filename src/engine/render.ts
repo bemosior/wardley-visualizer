@@ -110,18 +110,20 @@ export function createDirectionalArrow(from: { x: number; y: number }, to: { x: 
   const endX = to.x - ux * DIRECTIONAL_ARROW_GAP;
   const endY = to.y - uy * DIRECTIONAL_ARROW_GAP;
 
-  const shaft = document.createElementNS(SVG_NS, "line");
-  shaft.classList.add("wd-direction-arrow-shaft");
-  shaft.setAttribute("x1", String(startX));
-  shaft.setAttribute("y1", String(startY));
-  shaft.setAttribute("x2", String(endX));
-  shaft.setAttribute("y2", String(endY));
-  g.appendChild(shaft);
-
   const backX = endX - Math.cos(angle) * DIRECTIONAL_ARROW_HEAD_LENGTH;
   const backY = endY - Math.sin(angle) * DIRECTIONAL_ARROW_HEAD_LENGTH;
   const perpX = -Math.sin(angle) * (DIRECTIONAL_ARROW_HEAD_WIDTH / 2);
   const perpY = Math.cos(angle) * (DIRECTIONAL_ARROW_HEAD_WIDTH / 2);
+
+  // stops at the head's base (backX/backY), not its tip (endX/endY) — the shaft's round linecap
+  // would otherwise poke through the triangular head and distort its profile
+  const shaft = document.createElementNS(SVG_NS, "line");
+  shaft.classList.add("wd-direction-arrow-shaft");
+  shaft.setAttribute("x1", String(startX));
+  shaft.setAttribute("y1", String(startY));
+  shaft.setAttribute("x2", String(backX));
+  shaft.setAttribute("y2", String(backY));
+  g.appendChild(shaft);
 
   const head = document.createElementNS(SVG_NS, "path");
   head.classList.add("wd-direction-arrow-head");
