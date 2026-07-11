@@ -1,38 +1,37 @@
 export interface NeedOption {
   id: string;
   label: string;
-  /** example placeholder shown in the "who needs this?" text field — must match this need, not a different example */
-  userPlaceholder: string;
-  /** example placeholders for the 3 capability text fields, in order — must match this need, not a different example */
-  capabilityPlaceholders: [string, string, string];
+  /** the persona this need belongs to, offered as a "who should we help today?" pill */
+  user: string;
   /**
-   * extra capability pills offered alongside `capabilityPlaceholders` (Phase 10's "examples"
-   * chips only, never used as a text-field placeholder) — deliberately spans the evolution
-   * spectrum (genesis/custom-built/product/commodity) so the capabilities a visitor picks aren't
-   * all the same maturity, which matters once Phase 20 asks them to place each on the evolution
-   * axis.
+   * capability pills offered for this need's 3 capability text fields (Phase 10's "examples"
+   * chips) — deliberately spans the evolution spectrum (genesis/custom-built/product/commodity)
+   * so the capabilities a visitor picks aren't all the same maturity, which matters once Phase 20
+   * asks them to place each on the evolution axis.
    */
-  moreCapabilityOptions: string[];
+  capabilityOptions: string[];
 }
 
 /**
  * preset choices for Phase 10's "pick a user need" dropdown. Each option
- * carries its own example placeholders so the form's suggested answers
- * always match the selected need — previously the placeholders were
- * hardcoded to the tea example ("Commuter", "Kettle") regardless of which
- * need was picked, which testers flagged as a content leak (see TODO.md).
+ * carries its own capability pills so the form's suggested answers always
+ * match the selected need — previously the capability fields' placeholder
+ * text was hardcoded to the tea example ("Kettle") regardless of which need
+ * was picked, which testers flagged as a content leak (see TODO.md).
  *
- * Several options can share a `userPlaceholder` — each user has multiple needs on offer, not
- * just one — so `userPlaceholder` is intentionally NOT unique across the catalog the way `id`,
- * `label`, and the capability placeholders are (see `needCatalog.test.ts`).
+ * Several options can share a `user` — each user has multiple needs on offer, not just one — so
+ * `user` is intentionally NOT unique across the catalog the way `id`, `label`, and the capability
+ * options are (see `needCatalog.test.ts`).
  */
 export const NEED_CATALOG: NeedOption[] = [
   {
     id: "hot-tea",
     label: "Hot Tea",
-    userPlaceholder: "Commuter",
-    capabilityPlaceholders: ["Kettle", "Water", "Electricity"],
-    moreCapabilityOptions: [
+    user: "Commuter",
+    capabilityOptions: [
+      "Kettle",
+      "Water",
+      "Electricity",
       "Thermoelectric Mug",
       "Blacksmith's Kettle",
       "Induction Coil Ring",
@@ -45,9 +44,11 @@ export const NEED_CATALOG: NeedOption[] = [
   {
     id: "reliable-wifi-on-the-train",
     label: "Reliable Wifi on the Train",
-    userPlaceholder: "Commuter",
-    capabilityPlaceholders: ["Wifi Router", "Train Carriage", "Network Provider"],
-    moreCapabilityOptions: [
+    user: "Commuter",
+    capabilityOptions: [
+      "Wifi Router",
+      "Train Carriage",
+      "Network Provider",
       "Laser Data Link",
       "Trackside Relay Antenna",
       "Low-Earth-Orbit Satellite Dish",
@@ -60,9 +61,11 @@ export const NEED_CATALOG: NeedOption[] = [
   {
     id: "a-parking-spot-downtown",
     label: "A Parking Spot Downtown",
-    userPlaceholder: "Commuter",
-    capabilityPlaceholders: ["Parking Garage", "Payment Kiosk", "Security Camera"],
-    moreCapabilityOptions: [
+    user: "Commuter",
+    capabilityOptions: [
+      "Parking Garage",
+      "Payment Kiosk",
+      "Security Camera",
       "Valet Drone",
       "Building Super's Driveway",
       "Automated Valet Elevator",
@@ -75,9 +78,11 @@ export const NEED_CATALOG: NeedOption[] = [
   {
     id: "messaging-with-friends",
     label: "Messaging with Friends",
-    userPlaceholder: "Teenager",
-    capabilityPlaceholders: ["Smartphone", "Messaging App", "Mobile Network"],
-    moreCapabilityOptions: [
+    user: "Teenager",
+    capabilityOptions: [
+      "Smartphone",
+      "Messaging App",
+      "Mobile Network",
       "Satellite Mesh Pager",
       "CB Radio Channel",
       "Ham Radio Repeater",
@@ -90,9 +95,11 @@ export const NEED_CATALOG: NeedOption[] = [
   {
     id: "streaming-the-latest-show",
     label: "Streaming the Latest Show",
-    userPlaceholder: "Teenager",
-    capabilityPlaceholders: ["Streaming App", "Wifi Connection", "Subscription Plan"],
-    moreCapabilityOptions: [
+    user: "Teenager",
+    capabilityOptions: [
+      "Streaming App",
+      "Wifi Connection",
+      "Subscription Plan",
       "Neural Playback Headset",
       "Shared Family Login",
       "Retinal Projection Display",
@@ -105,9 +112,11 @@ export const NEED_CATALOG: NeedOption[] = [
   {
     id: "charging-their-phone-on-the-go",
     label: "Charging Their Phone on the Go",
-    userPlaceholder: "Teenager",
-    capabilityPlaceholders: ["Portable Charger", "USB Cable", "Charging Port"],
-    moreCapabilityOptions: [
+    user: "Teenager",
+    capabilityOptions: [
+      "Portable Charger",
+      "USB Cable",
+      "Charging Port",
       "Solar-Weave Backpack",
       "Salvaged Laptop Battery",
       "Public Wireless Charging Grid",
@@ -120,9 +129,11 @@ export const NEED_CATALOG: NeedOption[] = [
   {
     id: "fresh-grocery-delivery",
     label: "Fresh Grocery Delivery",
-    userPlaceholder: "Home Cook",
-    capabilityPlaceholders: ["Delivery Driver", "Refrigerated Storage", "Online Ordering"],
-    moreCapabilityOptions: [
+    user: "Home Cook",
+    capabilityOptions: [
+      "Delivery Driver",
+      "Refrigerated Storage",
+      "Online Ordering",
       "Delivery Drone",
       "Neighbor's Grocery Run",
       "Autonomous Sidewalk Rover",
@@ -135,9 +146,11 @@ export const NEED_CATALOG: NeedOption[] = [
   {
     id: "a-recipe-for-dinner-tonight",
     label: "A Recipe for Dinner Tonight",
-    userPlaceholder: "Home Cook",
-    capabilityPlaceholders: ["Recipe App", "Pantry Inventory", "Ingredient List"],
-    moreCapabilityOptions: [
+    user: "Home Cook",
+    capabilityOptions: [
+      "Recipe App",
+      "Pantry Inventory",
+      "Ingredient List",
       "AI Meal Planner",
       "Grandmother's Recipe Card",
       "Smart Fridge Suggestion Engine",
@@ -150,9 +163,11 @@ export const NEED_CATALOG: NeedOption[] = [
   {
     id: "meal-prep-containers",
     label: "Meal Prep Containers",
-    userPlaceholder: "Home Cook",
-    capabilityPlaceholders: ["Container Set", "Food Labels", "Storage Space"],
-    moreCapabilityOptions: [
+    user: "Home Cook",
+    capabilityOptions: [
+      "Container Set",
+      "Food Labels",
+      "Storage Space",
       "Vacuum-Seal Nanocoating",
       "Repurposed Jam Jars",
       "Biodegradable Nanofilm Wrap",
@@ -165,9 +180,11 @@ export const NEED_CATALOG: NeedOption[] = [
   {
     id: "transport-to-the-airport",
     label: "Transport to the Airport",
-    userPlaceholder: "Traveler",
-    capabilityPlaceholders: ["Driver", "Vehicle", "Road Network"],
-    moreCapabilityOptions: [
+    user: "Traveler",
+    capabilityOptions: [
+      "Driver",
+      "Vehicle",
+      "Road Network",
       "Air Taxi",
       "Neighbor's Carpool",
       "Autonomous Shuttle",
@@ -180,9 +197,11 @@ export const NEED_CATALOG: NeedOption[] = [
   {
     id: "a-hotel-room-for-the-night",
     label: "A Hotel Room for the Night",
-    userPlaceholder: "Traveler",
-    capabilityPlaceholders: ["Booking Platform", "Front Desk", "Room Key"],
-    moreCapabilityOptions: [
+    user: "Traveler",
+    capabilityOptions: [
+      "Booking Platform",
+      "Front Desk",
+      "Room Key",
       "Capsule Hotel",
       "Host's Spare Room",
       "Automated Check-In Kiosk",
@@ -195,9 +214,11 @@ export const NEED_CATALOG: NeedOption[] = [
   {
     id: "currency-exchanged-for-the-trip",
     label: "Currency Exchanged for the Trip",
-    userPlaceholder: "Traveler",
-    capabilityPlaceholders: ["Exchange Kiosk", "Local Currency", "Exchange Rate"],
-    moreCapabilityOptions: [
+    user: "Traveler",
+    capabilityOptions: [
+      "Exchange Kiosk",
+      "Local Currency",
+      "Exchange Rate",
       "Cross-Border Crypto Wallet",
       "Street Money Changer",
       "Biometric Payment Wristband",
@@ -210,9 +231,11 @@ export const NEED_CATALOG: NeedOption[] = [
   {
     id: "documents-signed",
     label: "Documents Signed",
-    userPlaceholder: "Contractor",
-    capabilityPlaceholders: ["E-Signature Tool", "Identity Verification", "Document Storage"],
-    moreCapabilityOptions: [
+    user: "Contractor",
+    capabilityOptions: [
+      "E-Signature Tool",
+      "Identity Verification",
+      "Document Storage",
       "Blockchain Notarization",
       "Traveling Notary",
       "Biometric Signature Scanner",
@@ -225,9 +248,11 @@ export const NEED_CATALOG: NeedOption[] = [
   {
     id: "materials-delivered-to-the-job-site",
     label: "Materials Delivered to the Job Site",
-    userPlaceholder: "Contractor",
-    capabilityPlaceholders: ["Supplier", "Delivery Truck", "Loading Dock"],
-    moreCapabilityOptions: [
+    user: "Contractor",
+    capabilityOptions: [
+      "Supplier",
+      "Delivery Truck",
+      "Loading Dock",
       "Drone Freight",
       "Subcontractor's Pickup Truck",
       "Autonomous Cargo Rover",
@@ -240,9 +265,11 @@ export const NEED_CATALOG: NeedOption[] = [
   {
     id: "a-permit-approved",
     label: "A Permit Approved",
-    userPlaceholder: "Contractor",
-    capabilityPlaceholders: ["Permit Office", "Application Form", "Inspector"],
-    moreCapabilityOptions: [
+    user: "Contractor",
+    capabilityOptions: [
+      "Permit Office",
+      "Application Form",
+      "Inspector",
       "Automated Permit Reviewer",
       "Government Clerk's Phone Number",
       "AI Zoning Compliance Checker",
@@ -255,9 +282,11 @@ export const NEED_CATALOG: NeedOption[] = [
   {
     id: "photos-displayed",
     label: "Photos Displayed",
-    userPlaceholder: "Parent",
-    capabilityPlaceholders: ["Printer", "Photo Paper", "Ink"],
-    moreCapabilityOptions: [
+    user: "Parent",
+    capabilityOptions: [
+      "Printer",
+      "Photo Paper",
+      "Ink",
       "Holographic Photo Booth",
       "Garage Darkroom",
       "Light-Field Camera",
@@ -270,9 +299,11 @@ export const NEED_CATALOG: NeedOption[] = [
   {
     id: "a-babysitter-for-date-night",
     label: "A Babysitter for Date Night",
-    userPlaceholder: "Parent",
-    capabilityPlaceholders: ["Babysitting App", "Background Check", "Reference List"],
-    moreCapabilityOptions: [
+    user: "Parent",
+    capabilityOptions: [
+      "Babysitting App",
+      "Background Check",
+      "Reference List",
       "Supervisor Robot",
       "Trusted Neighbor's Kid",
       "Nanny-Matching AI",
@@ -285,9 +316,11 @@ export const NEED_CATALOG: NeedOption[] = [
   {
     id: "school-supplies-for-the-new-year",
     label: "School Supplies for the New Year",
-    userPlaceholder: "Parent",
-    capabilityPlaceholders: ["Supply List", "Retail Store", "Backpack"],
-    moreCapabilityOptions: [
+    user: "Parent",
+    capabilityOptions: [
+      "Supply List",
+      "Retail Store",
+      "Backpack",
       "Replicator-Printed Supply Kit",
       "Parent Swap Meet",
       "Smart Backpack Tracker",
