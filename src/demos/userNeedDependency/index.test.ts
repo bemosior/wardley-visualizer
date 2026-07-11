@@ -16,18 +16,7 @@ function drag(handle: Element, to: { x: number; y: number }): void {
   handle.dispatchEvent(new PointerEvent("pointerup", { clientX: to.x, clientY: to.y, pointerId: 1 }));
 }
 
-/** happy-dom doesn't implement HTMLFormElement.requestSubmit; dispatch the event it relies on directly */
-function submitForm(mascotHost: HTMLElement): void {
-  mascotHost.querySelector("form")!.dispatchEvent(new Event("submit", { cancelable: true }));
-}
-
-function submitText(mascotHost: HTMLElement, value: string): void {
-  const input = mascotHost.querySelector<HTMLInputElement>(".wd-panel-form-input")!;
-  input.value = value;
-  submitForm(mascotHost);
-}
-
-/** clicks a `type: "choice"` field's pill option matching `label` exactly (User/Need in Phase 10 -- no text input to type into, see panel.ts) */
+/** clicks a `type: "choice"` field's pill option matching `label` exactly (every Phase 10 field -- no text input to type into, see panel.ts) */
 function chooseOption(mascotHost: HTMLElement, label: string): void {
   const chip = Array.from(mascotHost.querySelectorAll<HTMLButtonElement>(".wd-panel-form-example")).find(
     (button) => button.textContent === label,
@@ -178,20 +167,20 @@ describe("runValueChainScenario", () => {
     await flush();
     expect(canvas.querySelector('[data-node-id="need"] .wd-node-label')!.textContent).toBe(need.label);
 
-    submitText(mascotHost, "A kettle");
+    chooseOption(mascotHost, "Kettle");
     await flush();
-    expect(canvas.querySelector('[data-node-id="dependency-1"] .wd-node-label')!.textContent).toBe("A kettle");
+    expect(canvas.querySelector('[data-node-id="dependency-1"] .wd-node-label')!.textContent).toBe("Kettle");
 
-    submitText(mascotHost, "Water");
+    chooseOption(mascotHost, "Water");
     await flush();
     expect(canvas.querySelector('[data-node-id="dependency-2"] .wd-node-label')!.textContent).toBe("Water");
 
-    submitText(mascotHost, "Electricity");
+    chooseOption(mascotHost, "Electricity");
     await flush();
     expect(canvas.querySelector('[data-node-id="dependency-3"] .wd-node-label')!.textContent).toBe("Electricity");
   });
 
-  it("shows a generic placeholder and example pills matching the selected need, not a different need's example", async () => {
+  it("shows capability pills matching the selected need, not a different need's example, with no free-text input", async () => {
     const { canvas, mascotHost } = buildScenario(vi.fn());
     await completeDragStep(canvas, mascotHost);
 
@@ -203,14 +192,14 @@ describe("runValueChainScenario", () => {
     await flush();
 
     for (let i = 0; i < 3; i++) {
-      expect(mascotHost.querySelector<HTMLInputElement>(".wd-panel-form-input")!.placeholder).toBe("Write your own");
-      const exampleLabels = Array.from(mascotHost.querySelectorAll(".wd-panel-form-example")).map(
+      expect(mascotHost.querySelector(".wd-panel-form-input")).toBeNull();
+      const pillLabels = Array.from(mascotHost.querySelectorAll(".wd-panel-form-example")).map(
         (chip) => chip.textContent,
       );
-      for (const label of exampleLabels) {
+      for (const label of pillLabels) {
         expect(grocery.capabilityOptions).toContain(label);
       }
-      submitText(mascotHost, "answer");
+      chooseOption(mascotHost, pillLabels[0]!);
       await flush();
     }
   });
@@ -225,13 +214,13 @@ describe("runValueChainScenario", () => {
     await flush();
     chooseOption(mascotHost, NEED_CATALOG[0].label);
     await flush();
-    submitText(mascotHost, "A kettle");
+    chooseOption(mascotHost, "Kettle");
     await flush();
-    submitText(mascotHost, "Water");
+    chooseOption(mascotHost, "Water");
     await flush();
     expect(onCelebrate).not.toHaveBeenCalled();
 
-    submitText(mascotHost, "Electricity");
+    chooseOption(mascotHost, "Electricity");
     await flush();
 
     expect(mascotHost.querySelector(".wd-panel-content")).not.toBeNull();
@@ -252,11 +241,11 @@ describe("runValueChainScenario", () => {
     await flush();
     chooseOption(mascotHost, NEED_CATALOG[0].label);
     await flush();
-    submitText(mascotHost, "A kettle");
+    chooseOption(mascotHost, "Kettle");
     await flush();
-    submitText(mascotHost, "Water");
+    chooseOption(mascotHost, "Water");
     await flush();
-    submitText(mascotHost, "Electricity");
+    chooseOption(mascotHost, "Electricity");
     await flush();
 
     expect(mascotHost.querySelector(".wd-next-link")).not.toBeNull();
@@ -304,11 +293,11 @@ describe("runValueChainScenario", () => {
     await flush();
     chooseOption(mascotHost, need.label);
     await flush();
-    submitText(mascotHost, "A kettle");
+    chooseOption(mascotHost, "Kettle");
     await flush();
-    submitText(mascotHost, "Water");
+    chooseOption(mascotHost, "Water");
     await flush();
-    submitText(mascotHost, "Electricity");
+    chooseOption(mascotHost, "Electricity");
     await flush();
 
     clickNext(mascotHost);
@@ -328,11 +317,11 @@ describe("runValueChainScenario", () => {
     await flush();
     chooseOption(mascotHost, NEED_CATALOG[0].label);
     await flush();
-    submitText(mascotHost, "A kettle");
+    chooseOption(mascotHost, "Kettle");
     await flush();
-    submitText(mascotHost, "Water");
+    chooseOption(mascotHost, "Water");
     await flush();
-    submitText(mascotHost, "Electricity");
+    chooseOption(mascotHost, "Electricity");
     await flush();
     clickNext(mascotHost);
     await flush();
@@ -388,7 +377,7 @@ describe("runValueChainScenario", () => {
     // the scenario doesn't resolve yet — Capability-1/2/3 still have to go through
     // the same drag-confirm pattern before the whole thing is done
     expect(resolved).toBe(false);
-    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Is A kettle in Genesis?");
+    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Is Kettle in Genesis?");
     vi.useRealTimers();
   });
 
@@ -418,7 +407,7 @@ describe("runValueChainScenario", () => {
     await reachEvolutionStep(canvas, mascotHost);
     await confirmEvolutionStep(canvas, mascotHost, "need", 150, 76);
 
-    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Is A kettle in Genesis?");
+    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Is Kettle in Genesis?");
     expect(canvas.querySelector('[data-node-id="dependency-1"]')!.getAttribute("transform")).toMatch(
       /^translate\(50,/,
     );
@@ -454,7 +443,7 @@ describe("runValueChainScenario", () => {
 
     expect(resolved).toBe(false);
     expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(
-      gatePrompt("right-methods", "A kettle"),
+      gatePrompt("right-methods", "Kettle"),
     );
     expect(mascotHost.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe(
       "Choosing is how you learn!",
@@ -509,7 +498,7 @@ describe("runValueChainScenario", () => {
       "Choosing is how you learn!",
     );
     expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(
-      gatePrompt("right-methods", "A kettle"),
+      gatePrompt("right-methods", "Kettle"),
     );
     expect(optionLabels(mascotHost)).toEqual(["Yes", "No", "Try something else"]);
 
@@ -517,7 +506,7 @@ describe("runValueChainScenario", () => {
     await flush();
 
     expect(mascotHost.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe("Keep going!");
-    // No drops every remaining "right-methods" candidate, not just A kettle, so this lands on
+    // No drops every remaining "right-methods" candidate, not just Kettle, so this lands on
     // the next concept in the bank ("organizational inertia"), opening on Need
     expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(
       gatePrompt("inertia", NEED_CATALOG[0].label),
@@ -536,7 +525,7 @@ describe("runValueChainScenario", () => {
     clickYes(mascotHost);
     await flush();
 
-    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("A kettle");
+    expect(mascotHost.querySelector(".wd-panel-placeholder-heading")!.textContent).toBe("Kettle");
     expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(METHOD_QUESTION.prompt);
 
     clickOption(mascotHost, 2); // "No, we're using the wrong methods for this stage.", annotation "Danger: Wrong Methods"
@@ -688,7 +677,7 @@ describe("runValueChainScenario", () => {
     const findingsHeading = mascotHost.querySelector(".wd-panel-findings")!.querySelector(".wd-panel-placeholder-heading");
     expect(findingsHeading!.textContent).toBe("Here's what you found, and you're barely scratching the surface!");
     const items = Array.from(mascotHost.querySelectorAll(".wd-panel-findings-list li")).map((li) => li.textContent);
-    expect(items).toEqual(["Using the Right Methods at A kettle"]);
+    expect(items).toEqual(["Using the Right Methods at Kettle"]);
 
     const finalLink = mascotHost.querySelector<HTMLButtonElement>(".wd-next-link")!;
     expect(finalLink.textContent).toBe("What's next →");
@@ -697,21 +686,5 @@ describe("runValueChainScenario", () => {
 
     expect(resolved).toBe(true);
     vi.useRealTimers();
-  });
-
-  it("does not advance on a whitespace-only capability answer", async () => {
-    const { canvas, mascotHost } = buildScenario(vi.fn());
-    await completeDragStep(canvas, mascotHost);
-    chooseOption(mascotHost, "Commuter");
-    await flush();
-    chooseOption(mascotHost, NEED_CATALOG[0].label);
-    await flush();
-
-    submitText(mascotHost, "   ");
-    await flush();
-
-    expect(mascotHost.querySelector(".wd-panel-form-prompt")!.textContent).toBe(
-      `What's something they depend on to get their "${NEED_CATALOG[0].label}" need met? \r\n(1 of 3)`,
-    );
   });
 });

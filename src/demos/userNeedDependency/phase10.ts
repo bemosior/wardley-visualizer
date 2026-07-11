@@ -87,10 +87,9 @@ export async function runPhase10(ctx: ScenarioContext): Promise<void> {
       (label) => !usedCapabilityLabels.has(label.toLowerCase()),
     );
     const capabilityLabel = await mascot.showField({
-      type: "text",
+      type: "choice",
       prompt: `What's something ${i > 0 ? "else " : ""}they depend on to get their "${needLabel}" need met? \r\n(${i + 1} of ${capabilityCount})`,
-      placeholder: "Write your own",
-      examples: remainingCapabilities,
+      options: remainingCapabilities,
     });
     usedCapabilityLabels.add(capabilityLabel.trim().toLowerCase());
     ctx.chain = relabelCapability(ctx.chain, capability.id, capabilityLabel);
