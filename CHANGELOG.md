@@ -3,7 +3,22 @@
 Historical record of completed work, pulled out of [TODO.md](TODO.md) to keep
 that file focused on what's still open. Newest first.
 
-## 2026-07-11 — Mascot bubble no longer covers the map
+## 2026-07-11 — v0.2 feedback response
+
+### Capability fields: pill-only, matching User/Need
+
+`feedback/v0.2/tristanslominski.txt`: glad he no longer has to type a component name, wants the
+precreated pills to be the primary interaction with the type-your-own box removed or de-emphasized.
+`phase10.ts`'s three capability sub-questions switched from `type: "text"` (a "Write your own" input
+plus example chips) to `type: "choice"` (`remainingCapabilities` as `options`, no input at all) —
+the same field shape the 2026-07-10 change already gave User/Need (see that entry's "pill-only, no
+free text" below). Safe because every need in `needCatalog.ts` carries 10 `capabilityOptions` and a
+chain only ever asks for 3, so there's always enough pills to fill the form without a free-text
+escape hatch. `src/dev/autopilot.ts`'s `fillAndSubmit` needed no change — it already branched on
+whether a field renders a `.wd-panel-form-input` at all, added generically in the 2026-07-10 change
+for the User/Need fields.
+
+### Mascot bubble no longer covers the map
 
 Response to `feedback/v0.2/tristanslominski.txt`'s core complaint: the mascot's dialog covered the
 value chain/map while a question was on screen. Rather than another anchor-position tweak (the

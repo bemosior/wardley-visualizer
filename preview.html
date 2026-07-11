@@ -81,6 +81,66 @@
         font-size: 0.75rem;
         margin-left: 0.35rem;
       }
+
+      /* draft: end credits, scrolling like a game/Patreon-video outro.
+         Hidden until the mascot's closing "Nice work!" recap fires (onComplete). */
+      .credits {
+        display: none;
+        background: #111;
+        color: #eee;
+        padding: 2.5rem 1.5rem;
+        text-align: center;
+      }
+      .credits.is-visible {
+        display: block;
+        animation: credits-fade-in 0.6s ease;
+      }
+      @keyframes credits-fade-in {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      .credits-heading {
+        font-family: var(--font-ui);
+        font-size: 0.85rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #999;
+        margin: 0 0 1.25rem;
+      }
+      .credits-scroll {
+        height: 180px;
+        overflow: hidden;
+        position: relative;
+        mask-image: linear-gradient(to bottom, transparent, #000 15%, #000 85%, transparent);
+        -webkit-mask-image: linear-gradient(to bottom, transparent, #000 15%, #000 85%, transparent);
+      }
+      .credits-scroll ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        animation: credits-scroll-up 14s linear infinite;
+      }
+      .credits-scroll li {
+        font-family: var(--font-ui);
+        font-size: 1.05rem;
+        padding: 0.4rem 0;
+      }
+      @keyframes credits-scroll-up {
+        from {
+          transform: translateY(0);
+        }
+        to {
+          transform: translateY(-100%);
+        }
+      }
     </style>
   </head>
   <body>
@@ -109,6 +169,24 @@
             <div id="mascot-dialog-host-a" class="wd-mascot-dialog-host"></div>
           </div>
         </div>
+      </div>
+    </section>
+
+    <section class="credits">
+      <p class="credits-heading">Thank you to everyone who gave feedback</p>
+      <div class="credits-scroll">
+        <ul>
+          <li>James Fairbairn</li>
+          <li>Joel Tosi</li>
+          <li>Josh Kruszynski</li>
+          <li>Michael Lindqvist</li>
+          <li>Pablo Gil</li>
+          <li>Rian Porter</li>
+          <li>Tom Geraghty</li>
+          <li>Velocirachael</li>
+          <li>Henk Oudman</li>
+          <li>Tristan Slominski</li>
+        </ul>
       </div>
     </section>
 
@@ -142,6 +220,10 @@
         dialogHost: dialogHost,
         onMount: autopilot && autopilot.onMount,
         onEvolutionStep: autopilot && autopilot.onEvolutionStep,
+        // Reveal the end credits only once the mascot's closing "Nice work!" recap fires.
+        onComplete: function () {
+          document.querySelector(".credits").classList.add("is-visible");
+        },
         config: {
           viewBox: { width: 400, height: 520 },
           snapThreshold: 30,

@@ -107,20 +107,6 @@ Open/deferred items only — completed items from this batch are in
       side of this tension, not something playtesters asked for by name — not
       resolved here, just flagged since it's now more load-bearing than before.
 
-## Feedback-driven TODOs (from `feedback/v0.2`, 2026-07-11)
-
-Open items only. See `feedback/v0.2/tristanslominski.txt` for full reviewer context.
-
-- [ ] **Make capability entry pill-first, de-emphasize free typing.** `tristanslominski.txt`:
-      glad he no longer has to type a component name and instead chooses from precreated ones —
-      wants the precreated pills to be the primary interaction, with the type-your-own box removed
-      or de-emphasized. User/Need fields already went pill-only in the 2026-07-10 change (`type:
-      "choice"`, no free text — see CHANGELOG.md's "User/Need fields: pill-only" entry), but
-      Capability fields (`phase10.ts:89-94`) are still `type: "text"`, rendering a "Write your own"
-      input alongside the example pills. Worth deciding whether to switch Capabilities to `type:
-      "choice"`-only (dropping free text entirely, matching User/Need) or keep a free-text escape
-      hatch but make it visually secondary to the pills.
-
 ## Next: reusable foundation for ~150 embeddable exercises (planned 2026-07-11, not yet built)
 
 The course needs up to ~150 situation-specific Wardley Mapping exercises, each
