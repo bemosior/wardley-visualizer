@@ -118,8 +118,8 @@ export const ALLIANCES_QUESTION: Question = {
   id: "alliances",
   prompt: "Do we have any potential friends in this space with whom we could collaborate?",
   options: [
-    { id: "yes-begin", label: "Not yet — we'd need to start building them.", annotation: "Alliances: Begin" },
-    { id: "yes-maintain", label: "Yes — we should deepen them.", annotation: "Alliances: Maintain / Deepen" },
+    { id: "yes-begin", label: "Not yet — we'd need to start making some.", annotation: "Alliances: Begin" },
+    { id: "yes-maintain", label: "Yes — we should deepen our relationships.", annotation: "Alliances: Maintain / Deepen" },
     { id: "no", label: "No. We're truly alone", annotation: "Alliances: None" },
     { id: "unknown", label: "Unknown — not sure.", annotation: "Alliances: Unknown!" },
   ],
