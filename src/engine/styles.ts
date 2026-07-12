@@ -699,6 +699,17 @@ const CSS = `
   margin-top: 0.75rem;
 }
 
+/* short (<=3 word) option sets -- e.g. a gate's Yes/No/Try something else -- lay out in a row
+   instead of a stacked column, since a column of one-word buttons wastes vertical space. */
+.wd-panel-question-options--horizontal {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.wd-panel-question-options--horizontal .wd-panel-question-option {
+  text-align: center;
+}
+
 .wd-panel-question-option {
   font-family: var(--wd-font-ui);
   font-size: 0.8rem;

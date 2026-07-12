@@ -399,12 +399,15 @@ export class Panel {
   }
 
   /**
-   * renders `prompt` + `subtitle`, then one button per `option` (plain string ids, unlike
-   * `showQuestion`'s `QuestionOption`+`annotation` — a gate's Yes/No/shuffle/Done choices don't
-   * carry a map annotation of their own); resolves with the chosen option's `id` once clicked.
-   * Used by Phase 30 to ask "Could exploring {concept} with {node} teach us something?" before
-   * committing to a concept's deep-dive `showQuestion`. `emphasize`, if given, is the list of
-   * node/concept names to highlight via `renderWithEmphasis` wherever they appear in `prompt`.
+   * renders `prompt` + optional `subtitle` (omitted entirely when blank, so it costs no vertical
+   * space), then one button per `option` (plain string ids, unlike `showQuestion`'s
+   * `QuestionOption`+`annotation` — a gate's Yes/No/shuffle/Done choices don't carry a map
+   * annotation of their own); resolves with the chosen option's `id` once clicked. Used by Phase
+   * 30 to ask "Want to explore this with {node}?" before committing to a concept's deep-dive
+   * `showQuestion`. `emphasize`, if given, is the list of node/concept names to highlight via
+   * `renderWithEmphasis` wherever they appear in `prompt`. When every option label is three words
+   * or fewer (true of all current gate button sets), the options lay out horizontally instead of
+   * stacked, since a column of one-word buttons wastes vertical space.
    */
   showGate(prompt: string, subtitle: string, options: GateOption[], emphasize: string[] = []): Promise<string> {
     this.clear();
@@ -417,13 +420,18 @@ export class Panel {
       renderWithEmphasis(promptEl, prompt, emphasize);
       content.appendChild(promptEl);
 
-      const subtitleEl = document.createElement("div");
-      subtitleEl.classList.add("wd-panel-placeholder-subheading");
-      subtitleEl.textContent = subtitle;
-      content.appendChild(subtitleEl);
+      if (subtitle) {
+        const subtitleEl = document.createElement("div");
+        subtitleEl.classList.add("wd-panel-placeholder-subheading");
+        subtitleEl.textContent = subtitle;
+        content.appendChild(subtitleEl);
+      }
 
       const optionList = document.createElement("div");
       optionList.classList.add("wd-panel-question-options");
+      if (options.every((option) => option.label.trim().split(/\s+/).length <= 3)) {
+        optionList.classList.add("wd-panel-question-options--horizontal");
+      }
       for (const option of options) {
         const button = document.createElement("button");
         button.type = "button";
