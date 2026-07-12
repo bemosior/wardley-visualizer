@@ -111,7 +111,7 @@ describe("runValueChainScenario", () => {
       false,
     );
     expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe(
-      "Oh cool! I see you just made a Value Chain — a recipe for delivering value.",
+      "Oh cool! You made a Value Chain!",
     );
     const gateLink = mascotHost.querySelector<HTMLButtonElement>(".wd-next-link");
     expect(gateLink).not.toBeNull();
