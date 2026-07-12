@@ -127,7 +127,7 @@ describe("runValueChainScenario", () => {
     await flush();
 
     expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe(
-      "A value chain! It's a recipe for delivering value.",
+      "Yes! A value chain is a recipe for delivering value.",
     );
 
     clickNext(mascotHost);
