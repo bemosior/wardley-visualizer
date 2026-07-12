@@ -597,9 +597,12 @@ const CSS = `
   display: inline-block;
   align-self: flex-start;
   width: auto;
-  padding: 0.3rem 0.7rem;
-  font-size: 0.8rem;
-  line-height: 1.2rem;
+  /* shrunk from 0.3rem 0.7rem/0.8rem/1.2rem -- inside .wd-mascot-caption's flex row, this
+     button's own height counts toward the caption's total, and every bit of it matters for
+     pickMascotPlacement's vertical-overflow check (see that rule's own comment). */
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+  line-height: 1.1rem;
 }
 
 .wd-panel-placeholder .wd-next-link {
@@ -918,7 +921,23 @@ const CSS = `
      .wd-mascot flex row used to hit (see git history). width: max-content forces it to prefer its
      natural (unwrapped) content width instead, still capped by max-width below. */
   width: max-content;
-  max-width: 200px;
+  /* widened from 200px -- at a host's real type scale (e.g. lwm-html's 18px root, vs. this repo's
+     own dev preview defaulting to the browser's 16px until it was synced to match) the longer
+     narrative beats (e.g. Phase 5's "This is a Capability...") wrapped to a 3rd line, and for a
+     node sitting close to the bottom of its viewBox (Phase 5's single-Capability anchor) that extra
+     line was enough to clip past the map's bottom edge and flip pickMascotPlacement's choice from
+     East to Northeast. A short-term mitigation, not a fix for the general case -- see TODO.md's
+     automatic-vertical-layout item for the real fix (guaranteeing headroom for a multi-line caption
+     next to whatever node ends up lowest, instead of tuning around today's fixed layout). */
+  max-width: 230px;
+  /* a host page that resets every element to border-box sizing (e.g. lwm-html) would otherwise
+     shrink this caption's actual text area by its own border+padding, wrapping to more/taller
+     lines than a host without that reset -- which changes measureCaption()'s result and can flip
+     pickMascotPlacement's chosen direction (confirmed: East on a content-box host, Northeast on a
+     border-box one, for the same anchor/message). Pin it explicitly so the caption measures the
+     same regardless of the host's own reset, matching .wd-next-link/.wd-mascot-dialog's own
+     defensive box-sizing below. */
+  box-sizing: border-box;
   background: #fff;
   border: 1px solid var(--wd-color-border);
   border-radius: 10px;

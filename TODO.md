@@ -201,6 +201,31 @@ proof.
     composing the two functions above rather than a bespoke multi-shape
     algorithm.
 
+- [ ] **Phase 3b — Guarantee mascot headroom in every layout.** Found
+  2026-07-12: Phase 5's single-Capability anchor sits close to the bottom of
+  its authored viewBox (y=468 of a 520-tall box), so its mascot caption
+  (`pickMascotPlacement`, `src/engine/mascotPlacement.ts`) has very little
+  vertical room to work with. A real host's type scale can push a long
+  caption to wrap one more line than expected and clip past the map's bottom
+  edge, flipping the mascot from its usual East placement to Northeast —
+  confirmed happening on the live `lwm-html` embed (`html { font-size: 18px
+  }` there vs. the browser's 16px default, which `preview.html` didn't
+  override until this session) but not in local dev, since `preview.html`
+  was silently under-simulating the host's real font metrics. Short-term
+  mitigation landed this session (`src/engine/styles.ts`: widened
+  `.wd-mascot-caption`'s `max-width` 200px→230px, shrunk
+  `.wd-next-link--compact`'s padding/font-size; `preview.html`: added
+  `html { font-size: 18px }` so this class of bug is visible locally going
+  forward) — enough headroom for today's one scenario, not a general
+  guarantee. The real fix belongs in the layout family (Phase 3 above):
+  whatever function computes a `DemoConfig`'s node positions/viewBox height
+  should reserve enough margin — on whichever edge ends up nearest a node —
+  that *any* node can host a mascot caption up to 3 lines without the
+  caption ever needing to spill past the map bounds. Treat "room for a
+  mascot caption beside the lowest (or otherwise most-boxed-in) node" as a
+  real layout constraint the layout functions guarantee, not something
+  tuned per-scenario after the fact once a host's real fonts expose the gap.
+
 - [ ] **Phase 4 — Exercise runner (the core reusability layer).** Reject a
   rigid "array of steps piped through an interpreter" — it would either
   force awkward data-threading (Phase 10's form answers feed Phase 20's
