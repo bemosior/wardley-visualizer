@@ -107,7 +107,9 @@ export class Panel {
   constructor(container: HTMLElement) {
     injectStylesOnce();
     this.container = container;
-    this.container.classList.add("wd-panel");
+    // starts empty (no content has been rendered yet) -- every other showX method's clear() call
+    // below removes this the moment it renders real content; showEmpty() re-adds it.
+    this.container.classList.add("wd-panel", "wd-panel--empty");
   }
 
   /**
@@ -277,9 +279,10 @@ export class Panel {
     });
   }
 
-  /** clears the panel down to an empty `.wd-panel-content` placeholder */
+  /** clears the panel down to an empty `.wd-panel-content` placeholder, hiding the dialog box itself (`wd-panel--empty`, see styles.ts) since it has nothing to show */
   showEmpty(): void {
     this.clear();
+    this.container.classList.add("wd-panel--empty");
     const content = document.createElement("div");
     content.classList.add("wd-panel-content");
     this.container.appendChild(content);
@@ -548,5 +551,6 @@ export class Panel {
   clear(): void {
     this.container.innerHTML = "";
     this.instrumentKind = null;
+    this.container.classList.remove("wd-panel--empty");
   }
 }
