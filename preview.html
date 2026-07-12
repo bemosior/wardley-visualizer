@@ -160,7 +160,10 @@
           transform: translateY(0);
         }
         to {
-          transform: translateY(-100%);
+          /* -100% only clears the list's own height, leaving the last name resting at the
+             viewport's bottom edge forever. Also subtract .credits-scroll's height (100px)
+             so the list keeps rising until the last name is fully off-screen above it. */
+          transform: translateY(calc(-100% - 100px));
         }
       }
     </style>
