@@ -1,5 +1,6 @@
 import { EVOLUTION_STAGES, type EvolutionStage } from "../domain/evolution";
 import type { DemoConnection, DemoNode } from "./types";
+import type { Point } from "./animate";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 export const NODE_RADIUS = 48;
@@ -461,13 +462,15 @@ function findOpenTier(x: number, width: number, placed: AnnotationRect[]): numbe
  * by a previous call (for this or other nodes) — used to pick the lowest tier (vertical stacking
  * level, closest-to-node first) whose horizontal extent doesn't collide with an existing callout,
  * since two nodes can end up confirmed at very close x-positions on the evolution axis. Caller
- * appends the returned element and accumulates the returned rect for future calls.
+ * appends the returned element and accumulates the returned rect for future calls. `position` is
+ * the callout's own viewBox-space center (not the node's), so a caller (e.g. the mascot) can
+ * re-anchor onto the callout itself rather than the node it's attached to.
  */
 export function createAnnotation(
   node: DemoNode,
   text: string,
   placed: AnnotationRect[],
-): { element: SVGGElement; rect: AnnotationRect } {
+): { element: SVGGElement; rect: AnnotationRect; position: Point } {
   const width = estimateAnnotationWidth(text);
   const tier = findOpenTier(node.x, width, placed);
   const centerY = annotationCenterY(node.y, tier);
@@ -499,7 +502,11 @@ export function createAnnotation(
   label.setAttribute("y", String(centerY));
   g.appendChild(label);
 
-  return { element: g, rect: { xMin: node.x - width / 2, xMax: node.x + width / 2, tier } };
+  return {
+    element: g,
+    rect: { xMin: node.x - width / 2, xMax: node.x + width / 2, tier },
+    position: { x: node.x, y: centerY },
+  };
 }
 
 export function createConnectionLine(

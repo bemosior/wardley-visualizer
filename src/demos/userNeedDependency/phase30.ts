@@ -43,9 +43,11 @@ const samePairing = (a: Pairing, b: Pairing): boolean =>
  *
  * Yes leads into that concept's fixed deep-dive multiple-choice question (`Mascot.showQuestion`,
  * unchanged). If the chosen answer carries an `annotation`, it's anchored permanently near that
- * node via `demo.addAnnotation`, pushed onto `findings`, and the mascot immediately pauses on a
- * "Nice insight!" gate (Keep Going / Finish Up) — only insight-producing answers interrupt the
- * flow; an answer with no annotation falls straight through to the next pairing. "Finish Up" ends
+ * node via `demo.addAnnotation` (which hands back the callout's own viewBox position), pushed onto
+ * `findings`, and the mascot re-anchors onto that callout (`moveToViewBoxPoint`) to say "Made a
+ * note of it here." before pausing on a "Nice insight!" gate (Keep Going / Finish Up) — only
+ * insight-producing answers interrupt the flow that way. An answer with no annotation instead gets
+ * a quick "Nothing to note. Got it." aside before falling through to the next pairing. "Finish Up" ends
  * the phase right there, same as naturally exhausting the bank. Shuffle abandons only the current
  * pairing and jumps to a uniformly random other still-unresolved pairing anywhere in the bank,
  * which may land back on the same concept with a different node.
@@ -90,8 +92,12 @@ export async function runPhase30(ctx: ScenarioContext): Promise<void> {
       const answer = await mascot.showQuestion(current.node.label, current.concept.question);
       remaining = remaining.filter((p) => p.concept.id !== current!.concept.id);
       if (answer.annotation) {
-        demo.addAnnotation(current.node.id, answer.annotation);
+        const notePos = demo.addAnnotation(current.node.id, answer.annotation);
         findings.push({ concept: current.concept.label, node: current.node.label, text: answer.annotation });
+
+        mascot.moveToViewBoxPoint(notePos.x, notePos.y);
+        mascot.say("Made a note of it here.");
+        await mascot.confirmPlacement("Next");
 
         const next = await mascot.showGate(
           "Nice insight!\n\nThis sort of thing might factor into your strategy.",
@@ -102,6 +108,9 @@ export async function runPhase30(ctx: ScenarioContext): Promise<void> {
           ],
         );
         if (next === "finishUp") break;
+      } else {
+        mascot.say("Nothing to note. Got it.");
+        await mascot.confirmPlacement("Next");
       }
       current = remaining[0];
       continue;
