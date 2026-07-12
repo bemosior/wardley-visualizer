@@ -3,6 +3,172 @@
 Historical record of completed work, pulled out of [TODO.md](TODO.md) to keep
 that file focused on what's still open. Newest first.
 
+## 2026-07-12 — v0.3 mascot placement & dialog polish
+
+Not driven by a `feedback/` batch — no `feedback/v0.3/` directory exists. This was a run of
+iterative product decisions (Ben's own, plus a couple of "found it while building the last thing"
+fixes) tightening the mascot placement/dialog system the v0.2 architecture change introduced, plus
+a smaller Phase 30 gate-flow cleanup.
+
+### Obstacle-aware mascot placement search
+
+`Mascot.reposition()`'s old logic only kept the avatar clear of the single node it was anchored to
+(below it, or above if there was no room) — it could still land on top of a sibling node or run
+straight across a connection line, with no signal for which node it was even pointing at. Replaced
+with `pickMascotPlacement` (new `src/engine/mascotPlacement.ts`, commit `c8d1b1f`): scores all 8
+compass directions (`DIRECTION_PRIORITY`) around the anchor, crossed with both caption sides, against
+a `MascotObstacles` snapshot (`WardleyDemo.getObstacles()`: every node circle, connection segment,
+and — added same day in `978bd52` — evolution-stage label chip, sourced from the rendered
+`.wd-backdrop-label-chip` rects via a new `getStageLabelRects()`). Scoring is tiered, each tier
+dominating the next (`HARD_CONSTRAINT_WEIGHT` = 1,000,000 vs. `EDGE_HIT_WEIGHT` = 10,000 vs. raw
+overflow-px vs. a `TIE_BREAK_STEP` nudge for `DIRECTION_PRIORITY` order): never overlap a node or a
+stage-label chip, never let the avatar land outside the map bounds at all, never let more than
+`CAPTION_OFF_MAP_BUDGET` (25%, `71ef193`) of the caption's own width spill past the map's left/right
+edges — that whole tier beats "avoid crossing an edge" (soft — crossed only if every direction does),
+which beats "prefer less overflow," which beats "prefer natural reading order" (below > above >
+beside > diagonal). New `src/engine/geometry.ts` holds the pure, independently-tested geometry
+primitives this needs (`rectIntersectsCircle`, `rectIntersectsSegment`, `rectsIntersect`,
+`rectOverflow`, `horizontalOverflow`, `inflateRect`) — none of them touch the DOM, so the whole search
+is unit-testable without mocking `getBoundingClientRect`. `c8d1b1f` also fixed a latent
+floating-point bug this surfaced: a cardinal candidate sits exactly tangent to its own anchor's
+inflated collision circle, which rounding could flip into a spurious self-collision (reproduced in
+Phase 20, pushing the avatar half off-canvas) — fixed with a 1px `SELF_CLEARANCE_EPSILON`.
+
+Deleted entirely as part of this: the old anchor-only `reposition()` fallback logic that this
+replaced (`MascotPlacement`'s `"auto"`/`"northeast"`/`"pinned"` vocabulary was already gone as of
+v0.2 — this finishes the job by replacing what v0.2 left as a simple below/above check).
+
+### Keeping the mascot out of the horizontal evolution-drag row
+
+`8a06033`: Phase 20's evolution-axis drag moves a node purely horizontally across the whole map, but
+`pickMascotPlacement` often chose a spot directly beside the node (E/W, the only direction clear of
+nearby edges) — since the search only ever sees a snapshot, it can't know the node is about to slide
+straight through that exact spot. Added `NON_ROW_DIRECTIONS` (`DIRECTION_PRIORITY` minus E/W) and a
+new `directions` parameter on `pickMascotPlacement`/`Mascot.moveTo` so `phase20.ts`'s Need/Capability
+evolution anchors restrict the search to above/below/diagonal only. `Mascot` tracks the restriction as
+`lastDirections` so it survives the window-resize re-anchor path (`trackAnchor`) without falling back
+to the full 8-direction default and silently dropping the row restriction mid-drag.
+
+### More dramatic mascot first-entrance flourish
+
+`28f20bb`: `Mascot.arrive()`'s pop-in (played once, right after Phase 0's Need snaps into place) now
+overshoots past scale 1 with a slight rotation wobble instead of a flat fade/scale-up (`0.35s` →
+`0.48s` keyframe; `ARRIVE_DURATION_MS` bumped `1000` → `1100` to cover the longer tail), and spawns a
+firework burst — the same `createFireworkShells` already used for node-snap/evolution-confirm
+celebrations — at wherever the avatar actually landed, via a new `lastAvatarCenter` field set every
+`reposition()` call and a `ARRIVE_FIREWORK_DELAY_MS` (260ms) timed to the pop-in's ~55% overshoot
+peak rather than its first frame. `FIREWORK_CLEANUP_MS` moved to `render.ts` (exported alongside
+`createFireworkShells`) to avoid duplicating it between `WardleyDemo.ts` and `mascot.ts`. Still fully
+skipped (no transition, no firework, straight to idle) under `prefersReducedMotion()`.
+
+### Phase 5 "recipe" beat: reordering and relabel timing
+
+Three related fixes to how Phase 5 introduces the Capability row, landed as a small cluster of
+same-evening commits:
+
+- `b69f818`: the "a Value Chain is like a recipe" line used to play *after* the three Capability
+  nodes were already relabeled to Part A/B/C, with the mascot anchored directly at the rightmost
+  node. Reordered so the "it takes multiple parts" idea lands before the parts are named, and moved
+  the mascot into open canvas whitespace to the right of the whole chain for that beat (the same
+  node-independent `moveToViewBoxPoint` technique Phase 7 already uses to step back for its own
+  introduction).
+- `32a0bd7`: the row-expansion (single Capability node → three) was happening before either recipe
+  caption played, so a host config that starts with just one Capability (`index.html`/`preview.html`)
+  already showed all three nodes by the time the mascot said the first line. Reordered so the row
+  only grows to three — fading the missing two in — right as the *second* caption explains why; the
+  mascot's whitespace anchor is now computed from the row's eventual final positions up front so it
+  doesn't have to jump again once the row fills in.
+- `4e6b05f`: the three Capability nodes stayed under their generic placeholder label through the
+  row-growing step and only picked up "Part A"/"Part B"/"Part C" on the *next* beat, so a
+  newly-added node briefly showed the wrong label before catching up. Relabel now happens at the
+  same moment the row grows to three — already-rendered nodes relabel directly, and still-missing
+  ones get their final Part label baked into `addNode` itself so they fade in already named.
+- `9adc7c9`: separately, Phase 7's "I'm Ben, by the way" caption used to linger beside the mascot
+  during its post-confirm celebration bounce. Added `Mascot.hideCaption()` (clears the caption text
+  and adds `.wd-mascot-caption--hidden`, opacity+`pointer-events: none`), called right after the
+  "Nice to meet you!" click; reverses automatically the next time `say()` or a panel-hosted method
+  renders new caption content.
+
+Test fixups for this cluster (`19cf379`, `063bcbc`, and stray `422e9d8`/`4f1dbb2`/`563fea9`/
+`95b61ca`/`ca3d160`/`a5afa77` wording tweaks from a parallel branch merge) are folded in here rather
+than listed separately.
+
+### Mascot caption/panel polish
+
+A cluster of smaller UX fixes to the two-surface (caption + dialog panel) mascot architecture v0.2
+introduced:
+
+- `9b334db`: `Mascot.say()` always concatenated its heading+subheading arguments into one flat
+  string with no rendering distinction, so the two-field split was vestigial — collapsed to a single
+  string per caption. `phase5.ts`'s `MASCOT_MULTIPLE_PARTS` becomes two named string constants since
+  it was already delivered as two sequential `say()` beats.
+- `436d342`: `.wd-mascot-caption-text` was inheriting `text-align: center` from
+  `index.html`/`preview.html`'s `.hero` wrapper since the mascot's own styles never set it
+  explicitly — pinned to left-align.
+- `6dfa7c7` then `dac4aab`: every panel-hosted `show*` method (`showField`, `showGate`,
+  `showQuestion`, `showRecap`, `showFindings`, etc.) gained an optional trailing `caption` param,
+  threaded through the private `pointToPanel`, so a phase can override the generic "Take a look
+  below ↓" pointer line. `dac4aab` then flipped the *default* itself to be content-specific per
+  method (drag target, question subject, finding count, etc.) instead of one generic string for
+  every case; `phase10.ts`'s three `showField` calls pass explicit overrides ("Pick a user below.
+  ↓" / "Pick a user need below. ↓" / "Pick a capability below. ↓") since the `"choice"` field type
+  alone doesn't distinguish user/need/capability. `showDragHandles`/`showPlaceholder` were left on
+  the generic default since neither has a live call site.
+- `6655299`: the dialog panel below the canvas rendered as a visible bordered/shadowed strip even
+  with no content (e.g. mid-caption `say()` beats), and its form/choice prompts inherited the same
+  centered `text-align` bug the caption had. Added a `wd-panel--empty` class `Panel` toggles around
+  `clear()`/`showEmpty()`, and pinned `.wd-panel` to `text-align: left`.
+
+### Phase 25: two-beat entrance
+
+`0c67600`: the single "Use the map to think..." caption between Phase 20 and Phase 30 is now two
+beats gated by a "Next" click — `MASCOT_GATHER_TO_THINK` ("Now we gather around the map to think and
+discuss our strategy together.") followed by `MASCOT_SPECIAL_QUESTIONS` ("We use dozens of special
+questions to find gaps and surface new ideas. Want to try?") — giving Phase 25 its own two-step
+entrance rather than a single wall of text.
+
+### Phase 30 gate-flow cleanup
+
+A same-evening run of decisions simplifying the Q&A loop's gate:
+
+- `8ed4073`: dropped the "No" option from the per-pairing gate entirely. It used to drop every
+  remaining candidate node for that concept and jump straight to the next concept in bank order —
+  redundant with "Try something else" (shuffle), which already covers moving on; the gate is now
+  always exactly Yes/"Try something else" (plus "Finish Up" once a finding exists).
+- `1f7d8d3`: shrank the gate panel's vertical footprint — dropped the "Choosing is how you
+  learn!"/"Keep going!" subtitle entirely (`Panel.showGate`'s `subtitle` param, now omitted from the
+  DOM rather than rendered empty when blank), tightened the prompt from `"{definition}\n\nDo you
+  think we could learn something from exploring {concept} with {node}?"` to `"{definition} Want to
+  explore this with {node}?"`, and laid gate buttons out horizontally instead of stacked whenever
+  every option label is three words or fewer (true of every gate today).
+- `db7da71`: added a mascot reaction beat after each deep-dive answer. `WardleyDemo.addAnnotation`
+  now returns the callout's own viewBox position so the mascot can re-anchor onto it
+  (`moveToViewBoxPoint`) before pausing on the "Nice insight!" gate; a blank-annotation answer gets a
+  quick "Nothing to note. Got it." aside instead of falling through silently.
+- `b847923`, then `ee70809`/`13f6efd`/`b1e793d`: the callout-focus move first played as its own
+  `say()` + `confirmPlacement("Next")` beat ahead of the "Nice insight!" gate, requiring an extra
+  click; folded into the gate's own `caption` override instead (`showGate`'s new trailing param, see
+  above) so the note and the Keep Going/Finish Up choice render as one beat. Wording iterated same
+  evening: "Made a note of it here." → "Made a note of it here — take a look below. ↓" → final
+  "Made a note of it here. Keep going, below. ↓"; the gate prompt itself also lost its
+  `\n\n` double-break ("Nice insight!\n\nThis sort of thing..." → "Nice insight! This sort of
+  thing...").
+- `30f82ff`: renamed the "Using the Right Methods" concept (`domain/conceptBank.ts`, id
+  `right-methods`) to "Use Appropriate Methods" — same definition, reworded to match
+  ("...This is called using appropriate methods.").
+
+### Autopilot: fix off-by-one gate count after the recipe-beat merge
+
+`f0bf034`: `src/dev/autopilot.ts`'s `attachAutopilot` hardcodes `plainNextCount` thresholds to tell
+apart Phase 0/5/10's identically-labeled "Next" links from each other — a known recurring class of
+bug, since the thresholds silently drift whenever a phase's gate count changes (see the 2026-07-10
+entry's evolution-intro gate for the same failure mode). Phase 5's recipe explanation dropped from
+two captions/gates to one back in `063bcbc` (above), but the thresholds (`<= 6`/`=== 7`/`=== 8`) were
+never updated, so `skipTo=celebrate` and friends auto-clicked one gate too far, most visibly skipping
+straight past the real Phase 10→20 gate they're supposed to stop at. Rebased down to `<= 5`/`=== 6`/
+`=== 7`, plus a new `=== 8` branch for Phase 25's own internal gate (the two-beat split from
+`0c67600`), which `thinking`/`recap` previously had no way to click through.
+
 ## 2026-07-11 — v0.2 feedback response
 
 ### Capability fields: pill-only, matching User/Need
