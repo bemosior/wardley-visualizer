@@ -34,6 +34,14 @@ const CSS = `
   z-index: 1;
 }
 
+/* pins the panel's own text alignment regardless of whatever text-align a host page sets on an
+   ancestor (e.g. index.html's centered .hero) -- same reasoning as .wd-mascot-caption's own pin
+   below. Individual elements that want to be centered (the recap CTA, a next-link) already set
+   their own explicit text-align: center and win over this via direct styling, not inheritance. */
+.wd-panel {
+  text-align: left;
+}
+
 .wardley-demo-root svg {
   display: block;
   width: 100%;
@@ -950,6 +958,14 @@ const CSS = `
 
 .wd-mascot-dialog--arriving {
   opacity: 0;
+}
+
+/* Panel.showEmpty (and the panel's own never-rendered starting state, see the wd-panel--empty
+   class added in Panel's constructor) collapses the dialog box entirely -- an empty bordered/
+   shadowed strip below the canvas whenever the mascot has nothing to say there (e.g. mid-caption
+   beats via say()) reads as a stray UI glitch, not an intentional empty state. */
+.wd-mascot-dialog.wd-panel--empty {
+  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
