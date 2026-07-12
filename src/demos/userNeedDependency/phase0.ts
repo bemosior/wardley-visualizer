@@ -18,8 +18,8 @@ const seedValueChain = createValueChain({
  * "what's a Value Chain?" payoff (a one-shot "it's a recipe" summary); the User/Need/Capability
  * walkthrough that explains the chain piece-by-piece continues from here in `phase5.ts`. */
 const MASCOT_NEED_PLACED = {
-  heading: "You just made a Value Chain!",
-  subheading: "A value chain is a recipe for delivering value.",
+  heading: "Oh cool!",
+  subheading: "I see you just made a Value Chain — a recipe for delivering value.",
 };
 
 /**
