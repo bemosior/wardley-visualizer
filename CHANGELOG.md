@@ -3,6 +3,23 @@
 Historical record of completed work, pulled out of [TODO.md](TODO.md) to keep
 that file focused on what's still open. Newest first.
 
+## 2026-07-12 — v0.3.2 preview host-CSS fidelity fix
+
+`4b1b381`: the mascot placed itself East of Phase 5's Capability node in local `preview.html` but
+Northeast on the real `lwm-html` embed, for the exact same bundle — `pickMascotPlacement` itself was
+fine, `preview.html` just wasn't faithfully mirroring the production host's CSS. Two gaps: `.wd-mascot-caption`
+never set its own `box-sizing`, so lwm-html's site-wide `border-box` reset shrank the caption's text
+area vs. `preview.html`'s default `content-box`, wrapping the same message into more/taller lines;
+and lwm-html's real `html { font-size: 18px }` was never mirrored locally, so the `rem`-sized caption
+rendered smaller than production even before that. Combined, the taller caption clipped past the
+bottom of Phase 5's viewBox, flipping the placement search's tier-3 overflow scoring from East to
+Northeast — reproducible only in production, not locally. Fixed by pinning `.wd-mascot-caption` to
+`box-sizing: border-box` (matching `.wd-next-link`/`.wd-mascot-dialog`'s existing pattern), widening
+the caption's `max-width` (200px → 230px) and shrinking the compact "Next" button so long captions
+need fewer lines, and setting `preview.html`'s root `font-size: 18px` to match lwm-html for real so
+this class of drift is visible locally going forward. General fix (guaranteed caption headroom in
+every layout, not tuned per scenario) logged as TODO.md's new Phase 3b.
+
 ## 2026-07-12 — v0.3 mascot placement & dialog polish
 
 Not driven by a `feedback/` batch — no `feedback/v0.3/` directory exists. This was a run of
