@@ -130,6 +130,11 @@ export function attachAutopilot({ avatarHost, dialogHost, target }: AutopilotOpt
         // Phase 25's own internal gate, between its two beats -- thinking/recap click through
         // into the second beat before Phase 30's own "Let's get strategic →" gate
         if (target === "thinking" || target === "recap") link!.click();
+      } else if (plainNextCount >= 9) {
+        // Phase 30's per-answer "Made a note of it here." / "Nothing to note. Got it." asides --
+        // one appears after every deep-dive answer, an unbounded number of times as the visitor
+        // walks the concept bank, so unlike the gates above this can't be a fixed count
+        if (target === "thinking" || target === "recap") link!.click();
       }
     } else if (linkText === "Nice to meet you!") {
       // Phase 7's "I'm Ben" introduction gate -- `intro` lands right here, unclicked; every other

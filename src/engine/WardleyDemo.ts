@@ -670,12 +670,15 @@ export class WardleyDemo {
    * callout would collide horizontally with one already placed, it stacks one tier higher instead
    * (see `createAnnotation`) rather than solving full layout — a node can end up with more than one
    * annotation if several concepts settle on it, so this stacking is load-bearing, not incidental.
+   * Returns the callout's own viewBox-space position, so a caller (e.g. the mascot, via
+   * `moveToViewBoxPoint`) can re-anchor onto the callout itself rather than the node.
    */
-  addAnnotation(nodeId: string, text: string): void {
+  addAnnotation(nodeId: string, text: string): Point {
     const node = this.nodesById.get(nodeId)!;
-    const { element, rect } = createAnnotation(node, text, this.annotationRects);
+    const { element, rect, position } = createAnnotation(node, text, this.annotationRects);
     this.annotationRects.push(rect);
     this.annotationLayer.appendChild(element);
+    return position;
   }
 
   private activateLines(): void {
