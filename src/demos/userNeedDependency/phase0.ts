@@ -70,7 +70,7 @@ export async function runPhase0(options: ValueChainScenarioOptions): Promise<Sce
   await mascot.arrive(() => mascot.say(MASCOT_NEED_PLACED));
   await mascot.confirmPlacement("A value chain?");
 
-  mascot.say("A value chain! It's a recipe for delivering value.")
+  mascot.say("Yes! A value chain is a recipe for delivering value.")
   await mascot.confirmPlacement("Next");
 
   return { demo, mascot, chain, options };
