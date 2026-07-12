@@ -542,12 +542,14 @@ export class WardleyDemo {
 
     const from = { x: node.x, y: node.y };
     const to = { x: genesisCenterX(this.viewBox.width), y: node.y };
+    let latest = from;
 
     const handle = animateTo(
       from,
       to,
       durationMs,
       (point) => {
+        latest = point;
         setNodePosition(nodeGroup, connectedLines, point);
         this.updateFlowParticlePaths(nodeId, point);
       },
@@ -558,10 +560,19 @@ export class WardleyDemo {
         onComplete?.();
       },
     );
-    this.pendingSlides.set(nodeId, handle.cancel);
+    // wraps handle.cancel so an interruption (see cancelPendingSlide below) also commits `node.x`/
+    // `node.y` to wherever the animation had actually reached -- animateTo's cancel() only stops
+    // the rAF loop, it never touches the point it was interpolating, so without this `node.x` would
+    // stay frozen at its pre-slide value while the DOM (and this node's live draggability) sits
+    // wherever the interrupted tween left it, and a confirm with no further drag would snap it back.
+    this.pendingSlides.set(nodeId, () => {
+      handle.cancel();
+      node.x = latest.x;
+      node.y = latest.y;
+    });
   }
 
-  /** stops `slideToGenesis`'s in-flight animation for a node, if any, leaving it wherever it currently sits -- see `pendingSlides`' doc comment */
+  /** stops `slideToGenesis`'s in-flight animation for a node, if any, syncing `node.x`/`node.y` to wherever it currently sits -- see `pendingSlides`' doc comment */
   private cancelPendingSlide(nodeId: string): void {
     this.pendingSlides.get(nodeId)?.();
     this.pendingSlides.delete(nodeId);
