@@ -610,8 +610,6 @@ describe("runValueChainScenario", () => {
     expect(canvas.querySelectorAll(".wd-annotation").length).toBe(1);
     expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe("Made a note of it here.");
 
-    clickNext(mascotHost); // past "Made a note of it here."
-    await flush();
     clickOption(mascotHost, 0); // "Keep Going" past the "Nice insight!" pause
     await flush();
 
@@ -655,10 +653,6 @@ describe("runValueChainScenario", () => {
 
     expect(canvas.querySelectorAll(".wd-annotation").length).toBe(1);
     expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe("Made a note of it here.");
-
-    clickNext(mascotHost); // past "Made a note of it here."
-    await flush();
-
     expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(
       "Nice insight!\n\nThis sort of thing might factor into your strategy.",
     );
@@ -692,8 +686,6 @@ describe("runValueChainScenario", () => {
     await flush();
     clickOption(mascotHost, 2); // "Use Appropriate Methods" -> wrong methods, annotation "Danger: Wrong Methods"
     await flush();
-    clickNext(mascotHost); // past "Made a note of it here."
-    await flush();
     clickOption(mascotHost, 0); // "Keep Going" past the "Nice insight!" pause
     await flush();
 
@@ -724,8 +716,6 @@ describe("runValueChainScenario", () => {
     clickYes(mascotHost);
     await flush();
     clickOption(mascotHost, 2); // "Use Appropriate Methods" -> wrong methods, annotation "Danger: Wrong Methods"
-    await flush();
-    clickNext(mascotHost); // past "Made a note of it here."
     await flush();
     clickOption(mascotHost, 0); // "Keep Going" past "right-methods"'s insight gate
     await flush();
@@ -763,8 +753,6 @@ describe("runValueChainScenario", () => {
     clickYes(mascotHost);
     await flush();
     clickOption(mascotHost, 2); // "Use Appropriate Methods" -> wrong methods, annotation "Danger: Wrong Methods"
-    await flush();
-    clickNext(mascotHost); // past "Made a note of it here."
     await flush();
     clickOption(mascotHost, 1); // "Finish Up"
     await flush();
