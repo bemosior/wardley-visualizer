@@ -107,7 +107,7 @@ export async function runPhase30(ctx: ScenarioContext): Promise<void> {
             { id: "finishUp", label: "Finish Up" },
           ],
           undefined,
-          "Made a note of it here — take a look below. ↓",
+          "Made a note of it here. Keep going, below. ↓",
         );
         if (next === "finishUp") break;
       } else {

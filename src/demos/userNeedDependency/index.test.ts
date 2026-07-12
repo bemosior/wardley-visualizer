@@ -609,7 +609,7 @@ describe("runValueChainScenario", () => {
 
     expect(canvas.querySelectorAll(".wd-annotation").length).toBe(1);
     expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe(
-      "Made a note of it here — take a look below. ↓",
+      "Made a note of it here. Keep going, below. ↓",
     );
 
     clickOption(mascotHost, 0); // "Keep Going" past the "Nice insight!" pause
@@ -655,7 +655,7 @@ describe("runValueChainScenario", () => {
 
     expect(canvas.querySelectorAll(".wd-annotation").length).toBe(1);
     expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe(
-      "Made a note of it here — take a look below. ↓",
+      "Made a note of it here. Keep going, below. ↓",
     );
     expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(
       "Nice insight! This sort of thing might factor into your strategy.",
