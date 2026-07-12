@@ -359,29 +359,32 @@ export class Mascot {
   }
 
   /** points the avatar's caption at the dialog panel below -- called by every panel-hosted method
-   * so a phase author gets the "look below" redirect for free, without wiring it per call site. */
-  private pointToPanel(): void {
+   * so a phase author gets the "look below" redirect for free, without wiring it per call site.
+   * `caption`, if passed, overrides the default `POINT_TO_PANEL_TEXT` for phases that want the
+   * small caption to say something more specific than "look below" while still routing
+   * `confirmPlacement` at the panel. */
+  private pointToPanel(caption: string = POINT_TO_PANEL_TEXT): void {
     this.activeSurface = "panel";
-    this.captionTextEl.textContent = POINT_TO_PANEL_TEXT;
+    this.captionTextEl.textContent = caption;
     this.captionActionEl.replaceChildren();
     this.reposition();
   }
 
-  showDragHandles(slots: PanelDragSlot[], intro?: { heading: string; subheading: string }): PanelDragHandle {
+  showDragHandles(slots: PanelDragSlot[], intro?: { heading: string; subheading: string }, caption?: string): PanelDragHandle {
     this.talk();
-    this.pointToPanel();
+    this.pointToPanel(caption);
     return this.panel.showDragHandles(slots, intro);
   }
 
-  showField(field: PanelField): Promise<string> {
+  showField(field: PanelField, caption?: string): Promise<string> {
     this.talk();
-    this.pointToPanel();
+    this.pointToPanel(caption);
     return this.panel.showField(field);
   }
 
-  showInstrumentPanel(heading: string, kind: EvolutionKind, initialStage: EvolutionStage, delayMs = 0): void {
+  showInstrumentPanel(heading: string, kind: EvolutionKind, initialStage: EvolutionStage, delayMs = 0, caption?: string): void {
     this.talk(delayMs);
-    this.pointToPanel();
+    this.pointToPanel(caption);
     this.panel.showInstrumentPanel(heading, kind, initialStage, delayMs);
   }
 
@@ -389,38 +392,38 @@ export class Mascot {
     this.panel.updateInstrumentPanel(stage);
   }
 
-  showQuestion(heading: string, question: Question): Promise<QuestionOption> {
+  showQuestion(heading: string, question: Question, caption?: string): Promise<QuestionOption> {
     this.talk();
-    this.pointToPanel();
+    this.pointToPanel(caption);
     return this.panel.showQuestion(heading, question);
   }
 
-  showGate(prompt: string, subtitle: string, options: GateOption[], emphasize?: string[]): Promise<string> {
+  showGate(prompt: string, subtitle: string, options: GateOption[], emphasize?: string[], caption?: string): Promise<string> {
     this.talk();
-    this.pointToPanel();
+    this.pointToPanel(caption);
     return this.panel.showGate(prompt, subtitle, options, emphasize);
   }
 
-  showRecap(items: string[], cta: { label: string; href: string }): void {
+  showRecap(items: string[], cta: { label: string; href: string }, caption?: string): void {
     this.talk();
-    this.pointToPanel();
+    this.pointToPanel(caption);
     this.panel.showRecap(items, cta);
   }
 
-  showEmpty(): void {
-    this.pointToPanel();
+  showEmpty(caption?: string): void {
+    this.pointToPanel(caption);
     this.panel.showEmpty();
   }
 
-  showFindings(findings: Finding[], heading: string): void {
+  showFindings(findings: Finding[], heading: string, caption?: string): void {
     this.talk();
-    this.pointToPanel();
+    this.pointToPanel(caption);
     this.panel.showFindings(findings, heading);
   }
 
-  showPlaceholder(heading: string, subheading: string, delayMs = 0): void {
+  showPlaceholder(heading: string, subheading: string, delayMs = 0, caption?: string): void {
     this.talk(delayMs);
-    this.pointToPanel();
+    this.pointToPanel(caption);
     this.panel.showPlaceholder(heading, subheading, delayMs);
   }
 }
