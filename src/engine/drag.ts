@@ -192,6 +192,7 @@ export function attachAxisDrag(options: AxisDragOptions): AxisDragHandle {
   const { svg, nodeGroup, node, connectedLines, minX, maxX, onPositionChange, onFirstRelease, onDragStart } = options;
 
   let currentX = node.x;
+  let hasMoved = false;
   let hasReleasedOnce = false;
   let confirmed = false;
 
@@ -202,6 +203,7 @@ export function attachAxisDrag(options: AxisDragOptions): AxisDragHandle {
   function onPointerMove(event: PointerEvent): void {
     const point = toSvgPoint(svg, event.clientX, event.clientY);
     currentX = clamp(point.x);
+    hasMoved = true;
     setNodePosition(nodeGroup, connectedLines, { x: currentX, y: node.y });
     onPositionChange?.(currentX);
   }
@@ -234,6 +236,12 @@ export function attachAxisDrag(options: AxisDragOptions): AxisDragHandle {
     confirm(onConfirm) {
       confirmed = true;
       nodeGroup.removeEventListener("pointerdown", onPointerDown as EventListener);
+      // currentX was only ever set once, at attachAxisDrag's own setup time -- if the node was
+      // never actually dragged (a tap that just reveals the confirm control, or autopilot's
+      // skipDrag), that snapshot predates any concurrent slideToGenesis animation finishing or
+      // being cancelled, so it's stale. Re-read node.x here instead: onDragStart (fired on the
+      // tap that got us here) already resolved node.x to wherever the node actually sits.
+      if (!hasMoved) currentX = node.x;
       node.x = currentX;
       // re-stamps the <g>'s transform and connectedLines from currentX, same as every other
       // write to the node's position in this file (onPointerMove, skipDrag's caller) -- without
