@@ -100,7 +100,7 @@ export async function runPhase30(ctx: ScenarioContext): Promise<void> {
 
         mascot.moveToViewBoxPoint(notePos.x, notePos.y);
         const next = await mascot.showGate(
-          "Nice insight!\n\nThis sort of thing might factor into your strategy.",
+          "Nice insight! This sort of thing might factor into your strategy.",
           "",
           [
             { id: "keepGoing", label: "Keep Going" },

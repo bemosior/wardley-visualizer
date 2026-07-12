@@ -654,7 +654,7 @@ describe("runValueChainScenario", () => {
     expect(canvas.querySelectorAll(".wd-annotation").length).toBe(1);
     expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe("Made a note of it here.");
     expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(
-      "Nice insight!\n\nThis sort of thing might factor into your strategy.",
+      "Nice insight! This sort of thing might factor into your strategy.",
     );
     expect(optionLabels(mascotHost)).toEqual(["Keep Going", "Finish Up"]);
 
