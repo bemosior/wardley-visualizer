@@ -3,7 +3,7 @@ import { createMascotAvatar, type MascotState } from "./mascotAvatar";
 import { showNextLink } from "./nextLink";
 import { prefersReducedMotion } from "./animate";
 import { shiftRect } from "./geometry";
-import { pickMascotPlacement } from "./mascotPlacement";
+import { DIRECTION_PRIORITY, pickMascotPlacement, type CompassDirection } from "./mascotPlacement";
 import type { WardleyDemo } from "./WardleyDemo";
 import type { EvolutionStage } from "../domain/evolution";
 import type { Question, QuestionOption } from "../domain/questionBank";
@@ -78,6 +78,8 @@ export class Mascot {
   private currentAnchorNodeId: string | null = null;
   private viewBoxAnchor: { x: number; y: number } | null = null;
   private lastPos: { x: number; y: number; radius?: number } | null = null;
+  /** which compass directions `reposition` may consider -- see `moveTo`'s `directions` option */
+  private lastDirections: CompassDirection[] = DIRECTION_PRIORITY;
   private hasPositioned = false;
   /** which surface last rendered content -- `confirmPlacement` targets whichever one this is */
   private activeSurface: "caption" | "panel" = "caption";
@@ -167,11 +169,18 @@ export class Mascot {
    * positions the avatar just below (or above, if there's no room) `pos` (container-pixel space,
    * from `WardleyDemo.getNodePixelPosition`), offset by `pos.radius` so it's planted clear of the
    * node's circle instead of covering it, and remembers `nodeId` so a window resize re-tracks it.
+   *
+   * `directions`, if given, narrows which compass directions `reposition` may choose among instead
+   * of the full 8 (`NON_ROW_DIRECTIONS`, e.g., for Phase 20's evolution-axis anchors, which must
+   * never sit beside the node -- it's about to slide freely through that exact spot). Persists
+   * across the window-resize re-anchor (`trackAnchor`) until the next explicit `moveTo`/
+   * `moveToViewBoxPoint` call resets it.
    */
-  moveTo(nodeId: string, pos: { x: number; y: number; radius?: number }): void {
+  moveTo(nodeId: string, pos: { x: number; y: number; radius?: number }, directions: CompassDirection[] = DIRECTION_PRIORITY): void {
     this.currentAnchorNodeId = nodeId;
     this.viewBoxAnchor = null;
     this.lastPos = pos;
+    this.lastDirections = directions;
     this.reposition();
     this.scrollIntoViewIfNeeded();
   }
@@ -188,6 +197,7 @@ export class Mascot {
     this.currentAnchorNodeId = null;
     this.viewBoxAnchor = { x, y };
     this.lastPos = this.demo.getViewBoxPixelPosition(x, y);
+    this.lastDirections = DIRECTION_PRIORITY;
     this.reposition();
     this.scrollIntoViewIfNeeded();
   }
@@ -236,6 +246,7 @@ export class Mascot {
       bounds,
       CAPTION_GAP,
       NODE_CLEARANCE,
+      this.lastDirections,
     );
     let { avatarRect, captionRect } = placement;
 
@@ -294,7 +305,13 @@ export class Mascot {
     }
     if (!this.demo || !this.currentAnchorNodeId) return;
     const pos = this.demo.getNodePixelPosition(this.currentAnchorNodeId);
-    if (pos) this.moveTo(this.currentAnchorNodeId, pos);
+    // updates lastPos and re-derives placement directly, rather than going through the public
+    // `moveTo` (which would reset `lastDirections` to the full 8-direction default and silently
+    // drop a Phase-20-style row restriction if the visitor resizes mid-drag)
+    if (pos) {
+      this.lastPos = pos;
+      this.reposition();
+    }
   }
 
   /**
