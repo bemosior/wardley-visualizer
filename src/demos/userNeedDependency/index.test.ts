@@ -177,6 +177,62 @@ describe("runValueChainScenario", () => {
     expect(mascotHost.querySelector(".wd-panel-form-prompt")!.textContent).toBe("Who should we help today?");
   });
 
+  it("with a host config that renders only one Capability node, says the recipe line while still one node, then grows the row to three right as it explains why", async () => {
+    const canvas = document.createElement("div");
+    const { mascotHost, avatarHost, dialogHost } = makeMascotHosts();
+    document.body.append(canvas, mascotHost);
+    runValueChainScenario({
+      canvas,
+      avatarHost,
+      dialogHost,
+      onCelebrate: vi.fn(),
+      config: {
+        viewBox: { width: 400, height: 520 },
+        snapThreshold: 30,
+        nodes: [
+          { id: "user", label: "Someone we care about", x: 200, y: 100, draggable: false },
+          { id: "need", label: "Something they need", x: 200, y: 284, draggable: true, start: { x: 25, y: 237 } },
+          { id: "dependency-1", label: "Something that satisfies their need", x: 200, y: 468, draggable: false },
+        ],
+        connections: [
+          { from: "user", to: "need" },
+          { from: "need", to: "dependency-1" },
+        ],
+      },
+    });
+
+    const needNode = canvas.querySelector('[data-node-id="need"]')!;
+    drag(needNode, { x: 200, y: 284 });
+    await flush();
+    for (let i = 0; i < 3; i++) {
+      clickNext(mascotHost);
+      await flush();
+    }
+    expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe(
+      "This is a Capability. It's how we meet the user need.",
+    );
+
+    clickNext(mascotHost);
+    await flush();
+
+    // the recipe line is said while the row still shows only the one Capability the host config
+    // rendered -- the other two haven't faded in yet
+    expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe("A Value Chain is like a recipe.");
+    expect(canvas.querySelectorAll('[data-node-id^="dependency-"]')).toHaveLength(1);
+
+    clickNext(mascotHost);
+    await flush();
+
+    // the row grows to three right as the second caption explains why
+    expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe(
+      "It often takes multiple capabilities to come together to meet the user need.",
+    );
+    expect(canvas.querySelectorAll('[data-node-id^="dependency-"]')).toHaveLength(3);
+    expect(canvas.querySelector('[data-node-id="dependency-1"] .wd-node-label')!.textContent).toBe(
+      "Something that satisfies their need",
+    );
+  });
+
   it("does not advance to the form sequence if the Need is dropped away from its target", async () => {
     const { canvas, mascotHost } = buildScenario(vi.fn());
     const needNode = canvas.querySelector('[data-node-id="need"]')!;
