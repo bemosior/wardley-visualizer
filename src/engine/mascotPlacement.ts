@@ -1,5 +1,5 @@
 import type { Point } from "./animate";
-import { rectFromCenter, rectIntersectsCircle, rectIntersectsSegment, rectOverflow, type Rect } from "./geometry";
+import { inflateRect, rectFromCenter, rectIntersectsCircle, rectIntersectsSegment, rectOverflow, rectsIntersect, type Rect } from "./geometry";
 
 export type CompassDirection = "S" | "N" | "E" | "W" | "SE" | "SW" | "NE" | "NW";
 
@@ -57,6 +57,8 @@ export interface BoxSize {
 export interface MascotObstacles {
   nodes: (Point & { radius: number })[];
   edges: { a: Point; b: Point }[];
+  /** evolution-stage label chips (e.g. "Genesis"/"Custom-Built"/"Product"/"Commodity") -- a hard constraint, same tier as `nodes`, not the soft "avoid if possible" tier `edges` gets */
+  labels: Rect[];
 }
 
 export interface MascotPlacement {
@@ -108,10 +110,10 @@ function inflate(node: Point & { radius: number }, clearance: number): Point & {
  *
  * Every one of the 8 compass directions around the anchor, crossed with both caption sides (when
  * there's a caption), is scored and the minimum wins:
- *   1. never let the avatar or caption overlap a node (including nodes other than the anchor) --
- *      the dominant term, so any candidate clipping a node loses to any candidate that doesn't,
- *      no matter what else is true about it.
- *   2. avoid crossing an edge, but cross one rather than a node if every direction crosses one.
+ *   1. never let the avatar or caption overlap a node (including nodes other than the anchor) or
+ *      an evolution-stage label chip -- the dominant term, so any candidate clipping either loses
+ *      to any candidate that doesn't, no matter what else is true about it.
+ *   2. avoid crossing an edge, but cross one rather than a node/label if every direction crosses one.
  *   3. avoid spilling outside `bounds` (the avatar host's own rect) -- `null` when the host has no
  *      real layout yet (e.g. unit tests, or a reposition that races page load), in which case this
  *      tier is skipped entirely rather than scored against a meaningless 0x0 box.
@@ -135,6 +137,7 @@ export function pickMascotPlacement(
   directions: CompassDirection[] = DIRECTION_PRIORITY,
 ): MascotPlacement {
   const inflatedNodes = obstacles.nodes.map((n) => inflate(n, clearance));
+  const inflatedLabels = obstacles.labels.map((r) => inflateRect(r, clearance));
   const flips = captionSize ? [false, true] : [false];
 
   let best: MascotPlacement | null = null;
@@ -148,6 +151,9 @@ export function pickMascotPlacement(
       const nodeHits = inflatedNodes.filter(
         (n) => rectIntersectsCircle(avatarRect, n) || (captionRect !== null && rectIntersectsCircle(captionRect, n)),
       ).length;
+      const labelHits = inflatedLabels.filter(
+        (r) => rectsIntersect(avatarRect, r) || (captionRect !== null && rectsIntersect(captionRect, r)),
+      ).length;
       const edgeHits = obstacles.edges.filter(
         (e) => rectIntersectsSegment(avatarRect, e) || (captionRect !== null && rectIntersectsSegment(captionRect, e)),
       ).length;
@@ -156,7 +162,7 @@ export function pickMascotPlacement(
         : 0;
       const tieBreak = (dirIndex * flips.length + flipIndex) * TIE_BREAK_STEP;
 
-      const score = nodeHits * NODE_HIT_WEIGHT + edgeHits * EDGE_HIT_WEIGHT + overflow + tieBreak;
+      const score = (nodeHits + labelHits) * NODE_HIT_WEIGHT + edgeHits * EDGE_HIT_WEIGHT + overflow + tieBreak;
       if (score < bestScore) {
         bestScore = score;
         best = { direction, flip, avatarRect, captionRect };

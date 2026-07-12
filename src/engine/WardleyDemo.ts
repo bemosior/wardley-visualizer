@@ -26,6 +26,7 @@ import {
 import { injectStylesOnce } from "./styles";
 import { attachAxisDrag, attachDrag, setNodePosition, type ConnectedLine, type DragHandle, type RevealTarget } from "./drag";
 import { animateTo, type Point } from "./animate";
+import type { Rect } from "./geometry";
 
 export interface MountOptions {
   /** an external element (e.g. a toolbox slot) that the draggable node must be picked up from */
@@ -786,13 +787,14 @@ export class WardleyDemo {
   }
 
   /**
-   * every currently-registered node's circle and every rendered connection's line segment, all in
-   * the same container-pixel space `getNodePixelPosition` uses — for a caller (the mascot's
-   * positioner) that needs to steer clear of the whole scene, not just the one node it's anchored
-   * to. Nodes still mid-drag report their stored target position, same caveat as
-   * `getNodePixelPosition`.
+   * every currently-registered node's circle, every rendered connection's line segment, and every
+   * evolution-stage label chip (`.wd-backdrop-label-chip`, rendered by `showMapBackdrop` -- empty
+   * before the map backdrop exists), all in the same container-pixel space `getNodePixelPosition`
+   * uses — for a caller (the mascot's positioner) that needs to steer clear of the whole scene, not
+   * just the one node it's anchored to. Nodes still mid-drag report their stored target position,
+   * same caveat as `getNodePixelPosition`.
    */
-  getObstacles(): { nodes: (Point & { radius: number })[]; edges: { a: Point; b: Point }[] } {
+  getObstacles(): { nodes: (Point & { radius: number })[]; edges: { a: Point; b: Point }[]; labels: Rect[] } {
     const nodes: (Point & { radius: number })[] = [];
     for (const id of this.nodesById.keys()) {
       const pos = this.getNodePixelPosition(id);
@@ -804,7 +806,22 @@ export class WardleyDemo {
       const to = this.getNodePixelPosition(conn.to);
       if (from && to) edges.push({ a: { x: from.x, y: from.y }, b: { x: to.x, y: to.y } });
     }
-    return { nodes, edges };
+    return { nodes, edges, labels: this.getStageLabelRects() };
+  }
+
+  /** every evolution-stage label chip's bounding box, converted from its viewBox-space `x`/`y`/`width`/`height` attributes (set by `createMapBackdrop`) to container-pixel space -- empty before `showMapBackdrop` has rendered the backdrop */
+  private getStageLabelRects(): Rect[] {
+    const rects: Rect[] = [];
+    this.backdropLayer.querySelectorAll<SVGRectElement>(".wd-backdrop-label-chip").forEach((chip) => {
+      const x = Number(chip.getAttribute("x"));
+      const y = Number(chip.getAttribute("y"));
+      const width = Number(chip.getAttribute("width"));
+      const height = Number(chip.getAttribute("height"));
+      const topLeft = this.viewBoxToContainerPx(x, y);
+      const bottomRight = this.viewBoxToContainerPx(x + width, y + height);
+      rects.push({ left: topLeft.x, top: topLeft.y, right: bottomRight.x, bottom: bottomRight.y });
+    });
+    return rects;
   }
 
   /** current viewBox dimensions, in viewBox units — for a caller (e.g. a phase choosing a node-independent whitespace spot for the mascot) that needs to reason about the canvas's own bounds rather than any node's position */
