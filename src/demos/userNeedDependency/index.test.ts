@@ -525,7 +525,7 @@ describe("runValueChainScenario", () => {
 
     expect(resolved).toBe(false);
     expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe(
-      "Use the map to think To make a strategy, we ask the map special questions that help us think strategically. ",
+      "Use the map to think. To make a strategy, we ask the map special questions that help us think strategically.",
     );
 
     // Phase 25's own confirm link starts Phase 30's Q&A, opening on the first concept/node gate --
