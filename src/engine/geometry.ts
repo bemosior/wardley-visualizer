@@ -28,6 +28,11 @@ export function shiftRect(rect: Rect, dx: number, dy: number): Rect {
   return { left: rect.left + dx, top: rect.top + dy, right: rect.right + dx, bottom: rect.bottom + dy };
 }
 
+/** expands (or, for a negative `amount`, shrinks) every edge of `rect` outward by `amount`, keeping it centered */
+export function inflateRect(rect: Rect, amount: number): Rect {
+  return { left: rect.left - amount, top: rect.top - amount, right: rect.right + amount, bottom: rect.bottom + amount };
+}
+
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
@@ -88,6 +93,11 @@ export function rectIntersectsSegment(rect: Rect, seg: Segment): boolean {
     if (segmentsIntersect(seg.a, seg.b, edgeA, edgeB)) return true;
   }
   return false;
+}
+
+/** true if `a` and `b` overlap by more than a shared edge/corner (touching alone doesn't count, matching `rectIntersectsCircle`'s strict tangency rule) */
+export function rectsIntersect(a: Rect, b: Rect): boolean {
+  return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
 }
 
 /** how far past `bounds` (a [0, width] x [0, height] box, e.g. the mascot's host) `rect` extends, summed across all four sides -- 0 when fully contained */

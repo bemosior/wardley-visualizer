@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { rectIntersectsCircle, rectIntersectsSegment } from "./geometry";
+import { rectIntersectsCircle, rectIntersectsSegment, rectsIntersect } from "./geometry";
 import { DIRECTION_PRIORITY, pickMascotPlacement, type CompassDirection, type MascotObstacles } from "./mascotPlacement";
 
 const AVATAR = { width: 40, height: 60 };
 const GAP = 8;
 const CLEARANCE = 12;
-const NO_OBSTACLES: MascotObstacles = { nodes: [], edges: [] };
+const NO_OBSTACLES: MascotObstacles = { nodes: [], edges: [], labels: [] };
 
 describe("pickMascotPlacement with no obstacles", () => {
   it("defaults to directly below the anchor, clear of its radius, when nothing else constrains it", () => {
@@ -74,6 +74,7 @@ describe("pickMascotPlacement self-clearance", () => {
     const obstacles: MascotObstacles = {
       nodes: [{ x: anchor.x, y: anchor.y, radius: anchor.radius }],
       edges: [],
+      labels: [],
     };
 
     const placement = pickMascotPlacement(anchor, AVATAR, null, obstacles, null, GAP, CLEARANCE);
@@ -90,7 +91,7 @@ describe("pickMascotPlacement self-clearance", () => {
   it("never lets the avatar overlap a node other than the one it's anchored to", () => {
     const anchor = { x: 100, y: 100, radius: 40 };
     // sits directly in the default "below" spot
-    const obstacles: MascotObstacles = { nodes: [{ x: 100, y: 220, radius: 40 }], edges: [] };
+    const obstacles: MascotObstacles = { nodes: [{ x: 100, y: 220, radius: 40 }], edges: [], labels: [] };
 
     const placement = pickMascotPlacement(anchor, AVATAR, null, obstacles, null, GAP, CLEARANCE);
 
@@ -103,7 +104,7 @@ describe("pickMascotPlacement self-clearance", () => {
   it("never lets the caption overlap a node even when the avatar itself is clear", () => {
     const anchor = { x: 100, y: 100, radius: 40 };
     // sits only where an unflipped (rightward) caption would land, not where the avatar itself sits
-    const obstacles: MascotObstacles = { nodes: [{ x: 260, y: 100, radius: 30 }], edges: [] };
+    const obstacles: MascotObstacles = { nodes: [{ x: 260, y: 100, radius: 30 }], edges: [], labels: [] };
     const caption = { width: 120, height: 32 };
 
     const placement = pickMascotPlacement(anchor, AVATAR, caption, obstacles, null, GAP, CLEARANCE);
@@ -117,9 +118,57 @@ describe("pickMascotPlacement self-clearance", () => {
   it("falls back to the least-bad direction (fewest node overlaps) when every direction is blocked", () => {
     const anchor = { x: 100, y: 100, radius: 10 };
     // a single giant node dead-centered on the anchor overlaps every candidate rect in every direction
-    const obstacles: MascotObstacles = { nodes: [{ x: 100, y: 100, radius: 500 }], edges: [] };
+    const obstacles: MascotObstacles = { nodes: [{ x: 100, y: 100, radius: 500 }], edges: [], labels: [] };
 
     expect(() => pickMascotPlacement(anchor, AVATAR, null, obstacles, null, GAP, CLEARANCE)).not.toThrow();
+  });
+});
+
+describe("pickMascotPlacement avoiding evolution-stage labels (hard constraint)", () => {
+  it("never lets the avatar overlap a stage label chip", () => {
+    const anchor = { x: 100, y: 100, radius: 40 };
+    // sits directly in the default "below" spot
+    const obstacles: MascotObstacles = { nodes: [], edges: [], labels: [{ left: 60, top: 150, right: 140, bottom: 180 }] };
+
+    const placement = pickMascotPlacement(anchor, AVATAR, null, obstacles, null, GAP, CLEARANCE);
+
+    expect(placement.direction).not.toBe("S");
+    for (const label of obstacles.labels) {
+      expect(rectsIntersect(placement.avatarRect, label)).toBe(false);
+    }
+  });
+
+  it("never lets the caption overlap a stage label chip even when the avatar itself is clear", () => {
+    const anchor = { x: 100, y: 100, radius: 40 };
+    // for the default "below" avatar placement (top 153-213, left 80-120 -- radius 40 + clearance
+    // 12 + 1px self-epsilon + half the 60px avatar height), an unflipped caption lands at roughly
+    // left 128-248, top 167-199; this label sits right on top of that spot but clear of the avatar
+    // itself, so a correct picker flips the caption left instead of overlapping the label
+    const obstacles: MascotObstacles = { nodes: [], edges: [], labels: [{ left: 140, top: 170, right: 240, bottom: 200 }] };
+    const caption = { width: 120, height: 32 };
+
+    const placement = pickMascotPlacement(anchor, AVATAR, caption, obstacles, null, GAP, CLEARANCE);
+
+    expect(placement.direction).toBe("S");
+    expect(rectsIntersect(placement.avatarRect, obstacles.labels[0])).toBe(false);
+    expect(rectsIntersect(placement.captionRect!, obstacles.labels[0])).toBe(false);
+  });
+
+  it("weighs a label hit the same as a node hit -- prefers crossing an edge over obscuring either", () => {
+    const anchor = { x: 100, y: 100, radius: 40 };
+    // "below" crosses an edge but is otherwise open; "above" is edge-free but sits under a label
+    // chip. A label must be exactly as hard a constraint as a node, so "below" should still win.
+    // Restricted to just these two directions so the comparison isn't muddied by E/W/diagonals,
+    // which this obstacle set happens to leave completely free.
+    const obstacles: MascotObstacles = {
+      nodes: [],
+      edges: [{ a: { x: -1000, y: 170 }, b: { x: 1000, y: 170 } }],
+      labels: [{ left: 60, top: 20, right: 140, bottom: 45 }],
+    };
+
+    const placement = pickMascotPlacement(anchor, AVATAR, null, obstacles, null, GAP, CLEARANCE, ["N", "S"]);
+
+    expect(placement.direction).toBe("S");
   });
 });
 
@@ -135,6 +184,7 @@ describe("pickMascotPlacement avoiding edges (soft constraint)", () => {
         { a: { x: -1000, y: 100 }, b: { x: 1000, y: 100 } },
         { a: { x: 100, y: -1000 }, b: { x: 100, y: 1000 } },
       ],
+      labels: [],
     };
 
     const placement = pickMascotPlacement(anchor, AVATAR, null, obstacles, null, GAP, CLEARANCE);
@@ -151,7 +201,7 @@ describe("pickMascotPlacement avoiding edges (soft constraint)", () => {
     // 8 directions -- guarantees every candidate crosses at least one edge, exercising the
     // "cross an edge as a last resort" fallback rather than a lucky escape hatch.
     const edges = DIRECTION_PRIORITY.map((direction) => blockingSegmentFor(direction, anchor));
-    const obstacles: MascotObstacles = { nodes: [], edges };
+    const obstacles: MascotObstacles = { nodes: [], edges, labels: [] };
 
     const placement = pickMascotPlacement(anchor, AVATAR, null, obstacles, null, GAP, CLEARANCE);
 

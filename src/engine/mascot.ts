@@ -235,7 +235,7 @@ export class Mascot {
     const anchor = { x: this.lastPos.x, y: this.lastPos.y, radius: this.lastPos.radius ?? 0 };
     const hostRect = this.avatarHost.getBoundingClientRect();
     const bounds = hostRect.width && hostRect.height ? { width: hostRect.width, height: hostRect.height } : null;
-    const obstacles = this.demo?.getObstacles() ?? { nodes: [], edges: [] };
+    const obstacles = this.demo?.getObstacles() ?? { nodes: [], edges: [], labels: [] };
     const captionSize = this.measureCaption();
 
     const placement = pickMascotPlacement(

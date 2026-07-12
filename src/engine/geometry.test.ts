@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { rectFromCenter, rectIntersectsCircle, rectIntersectsSegment, rectOverflow, shiftRect } from "./geometry";
+import { inflateRect, rectFromCenter, rectIntersectsCircle, rectIntersectsSegment, rectOverflow, rectsIntersect, shiftRect } from "./geometry";
 
-describe("rectFromCenter / shiftRect", () => {
+describe("rectFromCenter / shiftRect / inflateRect", () => {
   it("builds a rect centered on the given point", () => {
     const rect = rectFromCenter({ x: 10, y: 20 }, 40, 60);
     expect(rect).toEqual({ left: -10, top: -10, right: 30, bottom: 50 });
@@ -10,6 +10,25 @@ describe("rectFromCenter / shiftRect", () => {
   it("translates every edge by dx/dy", () => {
     const rect = rectFromCenter({ x: 0, y: 0 }, 10, 10);
     expect(shiftRect(rect, 5, -5)).toEqual({ left: 0, top: -10, right: 10, bottom: 0 });
+  });
+
+  it("expands every edge outward by the given amount", () => {
+    const rect = { left: 0, top: 0, right: 10, bottom: 10 };
+    expect(inflateRect(rect, 5)).toEqual({ left: -5, top: -5, right: 15, bottom: 15 });
+  });
+});
+
+describe("rectsIntersect", () => {
+  it("is true when two rects overlap", () => {
+    expect(rectsIntersect({ left: 0, top: 0, right: 10, bottom: 10 }, { left: 5, top: 5, right: 15, bottom: 15 })).toBe(true);
+  });
+
+  it("is false when two rects sit clear of each other", () => {
+    expect(rectsIntersect({ left: 0, top: 0, right: 10, bottom: 10 }, { left: 20, top: 20, right: 30, bottom: 30 })).toBe(false);
+  });
+
+  it("is false for two rects merely sharing an edge (touching, not overlapping)", () => {
+    expect(rectsIntersect({ left: 0, top: 0, right: 10, bottom: 10 }, { left: 10, top: 0, right: 20, bottom: 10 })).toBe(false);
   });
 });
 

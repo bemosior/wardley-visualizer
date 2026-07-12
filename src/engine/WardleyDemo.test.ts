@@ -415,6 +415,40 @@ describe("WardleyDemo.getNodePixelPosition", () => {
   });
 });
 
+describe("WardleyDemo.getObstacles", () => {
+  function buildDemo(): WardleyDemo {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    return WardleyDemo.mount(container, {
+      viewBox: { width: 400, height: 300 },
+      nodes: [
+        { id: "user", label: "User", x: 200, y: 50, draggable: false },
+        { id: "need", label: "Need", x: 200, y: 150, draggable: false },
+      ],
+      connections: [{ from: "user", to: "need" }],
+      snapThreshold: 30,
+    });
+  }
+
+  it("reports every registered node and connection, with no stage-label rects before the map backdrop exists", () => {
+    const demo = buildDemo();
+
+    const obstacles = demo.getObstacles();
+
+    expect(obstacles.nodes).toHaveLength(2);
+    expect(obstacles.edges).toHaveLength(1);
+    expect(obstacles.labels).toEqual([]);
+  });
+
+  it("reports one rect per evolution stage once the map backdrop is shown", () => {
+    const demo = buildDemo();
+
+    demo.showMapBackdrop(demo.captureScale());
+
+    expect(demo.getObstacles().labels).toHaveLength(4);
+  });
+});
+
 describe("WardleyDemo.celebrateAll", () => {
   function buildDemo(): { demo: WardleyDemo; container: HTMLElement } {
     const container = document.createElement("div");
