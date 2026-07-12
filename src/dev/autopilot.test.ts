@@ -156,7 +156,7 @@ describe("attachAutopilot", () => {
     const { mascotHost } = buildScenario("finale");
     await flushAll(mascotHost);
 
-    expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe("You made a Wardley Map!");
+    expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe("You just made a Wardley Map! Nice work!");
     const gateLink = mascotHost.querySelector<HTMLButtonElement>(".wd-next-link");
     expect(gateLink).not.toBeNull();
     expect(gateLink!.textContent).toBe("Next");
