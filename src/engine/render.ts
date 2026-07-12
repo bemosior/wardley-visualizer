@@ -663,6 +663,9 @@ const FIREWORK_SHELL_COUNT = 3;
 const FIREWORK_SPARKS_PER_SHELL = 24;
 const FIREWORK_COLORS = ["#f4b942", "#ff6b6b", "#005f99", "#7ec8ff", "#ffffff"];
 
+/** firework shell animation is 1.1s plus up to ~0.36s shell stagger; pad before cleanup -- shared by every caller that appends `createFireworkShells`' output (WardleyDemo's own celebrations, the mascot's arrival burst) */
+export const FIREWORK_CLEANUP_MS = 1700;
+
 /** comma-separated box-shadow list: one dot per angle, all at the same `spread` distance from center */
 function buildSparkShadowList(angles: number[], spread: number): string {
   return angles

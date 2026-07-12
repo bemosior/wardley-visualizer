@@ -32,8 +32,9 @@ const MASCOT_NEED_PLACED = "Oh cool! I see you just made a Value Chain — a rec
  * Once the Need snaps into place, `onNeedPlaced` fires (Phase 0 done), the arrow cue is removed,
  * and *only then* does the `Mascot` mount for the first time — its avatar anchored beside the
  * Need's settled position. Before saying anything, it plays a one-time "arrival" flourish
- * (`Mascot.arrive`) — a pop-in plus the reused celebrating bounce/glow — so this first appearance
- * reads as a small reward rather than the mascot just flatly existing. It then reveals every
+ * (`Mascot.arrive`) — an overshoot pop-in, the reused celebrating bounce/glow, and a firework burst
+ * — so this first appearance reads as a small reward rather than the mascot just flatly existing.
+ * It then reveals every
  * node's label (`WardleyDemo.revealNodeLabels`) and explains what was just built
  * (`MASCOT_NEED_PLACED`, one short caption) behind its own "Next" beat — the caller (`phase5.ts`)
  * then starts directly with the User/Need/Capability walkthrough.

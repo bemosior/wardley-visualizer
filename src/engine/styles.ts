@@ -853,19 +853,26 @@ const CSS = `
    bounce/glow run together. */
 .wd-mascot--arriving .wd-mascot-avatar.wd-mascot--celebrating {
   animation:
-    wd-mascot-arrive 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+    wd-mascot-arrive 0.48s ease-out,
     wd-node-charged 2.4s ease-in-out infinite,
-    wd-mascot-celebrate 0.8s ease-in-out 0.2s;
+    wd-mascot-celebrate 0.8s ease-in-out 0.28s;
 }
 
 @keyframes wd-mascot-arrive {
   0% {
     opacity: 0;
-    transform: scale(0.4);
+    transform: scale(0.3) rotate(-8deg);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.18) rotate(4deg);
+  }
+  75% {
+    transform: scale(0.94) rotate(-2deg);
   }
   100% {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) rotate(0deg);
   }
 }
 
