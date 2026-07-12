@@ -650,7 +650,7 @@ describe("runValueChainScenario", () => {
 
     clickYes(mascotHost);
     await flush();
-    clickOption(mascotHost, 2); // "Using the Right Methods" -> wrong methods, annotation "Danger: Wrong Methods"
+    clickOption(mascotHost, 2); // "Use Appropriate Methods" -> wrong methods, annotation "Danger: Wrong Methods"
     await flush();
 
     expect(canvas.querySelectorAll(".wd-annotation").length).toBe(1);
@@ -690,7 +690,7 @@ describe("runValueChainScenario", () => {
 
     clickYes(mascotHost);
     await flush();
-    clickOption(mascotHost, 2); // "Using the Right Methods" -> wrong methods, annotation "Danger: Wrong Methods"
+    clickOption(mascotHost, 2); // "Use Appropriate Methods" -> wrong methods, annotation "Danger: Wrong Methods"
     await flush();
     clickNext(mascotHost); // past "Made a note of it here."
     await flush();
@@ -723,7 +723,7 @@ describe("runValueChainScenario", () => {
 
     clickYes(mascotHost);
     await flush();
-    clickOption(mascotHost, 2); // "Using the Right Methods" -> wrong methods, annotation "Danger: Wrong Methods"
+    clickOption(mascotHost, 2); // "Use Appropriate Methods" -> wrong methods, annotation "Danger: Wrong Methods"
     await flush();
     clickNext(mascotHost); // past "Made a note of it here."
     await flush();
@@ -762,7 +762,7 @@ describe("runValueChainScenario", () => {
 
     clickYes(mascotHost);
     await flush();
-    clickOption(mascotHost, 2); // "Using the Right Methods" -> wrong methods, annotation "Danger: Wrong Methods"
+    clickOption(mascotHost, 2); // "Use Appropriate Methods" -> wrong methods, annotation "Danger: Wrong Methods"
     await flush();
     clickNext(mascotHost); // past "Made a note of it here."
     await flush();
@@ -772,7 +772,7 @@ describe("runValueChainScenario", () => {
     const findingsHeading = mascotHost.querySelector(".wd-panel-findings")!.querySelector(".wd-panel-placeholder-heading");
     expect(findingsHeading!.textContent).toBe("Here's what you found, and you're barely scratching the surface!");
     const items = Array.from(mascotHost.querySelectorAll(".wd-panel-findings-list li")).map((li) => li.textContent);
-    expect(items).toEqual(["Using the Right Methods at Kettle"]);
+    expect(items).toEqual(["Use Appropriate Methods at Kettle"]);
 
     const finalLink = mascotHost.querySelector<HTMLButtonElement>(".wd-next-link")!;
     expect(finalLink.textContent).toBe("What's next →");

@@ -52,8 +52,8 @@ export const CONCEPT_BANK: Concept[] = [
   {
     id: "right-methods",
     category: "doctrine",
-    label: "Using the Right Methods",
-    definition: "In Wardley Mapping, we choose between Agile, Lean, or Six Sigma based on evolutionary stage. This is called Using the Right Methods.",
+    label: "Use Appropriate Methods",
+    definition: "In Wardley Mapping, we choose between Agile, Lean, or Six Sigma based on evolutionary stage. This is called using appropriate methods.",
     applicableKinds: ["capability"],
     question: METHOD_QUESTION,
   },
