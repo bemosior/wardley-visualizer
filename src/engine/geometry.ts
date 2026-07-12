@@ -109,3 +109,8 @@ export function rectOverflow(rect: Rect, bounds: { width: number; height: number
     Math.max(0, rect.bottom - bounds.height)
   );
 }
+
+/** how far past `bounds`'s left/right edges `rect` extends, summed across both sides -- 0 when fully contained horizontally, ignores top/bottom entirely */
+export function horizontalOverflow(rect: Rect, bounds: { width: number; height: number }): number {
+  return Math.max(0, -rect.left) + Math.max(0, rect.right - bounds.width);
+}
