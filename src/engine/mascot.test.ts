@@ -492,11 +492,51 @@ describe("Mascot.arrive", () => {
     expect(avatarHost.querySelector(".wd-mascot")!.classList.contains("wd-mascot--arriving")).toBe(true);
     expect(avatarHost.querySelector(".wd-mascot-avatar")!.classList.contains("wd-mascot--celebrating")).toBe(true);
 
-    await vi.advanceTimersByTimeAsync(1000);
+    await vi.advanceTimersByTimeAsync(1100);
     await arrived;
 
     expect(avatarHost.querySelector(".wd-mascot")!.classList.contains("wd-mascot--arriving")).toBe(false);
     expect(avatarHost.querySelector(".wd-mascot-avatar")!.classList.contains("wd-mascot--idle")).toBe(true);
+    vi.useRealTimers();
+  });
+
+  it("spawns a firework burst at the avatar's landing position once it's been positioned", async () => {
+    window.matchMedia = (() => ({ matches: false })) as unknown as typeof window.matchMedia;
+    vi.useFakeTimers();
+    const { avatarHost, dialogHost } = makeHosts();
+    const mascot = new Mascot(avatarHost, dialogHost);
+    mascot.mount();
+    const demo = buildDemo();
+    mascot.attachDemo(demo);
+    const pos = demo.getNodePixelPosition("need")!;
+    mascot.moveTo("need", pos);
+
+    const arrived = mascot.arrive();
+
+    expect(avatarHost.querySelectorAll(".wd-firework-shell").length).toBe(0);
+
+    await vi.advanceTimersByTimeAsync(300);
+    expect(avatarHost.querySelectorAll(".wd-firework-shell").length).toBeGreaterThan(0);
+
+    await vi.advanceTimersByTimeAsync(1700);
+    await arrived;
+
+    expect(avatarHost.querySelectorAll(".wd-firework-shell").length).toBe(0);
+    vi.useRealTimers();
+  });
+
+  it("does not spawn a firework burst when arrive() is called without a prior moveTo", async () => {
+    window.matchMedia = (() => ({ matches: false })) as unknown as typeof window.matchMedia;
+    vi.useFakeTimers();
+    const { avatarHost, dialogHost } = makeHosts();
+    const mascot = new Mascot(avatarHost, dialogHost);
+    mascot.mount();
+
+    const arrived = mascot.arrive();
+    await vi.advanceTimersByTimeAsync(1100);
+    await arrived;
+
+    expect(avatarHost.querySelectorAll(".wd-firework-shell").length).toBe(0);
     vi.useRealTimers();
   });
 
@@ -527,7 +567,7 @@ describe("Mascot.arrive", () => {
 
     expect(avatarHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe("");
 
-    await vi.advanceTimersByTimeAsync(1000);
+    await vi.advanceTimersByTimeAsync(1100);
     await arrived;
 
     expect(revealedWhileHidden).toBe(true);

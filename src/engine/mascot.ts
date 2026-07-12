@@ -4,6 +4,7 @@ import { showNextLink } from "./nextLink";
 import { prefersReducedMotion } from "./animate";
 import { shiftRect } from "./geometry";
 import { DIRECTION_PRIORITY, pickMascotPlacement, type CompassDirection } from "./mascotPlacement";
+import { createFireworkShells, FIREWORK_CLEANUP_MS } from "./render";
 import type { WardleyDemo } from "./WardleyDemo";
 import type { EvolutionStage } from "../domain/evolution";
 import type { Question, QuestionOption } from "../domain/questionBank";
@@ -12,8 +13,13 @@ import type { Question, QuestionOption } from "../domain/questionBank";
 const TALK_DURATION_MS = 600;
 
 /** how long the mascot's one-time first-appearance "arrival" flourish (`arrive()`) holds before
- * settling back to idle -- long enough for the pop-in plus the reused celebrate bounce to finish */
-const ARRIVE_DURATION_MS = 1000;
+ * settling back to idle -- long enough for the pop-in (0.48s) plus the reused celebrate bounce
+ * (0.28s delay + 0.8s) to finish, ~1.08s, without hard-cutting its tail */
+const ARRIVE_DURATION_MS = 1100;
+
+/** delay (ms) before `arrive()` spawns its firework burst -- timed to land at `wd-mascot-arrive`'s
+ * 55% overshoot peak (0.55 * 0.48s) rather than the first frame of the pop-in */
+const ARRIVE_FIREWORK_DELAY_MS = 260;
 
 /** matches `.wardley-demo-root .wd-mascot-avatar`'s width in styles.ts, so the avatar can be centered under a node */
 const AVATAR_WIDTH = 40;
@@ -78,6 +84,10 @@ export class Mascot {
   private currentAnchorNodeId: string | null = null;
   private viewBoxAnchor: { x: number; y: number } | null = null;
   private lastPos: { x: number; y: number; radius?: number } | null = null;
+  /** the avatar's center in `avatarHost`-local pixel space, set by `reposition()` -- lets `arrive()`
+   * spawn its firework burst at wherever the avatar actually landed without recomputing that math
+   * itself. Null until the first `reposition()` call (e.g. `arrive()` invoked with no prior `moveTo`). */
+  private lastAvatarCenter: { x: number; y: number } | null = null;
   /** which compass directions `reposition` may consider -- see `moveTo`'s `directions` option */
   private lastDirections: CompassDirection[] = DIRECTION_PRIORITY;
   private hasPositioned = false;
@@ -138,8 +148,11 @@ export class Mascot {
 
   /**
    * plays a one-time "arrival" flourish the moment the mascot first appears (Phase 0, right after
-   * the Need snaps into place): a pop-in plus the same celebratory bounce/glow `setState
-   * ("celebrating")` uses elsewhere. Both the caption and the dialog panel stay hidden
+   * the Need snaps into place): a springy overshoot pop-in plus the same celebratory bounce/glow
+   * `setState("celebrating")` uses elsewhere, topped off with a firework burst (the same
+   * `createFireworkShells` used for node-snap/evolution-confirm celebrations elsewhere) landing at
+   * the pop-in's overshoot peak, so the mascot's own entrance gets the same reward treatment as the
+   * scenario's other milestones. Both the caption and the dialog panel stay hidden
    * (`wd-mascot--arriving`/`wd-mascot-dialog--arriving`, added in the constructor) for the same
    * span -- whichever surface the caller's first content lands on, it shouldn't flash into view
    * before the flourish finishes. `reveal`, if passed, is invoked right as the flourish ends --
@@ -147,7 +160,8 @@ export class Mascot {
    * (e.g. `say(...)`) and have it already sitting in the DOM the instant it becomes visible,
    * rather than the caller setting it themselves a statement later and leaving an empty box to
    * flash first. Skips straight to idle (still invoking `reveal` and unhiding immediately, just
-   * with no transition) with no delay under `prefers-reduced-motion`, same as `animateTo`.
+   * with no transition, no firework) with no delay under `prefers-reduced-motion`, same as
+   * `animateTo`.
    */
   async arrive(reveal?: () => void): Promise<void> {
     if (prefersReducedMotion()) {
@@ -158,11 +172,31 @@ export class Mascot {
       return;
     }
     this.setState("celebrating");
+    this.fireworkAtAvatar();
     await new Promise<void>((resolve) => setTimeout(resolve, ARRIVE_DURATION_MS));
     this.setState("idle");
     reveal?.();
     this.avatarRoot.classList.remove("wd-mascot--arriving");
     this.dialogEl.classList.remove("wd-mascot-dialog--arriving");
+  }
+
+  /**
+   * spawns `arrive()`'s firework burst at wherever the avatar last landed (`lastAvatarCenter`,
+   * `avatarHost`-local pixel space -- already the right coordinate space for `createFireworkShells`
+   * since `avatarHost` and `WardleyDemo`'s own container share the same pixel origin, same as
+   * `reposition`'s own `avatarRect` math). No-op if `reposition()` has never run (e.g. `arrive()`
+   * called without a prior `moveTo`, as some unit tests do) -- nothing to burst at yet.
+   */
+  private fireworkAtAvatar(): void {
+    const center = this.lastAvatarCenter;
+    if (!center) return;
+    setTimeout(() => {
+      const shells = createFireworkShells(center.x, center.y);
+      for (const shell of shells) this.avatarHost.appendChild(shell);
+      setTimeout(() => {
+        for (const shell of shells) shell.remove();
+      }, FIREWORK_CLEANUP_MS);
+    }, ARRIVE_FIREWORK_DELAY_MS);
   }
 
   /**
@@ -275,6 +309,7 @@ export class Mascot {
     if (isFirstPosition) this.avatarRoot.style.transition = "none";
     this.avatarRoot.style.left = `${avatarRect.left}px`;
     this.avatarRoot.style.top = `${avatarRect.top}px`;
+    this.lastAvatarCenter = { x: avatarRect.left + AVATAR_WIDTH / 2, y: avatarRect.top + AVATAR_HEIGHT / 2 };
     if (isFirstPosition) {
       this.hasPositioned = true;
       void this.avatarRoot.offsetHeight;

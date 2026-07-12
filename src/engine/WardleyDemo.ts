@@ -16,6 +16,7 @@ import {
   createSvgRoot,
   createTargetMarker,
   fitNodeLabel,
+  FIREWORK_CLEANUP_MS,
   flowParamsForStage,
   genesisCenterX,
   NODE_RADIUS,
@@ -67,8 +68,6 @@ const FLOW_STAGGER_DELAY = -0.47;
 /** delay so the root node's idle "charged" glow stays permanently phase-shifted behind the draggable node's */
 const CHARGED_STAGGER_DELAY = "0.4s";
 
-/** firework shell animation is 1.1s plus up to ~0.36s shell stagger; pad before cleanup */
-const FIREWORK_CLEANUP_MS = 1700;
 const FIREWORK_BURST_STAGGER_MS = 250;
 
 /** how long the map caption (e.g. "Let's turn it into a Wardley Map!") stays fully visible before fading out */
