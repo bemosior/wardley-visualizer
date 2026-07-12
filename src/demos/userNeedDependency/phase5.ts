@@ -18,14 +18,36 @@ const MASCOT_MULTIPLE_PARTS_DETAIL =
   "It often takes multiple capabilities to come together to meet the user need.";
 
 /**
+ * an open patch of canvas whitespace to the right of the whole value chain, in viewBox
+ * coordinates — not anchored to any node, same technique as `phase7.ts`'s own step-back point (see
+ * its doc comment), just to the side instead of below. Derived from the chain's own actual node
+ * positions (the User row and the rightmost Capability, post-relabel-fill) rather than a
+ * hardcoded default-layout constant, so it stays clear of the row regardless of `layout`/`config`
+ * overrides: `x` clears the rightmost Capability's circle by a full `DEFAULT_CAPABILITY_GAP` (the
+ * same rhythm the row's own nodes are spaced at), clamped to the viewBox's own right edge so it
+ * never lands off-canvas; `y` sits vertically centered between the User row and the Capability
+ * row, so the avatar reads as beside the whole chain rather than level with any one row of it.
+ */
+function rightOfChainPoint(ctx: ScenarioContext, rightmostCapabilityId: string): { x: number; y: number } {
+  const { demo, chain } = ctx;
+  const viewBox = demo.getViewBoxSize();
+  const userPos = demo.getNodePosition(chain.user.id)!;
+  const rightPos = demo.getNodePosition(rightmostCapabilityId)!;
+  return {
+    x: Math.min(viewBox.width, rightPos.x + DEFAULT_CAPABILITY_GAP),
+    y: (userPos.y + rightPos.y) / 2,
+  };
+}
+
+/**
  * Phase 5: between Phase 0 (drag the Need into place) and Phase 10 (personalize via the form).
  * Starts right where `phase0.ts` leaves off (its own "You made a Value Chain!" caption already
  * shown and confirmed there), walking the visitor through the chain node by node instead of
  * summarizing it all in one beat: re-anchoring the mascot's avatar to the User node ("This is a
  * user."), then the Need ("This is a user need."), then a single Capability node ("This is a
- * capability."), each a short caption gated behind its own "Next" — before the Part A/B/C beat
- * below generalizes from that one capability to "the recipe often calls for many parts" (long
- * enough to need two captions in a row instead of one).
+ * capability."), each a short caption gated behind its own "Next" — before the recipe beat below
+ * generalizes from that one capability to "the recipe often calls for many parts" (long enough to
+ * need two captions in a row instead of one).
  *
  * For the Capability stop, Phase 0's config is allowed to render only *one* Capability node (e.g.
  * `preview.html`'s hand-tuned host-embed config, which deliberately shows a single "How their need
@@ -39,11 +61,16 @@ const MASCOT_MULTIPLE_PARTS_DETAIL =
  * and connects each new node to the Need (nothing to do here for `index.html`'s default layout,
  * which already renders all three from Phase 0 — the "missing" list is just empty).
  *
- * Once all three exist, relabels them "Part A"/"Part B"/"Part C" *by final left-to-right screen
- * position* (not by domain id order, since a host config's pre-existing node isn't necessarily
- * `dependency-1`), re-anchors the mascot's avatar to the rightmost of the sorted row, and explains
- * (two captions in a row -- this one runs long enough that a single caption would exceed
- * `Mascot.say`'s char guard) that a need is sometimes met by multiple parts adding up together.
+ * With all three Capability nodes on screen (still under their generic placeholder labels), steps
+ * the mascot's avatar back into open canvas whitespace to the right of the whole chain
+ * (`rightOfChainPoint`/`Mascot.moveToViewBoxPoint`, the same node-independent technique Phase 7
+ * uses to step back for its own introduction) and explains, stepping back from any one node to
+ * talk about the chain as a whole (two captions in a row -- this one runs long enough that a
+ * single caption would exceed `Mascot.say`'s char guard), that a need is sometimes met by multiple
+ * parts adding up together like a recipe. *Only then* relabels the three nodes "Part A"/"Part
+ * B"/"Part C" *by final left-to-right screen position* (not by domain id order, since a host
+ * config's pre-existing node isn't necessarily `dependency-1`) -- the visitor hears the "it takes
+ * multiple parts" idea before seeing the parts themselves get named, rather than the reverse.
  * Waits for a final "Next" gate before returning, so the caller (`phase10.ts`) can start directly
  * with "What does the user need?" instead of also showing its own opening caption.
  */
@@ -90,17 +117,16 @@ export async function runPhase5(ctx: ScenarioContext): Promise<void> {
     .map((capability) => ({ capability, pos: demo.getNodePosition(capability.id)! }))
     .sort((a, b) => a.pos.x - b.pos.x);
 
-  byScreenX.forEach(({ capability }, i) => {
-    ctx.chain = relabelCapability(ctx.chain, capability.id, PART_LABELS[i]);
-    demo.relabelNode(capability.id, PART_LABELS[i]);
-  });
-
-  const right = byScreenX[2].capability;
-  const rightPos = demo.getNodePixelPosition(right.id);
-  if (rightPos) mascot.moveTo(right.id, rightPos);
+  const { x, y } = rightOfChainPoint(ctx, byScreenX[2].capability.id);
+  mascot.moveToViewBoxPoint(x, y);
 
   mascot.say(MASCOT_MULTIPLE_PARTS_INTRO);
   await mascot.confirmPlacement("Next");
   mascot.say(MASCOT_MULTIPLE_PARTS_DETAIL);
   await mascot.confirmPlacement("Next");
+
+  byScreenX.forEach(({ capability }, i) => {
+    ctx.chain = relabelCapability(ctx.chain, capability.id, PART_LABELS[i]);
+    demo.relabelNode(capability.id, PART_LABELS[i]);
+  });
 }
