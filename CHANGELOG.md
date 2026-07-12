@@ -3,6 +3,31 @@
 Historical record of completed work, pulled out of [TODO.md](TODO.md) to keep
 that file focused on what's still open. Newest first.
 
+## 2026-07-12 — v0.4.0 credits panel move & evolution-drag jump fix
+
+### End credits become a floating top-right card
+
+`13b16ad`: the end credits used to sit in page flow below the map — easy to miss on a host page a
+visitor might not scroll to. Anchored instead as a small floating card in the map's top-right corner
+(clear of the mascot/nodes by the time the Finale reveals it), keeping the same scrolling name list
+and reveal timing; `#demo-a` becomes `position: relative` via the engine's own `.wardley-demo-root`
+class add, so no host-page CSS changes were needed beyond the credits markup itself. Two follow-ups
+same evening: `37685f3` added a dismiss button so a visitor can close the card immediately instead of
+it sitting in the way indefinitely, and `20e2566` fixed the name-list scroll loop — `translateY(-100%)`
+only cleared the list's own height, so the final name rose to the panel's bottom edge and jump-cut
+back instead of scrolling fully off-screen; fixed by also subtracting the `.credits-scroll`
+container's height, matching how the list starts fully hidden below.
+
+### Evolution-axis drag: fix node jump when confirming without a drag
+
+`ad97a5b`: `slideToGenesis` only wrote `node.x` on natural tween completion, never on cancellation, so
+a tap that cancelled the slide mid-flight (or one after it had already finished) left `node.x` stale.
+`attachAxisDrag` then snapshotted that stale `node.x` into `currentX` once at setup time, before the
+slide had a chance to finish — so confirming without ever actually dragging re-stamped the node back
+to its pre-slide position instead of wherever it visually sat. Fixed on both ends: cancelling a slide
+now commits `node.x`/`node.y` to wherever the tween had actually reached, and `confirm()` re-reads
+`node.x` when no real drag happened instead of trusting the stale setup-time snapshot.
+
 ## 2026-07-12 — v0.3.2 preview host-CSS fidelity fix
 
 `4b1b381`: the mascot placed itself East of Phase 5's Capability node in local `preview.html` but
