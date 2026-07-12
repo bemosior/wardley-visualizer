@@ -67,12 +67,12 @@ async function passCelebrateDelay(): Promise<void> {
   }
 }
 
-/** drags the Need into place (default layout's target is centerX=200, needY=76 for the default 400x300 viewBox), then clicks past its seven "Next" gates (Phase 0's opening caption, then Phase 5's User/Need/Capability captions and its two-caption "recipe" beat) and Phase 7's single "I'm Ben" introduction gate into the form */
+/** drags the Need into place (default layout's target is centerX=200, needY=76 for the default 400x300 viewBox), then clicks past its eight "Next"/gate links (Phase 0's opening caption and its own "A value chain?" recipe follow-up, then Phase 5's User/Need/Capability captions and its two-caption "recipe" beat) and Phase 7's single "I'm Ben" introduction gate into the form */
 async function completeDragStep(canvas: HTMLElement, mascotHost: HTMLElement): Promise<void> {
   const needNode = canvas.querySelector('[data-node-id="need"]')!;
   drag(needNode, { x: 200, y: 76 });
   await flush();
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < 8; i++) {
     clickNext(mascotHost);
     await flush();
   }
@@ -115,7 +115,7 @@ describe("runValueChainScenario", () => {
     );
     const gateLink = mascotHost.querySelector<HTMLButtonElement>(".wd-next-link");
     expect(gateLink).not.toBeNull();
-    expect(gateLink!.textContent).toBe("Next");
+    expect(gateLink!.textContent).toBe("A value chain?");
   });
 
   it("walks the user through User/Need/Capability, says the recipe line before relabeling, then relabels the three Capability nodes to Part A/B/C right as it explains multi-part needs, and has the mascot introduce itself before the form", async () => {
@@ -123,6 +123,13 @@ describe("runValueChainScenario", () => {
     const needNode = canvas.querySelector('[data-node-id="need"]')!;
     drag(needNode, { x: 200, y: 76 });
     await flush();
+    clickNext(mascotHost);
+    await flush();
+
+    expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe(
+      "A value chain! It's a recipe for delivering value.",
+    );
+
     clickNext(mascotHost);
     await flush();
 
@@ -204,7 +211,7 @@ describe("runValueChainScenario", () => {
     const needNode = canvas.querySelector('[data-node-id="need"]')!;
     drag(needNode, { x: 200, y: 284 });
     await flush();
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 4; i++) {
       clickNext(mascotHost);
       await flush();
     }
@@ -525,7 +532,7 @@ describe("runValueChainScenario", () => {
 
     expect(resolved).toBe(false);
     expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe(
-      "Use the map to think To make a strategy, we ask the map special questions that help us think strategically. ",
+      "Use the map to think. To make a strategy, we ask the map special questions that help us think strategically.",
     );
 
     // Phase 25's own confirm link starts Phase 30's Q&A, opening on the first concept/node gate --

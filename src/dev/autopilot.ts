@@ -103,7 +103,11 @@ export function attachAutopilot({ avatarHost, dialogHost, target }: AutopilotOpt
     const link = findLink();
     const linkText = link?.textContent?.trim();
 
-    if (linkText === "Next") {
+    if (linkText === "A value chain?") {
+      // Phase 0's "it's a recipe" follow-up gate, right after the opening "You made a Value
+      // Chain!" caption -- no target stops here, always click through
+      link!.click();
+    } else if (linkText === "Next") {
       plainNextCount++;
       if (plainNextCount <= 6) {
         // Phase 0's opening caption, then Phase 5's five gates (User/Need/Capability, and the
