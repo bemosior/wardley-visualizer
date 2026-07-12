@@ -172,6 +172,67 @@ describe("pickMascotPlacement avoiding evolution-stage labels (hard constraint)"
   });
 });
 
+describe("pickMascotPlacement staying on the map (hard constraint)", () => {
+  it("never lets the avatar land off the map when some direction fits fully on it", () => {
+    const anchor = { x: 290, y: 150, radius: 20 };
+    const bounds = { width: 300, height: 300 };
+    // anchored near the host's right edge -- S/N/E all spill the avatar's right edge past x=300;
+    // only W keeps it fully on the map
+    const placement = pickMascotPlacement(anchor, AVATAR, null, NO_OBSTACLES, bounds, GAP, CLEARANCE);
+
+    expect(placement.direction).toBe("W");
+    expect(placement.avatarRect.left).toBeGreaterThanOrEqual(0);
+    expect(placement.avatarRect.right).toBeLessThanOrEqual(bounds.width);
+  });
+
+  it("still returns a placement without throwing when the avatar can't fit on the map in any direction", () => {
+    const anchor = { x: 50, y: 50, radius: 20 };
+    const bounds = { width: 5, height: 5 };
+
+    expect(() => pickMascotPlacement(anchor, AVATAR, null, NO_OBSTACLES, bounds, GAP, CLEARANCE)).not.toThrow();
+  });
+
+  it("weighs an off-map avatar the same as a hard obstacle hit -- prefers crossing an edge over leaving the map", () => {
+    const anchor = { x: 50, y: 50, radius: 20 };
+    const bounds = { width: 100, height: 150 };
+    // S stays fully on the map (bottom at 143 of 150) but crosses an edge; N leaves the map
+    // entirely (top at -43) but is otherwise edge-free. Restricted to just these two directions so
+    // E/W/diagonals (which this obstacle set happens to leave both edge- and off-map-free) don't
+    // muddy the comparison.
+    const obstacles: MascotObstacles = { nodes: [], edges: [{ a: { x: -1000, y: 110 }, b: { x: 1000, y: 110 } }], labels: [] };
+
+    const placement = pickMascotPlacement(anchor, AVATAR, null, obstacles, bounds, GAP, CLEARANCE, ["N", "S"]);
+
+    expect(placement.direction).toBe("S");
+  });
+
+  it("never lets the caption spill more than 25% of its own width off the map", () => {
+    const anchor = { x: 290, y: 150, radius: 20 };
+    const bounds = { width: 300, height: 300 };
+    const caption = { width: 100, height: 32 };
+    // same right-edge-hugging anchor as the avatar-only test above; an unflipped caption beside a
+    // rightward avatar candidate would spill most of its width past x=300
+    const placement = pickMascotPlacement(anchor, AVATAR, caption, NO_OBSTACLES, bounds, GAP, CLEARANCE);
+
+    const spill = Math.max(0, placement.captionRect!.right - bounds.width) + Math.max(0, -placement.captionRect!.left);
+    expect(spill / caption.width).toBeLessThanOrEqual(0.25);
+  });
+
+  it("weighs a caption over the 25% budget the same as a hard obstacle hit -- prefers crossing an edge over exceeding it", () => {
+    const anchor = { x: 50, y: 150, radius: 0 };
+    const caption = { width: 100, height: 32 };
+    const bounds = { width: 180, height: 300 };
+    // S's caption (left 78-178) fits within bounds.width=180; E's caption (left 111-211) spills 31
+    // of its 100px width past x=180 -- a 31% budget violation. An edge sits only across S's avatar,
+    // so a correct picker still prefers crossing it over landing E's over-budget caption.
+    const obstacles: MascotObstacles = { nodes: [], edges: [{ a: { x: -1000, y: 190 }, b: { x: 1000, y: 190 } }], labels: [] };
+
+    const placement = pickMascotPlacement(anchor, AVATAR, caption, obstacles, bounds, GAP, CLEARANCE, ["S", "E"]);
+
+    expect(placement.direction).toBe("S");
+  });
+});
+
 describe("pickMascotPlacement avoiding edges (soft constraint)", () => {
   it("prefers a diagonal gap over crossing an edge when every cardinal direction is blocked", () => {
     const anchor = { x: 100, y: 100, radius: 40 };

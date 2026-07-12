@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { inflateRect, rectFromCenter, rectIntersectsCircle, rectIntersectsSegment, rectOverflow, rectsIntersect, shiftRect } from "./geometry";
+import {
+  horizontalOverflow,
+  inflateRect,
+  rectFromCenter,
+  rectIntersectsCircle,
+  rectIntersectsSegment,
+  rectOverflow,
+  rectsIntersect,
+  shiftRect,
+} from "./geometry";
 
 describe("rectFromCenter / shiftRect / inflateRect", () => {
   it("builds a rect centered on the given point", () => {
@@ -83,5 +92,17 @@ describe("rectOverflow", () => {
   it("sums how far the rect spills past every side it crosses", () => {
     const rect = { left: -3, top: -2, right: 108, bottom: 50 };
     expect(rectOverflow(rect, { width: 100, height: 40 })).toBe(3 + 2 + 8 + 10);
+  });
+});
+
+describe("horizontalOverflow", () => {
+  it("is zero when the rect fits entirely within bounds horizontally, even if it overflows vertically", () => {
+    const rect = { left: 5, top: -50, right: 15, bottom: 500 };
+    expect(horizontalOverflow(rect, { width: 100, height: 100 })).toBe(0);
+  });
+
+  it("sums how far the rect spills past the left and right edges, ignoring top/bottom", () => {
+    const rect = { left: -3, top: -2, right: 108, bottom: 500 };
+    expect(horizontalOverflow(rect, { width: 100, height: 40 })).toBe(3 + 8);
   });
 });

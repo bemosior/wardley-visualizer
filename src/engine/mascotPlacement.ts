@@ -1,5 +1,14 @@
 import type { Point } from "./animate";
-import { inflateRect, rectFromCenter, rectIntersectsCircle, rectIntersectsSegment, rectOverflow, rectsIntersect, type Rect } from "./geometry";
+import {
+  horizontalOverflow,
+  inflateRect,
+  rectFromCenter,
+  rectIntersectsCircle,
+  rectIntersectsSegment,
+  rectOverflow,
+  rectsIntersect,
+  type Rect,
+} from "./geometry";
 
 export type CompassDirection = "S" | "N" | "E" | "W" | "SE" | "SW" | "NE" | "NW";
 
@@ -33,12 +42,19 @@ const DIRECTION_VECTORS: Record<CompassDirection, { dx: number; dy: number }> = 
   NW: { dx: -1, dy: -1 },
 };
 
-/** dominates every lower tier -- a candidate that clips even one node is worse than a candidate that clips any number of edges or spills off-screen */
-const NODE_HIT_WEIGHT = 1_000_000;
-/** dominates overflow/tie-break, but never a node hit -- edges are a soft "avoid if possible" constraint */
+/**
+ * dominates every lower tier -- a candidate that violates any "never" rule (clips a node or label,
+ * plants the avatar off the map, or spills more than `CAPTION_OFF_MAP_BUDGET` of the caption's
+ * width off the map) is worse than a candidate that clips any number of edges or spills less.
+ */
+const HARD_CONSTRAINT_WEIGHT = 1_000_000;
+/** dominates overflow/tie-break, but never a hard-constraint hit -- edges are a soft "avoid if possible" constraint */
 const EDGE_HIT_WEIGHT = 10_000;
 /** spaces `DIRECTION_PRIORITY` entries far enough apart to break ties deterministically without ever outweighing a real overflow-px difference */
 const TIE_BREAK_STEP = 0.01;
+
+/** the most the caption may spill past the map's left/right edges, as a fraction of its own width -- past this it's scored as a hard-constraint violation, same as clipping a node */
+const CAPTION_OFF_MAP_BUDGET = 0.25;
 
 /**
  * a candidate's offset from the anchor is, by construction, exactly `clearance` past the anchor's
@@ -111,12 +127,17 @@ function inflate(node: Point & { radius: number }, clearance: number): Point & {
  * Every one of the 8 compass directions around the anchor, crossed with both caption sides (when
  * there's a caption), is scored and the minimum wins:
  *   1. never let the avatar or caption overlap a node (including nodes other than the anchor) or
- *      an evolution-stage label chip -- the dominant term, so any candidate clipping either loses
- *      to any candidate that doesn't, no matter what else is true about it.
- *   2. avoid crossing an edge, but cross one rather than a node/label if every direction crosses one.
- *   3. avoid spilling outside `bounds` (the avatar host's own rect) -- `null` when the host has no
- *      real layout yet (e.g. unit tests, or a reposition that races page load), in which case this
- *      tier is skipped entirely rather than scored against a meaningless 0x0 box.
+ *      an evolution-stage label chip; never let the avatar land outside `bounds` (the map) at all;
+ *      never let more than `CAPTION_OFF_MAP_BUDGET` of the caption's own width spill past the map's
+ *      left/right edges -- all four are the dominant term, so any candidate that breaks one of them
+ *      loses to any candidate that doesn't, no matter what else is true about it. Skipped when
+ *      `bounds` is `null` (the host has no real layout yet -- e.g. unit tests, or a reposition that
+ *      races page load), since there's no meaningful "the map" to measure against yet.
+ *   2. avoid crossing an edge, but cross one rather than break a rule from (1) if every direction does.
+ *   3. among candidates that already satisfy (1), prefer less total spill past `bounds` anyway (0 for
+ *      every avatar candidate once (1) is enforced, but still meaningful for the caption's remaining,
+ *      in-budget spill, and it's what lets a hopeless scene -- nothing satisfies (1) -- degrade
+ *      gracefully to the least-bad candidate instead of an arbitrary one).
  *   4. break remaining ties by `DIRECTION_PRIORITY`'s order, so the result is deterministic and
  *      favors the most naturally-read placement (below, then above, then beside) when several
  *      directions are otherwise equivalent.
@@ -157,12 +178,21 @@ export function pickMascotPlacement(
       const edgeHits = obstacles.edges.filter(
         (e) => rectIntersectsSegment(avatarRect, e) || (captionRect !== null && rectIntersectsSegment(captionRect, e)),
       ).length;
+      // the avatar must never be off the map at all; the caption may spill, but never more than
+      // CAPTION_OFF_MAP_BUDGET of its own width -- both `false` (never violated) when `bounds`
+      // isn't measurable yet, same as every other bounds-dependent check here.
+      const avatarOffMap = bounds !== null && rectOverflow(avatarRect, bounds) > 0;
+      const captionOverBudget =
+        bounds !== null &&
+        captionRect !== null &&
+        horizontalOverflow(captionRect, bounds) / (captionRect.right - captionRect.left) > CAPTION_OFF_MAP_BUDGET;
+      const hardHits = nodeHits + labelHits + (avatarOffMap ? 1 : 0) + (captionOverBudget ? 1 : 0);
       const overflow = bounds
         ? rectOverflow(avatarRect, bounds) + (captionRect !== null ? rectOverflow(captionRect, bounds) : 0)
         : 0;
       const tieBreak = (dirIndex * flips.length + flipIndex) * TIE_BREAK_STEP;
 
-      const score = (nodeHits + labelHits) * NODE_HIT_WEIGHT + edgeHits * EDGE_HIT_WEIGHT + overflow + tieBreak;
+      const score = hardHits * HARD_CONSTRAINT_WEIGHT + edgeHits * EDGE_HIT_WEIGHT + overflow + tieBreak;
       if (score < bestScore) {
         bestScore = score;
         best = { direction, flip, avatarRect, captionRect };
