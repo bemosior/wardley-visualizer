@@ -10,6 +10,18 @@ export type CompassDirection = "S" | "N" | "E" | "W" | "SE" | "SW" | "NE" | "NW"
  */
 export const DIRECTION_PRIORITY: CompassDirection[] = ["S", "N", "E", "W", "SE", "SW", "NE", "NW"];
 
+/**
+ * `DIRECTION_PRIORITY` minus the two directions that share the anchor's exact y (E/W) -- for a
+ * caller (Phase 20's evolution-axis drag) whose anchor node is about to slide freely along a fixed
+ * horizontal row across the *entire* map width. `pickMascotPlacement` only ever sees a snapshot of
+ * the scene, so it can't know a node is about to travel through the very spot it just chose beside
+ * that node -- E/W candidates sit at the anchor's own y, so a long horizontal drag runs the avatar
+ * over every time. The four diagonals stay in the set: their vertical offset (see
+ * `avatarRectForDirection`'s diagonal branch) already clears the anchor's row by the same margin S/N
+ * do, so they're just as safe as a fallback when both S and N cross an edge.
+ */
+export const NON_ROW_DIRECTIONS: CompassDirection[] = DIRECTION_PRIORITY.filter((d) => d !== "E" && d !== "W");
+
 const DIRECTION_VECTORS: Record<CompassDirection, { dx: number; dy: number }> = {
   S: { dx: 0, dy: 1 },
   N: { dx: 0, dy: -1 },
@@ -108,6 +120,9 @@ function inflate(node: Point & { radius: number }, clearance: number): Point & {
  *      directions are otherwise equivalent.
  *
  * Pure and DOM-free so the search itself is unit-testable without mocking `getBoundingClientRect`.
+ *
+ * `directions` narrows the 8-direction search (default `DIRECTION_PRIORITY`) -- see
+ * `NON_ROW_DIRECTIONS` for the one caller that restricts it today.
  */
 export function pickMascotPlacement(
   anchor: Point & { radius: number },
@@ -117,6 +132,7 @@ export function pickMascotPlacement(
   bounds: BoxSize | null,
   gap: number,
   clearance: number,
+  directions: CompassDirection[] = DIRECTION_PRIORITY,
 ): MascotPlacement {
   const inflatedNodes = obstacles.nodes.map((n) => inflate(n, clearance));
   const flips = captionSize ? [false, true] : [false];
@@ -124,7 +140,7 @@ export function pickMascotPlacement(
   let best: MascotPlacement | null = null;
   let bestScore = Infinity;
 
-  DIRECTION_PRIORITY.forEach((direction, dirIndex) => {
+  directions.forEach((direction, dirIndex) => {
     const avatarRect = avatarRectForDirection(direction, anchor, avatarSize, clearance);
     flips.forEach((flip, flipIndex) => {
       const captionRect = captionSize ? captionRectFor(avatarRect, captionSize, flip, gap) : null;
@@ -148,6 +164,6 @@ export function pickMascotPlacement(
     });
   });
 
-  // DIRECTION_PRIORITY is a non-empty literal, so the loop above always assigns `best` at least once.
+  // every caller passes a non-empty `directions` array, so the loop above always assigns `best` at least once.
   return best!;
 }

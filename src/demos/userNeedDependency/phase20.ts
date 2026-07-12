@@ -1,5 +1,6 @@
 import type { WardleyDemo } from "../../engine/WardleyDemo";
 import type { Mascot } from "../../engine/mascot";
+import { NON_ROW_DIRECTIONS } from "../../engine/mascotPlacement";
 import type { ScenarioContext, ValueChainScenarioOptions } from "./index";
 
 /**
@@ -84,8 +85,10 @@ export async function runPhase20(ctx: ScenarioContext): Promise<void> {
     if (!allPlaced) {
       const pos = demo.getNodePixelPosition(chain.need.id);
       // the Need is about to drag freely along the evolution axis below while the avatar stays
-      // put, tracking its pre-drag position rather than chasing it pixel-by-pixel.
-      if (pos) mascot.moveTo(chain.need.id, pos);
+      // put, tracking its pre-drag position rather than chasing it pixel-by-pixel -- restricted to
+      // NON_ROW_DIRECTIONS so it never plants itself beside the node, directly in the path of that
+      // horizontal drag (see NON_ROW_DIRECTIONS' doc comment).
+      if (pos) mascot.moveTo(chain.need.id, pos, NON_ROW_DIRECTIONS);
     }
   });
   demo.beckonNode(chain.need.id);
@@ -102,7 +105,7 @@ export async function runPhase20(ctx: ScenarioContext): Promise<void> {
     demo.slideToGenesis(capability.id, undefined, () => {
       if (!allPlaced) {
         const pos = demo.getNodePixelPosition(capability.id);
-        if (pos) mascot.moveTo(capability.id, pos);
+        if (pos) mascot.moveTo(capability.id, pos, NON_ROW_DIRECTIONS);
       }
     });
     await awaitEvolutionConfirm(demo, mascot, capability.id, options.onEvolutionStep);
