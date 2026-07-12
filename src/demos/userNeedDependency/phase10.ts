@@ -26,7 +26,7 @@ export async function runPhase10(ctx: ScenarioContext): Promise<void> {
       // dedupe so each user gets exactly one pill, not one per need they have.
       options: [...new Set(NEED_CATALOG.map((need) => need.user))],
     },
-    "Pick a user below. ↓",
+    "Pick a user to help below. ↓",
   );
   ctx.chain = relabelUser(ctx.chain, userLabel);
   demo.relabelNode(ctx.chain.user.id, ctx.chain.user.label);
@@ -47,7 +47,7 @@ export async function runPhase10(ctx: ScenarioContext): Promise<void> {
       prompt: "What does " + userLabel + " need?",
       options: relevantNeeds.map((need) => need.label),
     },
-    "Pick a user need below. ↓",
+    "Pick their user need below. ↓",
   );
   ctx.chain = relabelNeed(ctx.chain, needLabel);
   demo.relabelNode(ctx.chain.need.id, ctx.chain.need.label);
@@ -93,7 +93,7 @@ export async function runPhase10(ctx: ScenarioContext): Promise<void> {
         prompt: `What's something ${i > 0 ? "else " : ""}they depend on to get their "${needLabel}" need met? \r\n(${i + 1} of ${capabilityCount})`,
         options: remainingCapabilities,
       },
-      "Pick a capability below. ↓",
+      "Pick three capabilities below. ↓",
     );
     usedCapabilityLabels.add(capabilityLabel.trim().toLowerCase());
     ctx.chain = relabelCapability(ctx.chain, capability.id, capabilityLabel);
