@@ -118,7 +118,7 @@ describe("runValueChainScenario", () => {
     expect(gateLink!.textContent).toBe("Next");
   });
 
-  it("walks the user through User/Need/Capability, relabels the three Capability nodes to Part A/B/C, explains multi-part needs (two captions in a row), then has the mascot introduce itself before the form", async () => {
+  it("walks the user through User/Need/Capability, explains multi-part needs (two captions in a row) before relabeling, then relabels the three Capability nodes to Part A/B/C and has the mascot introduce itself before the form", async () => {
     const { canvas, mascotHost } = buildScenario(vi.fn());
     const needNode = canvas.querySelector('[data-node-id="need"]')!;
     drag(needNode, { x: 200, y: 76 });
@@ -145,11 +145,13 @@ describe("runValueChainScenario", () => {
     clickNext(mascotHost);
     await flush();
 
+    // the recipe beat is said before the three Capability nodes are relabeled -- they're still
+    // under their generic placeholder label at this point
     expect(mascotHost.querySelector("form")).toBeNull();
     expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe("A Value Chain is like a recipe.");
-    expect(canvas.querySelector('[data-node-id="dependency-1"] .wd-node-label')!.textContent).toBe("Part A");
-    expect(canvas.querySelector('[data-node-id="dependency-2"] .wd-node-label')!.textContent).toBe("Part B");
-    expect(canvas.querySelector('[data-node-id="dependency-3"] .wd-node-label')!.textContent).toBe("Part C");
+    expect(canvas.querySelector('[data-node-id="dependency-1"] .wd-node-label')!.textContent).toBe("Capability");
+    expect(canvas.querySelector('[data-node-id="dependency-2"] .wd-node-label')!.textContent).toBe("Capability");
+    expect(canvas.querySelector('[data-node-id="dependency-3"] .wd-node-label')!.textContent).toBe("Capability");
 
     clickNext(mascotHost);
     await flush();
@@ -163,6 +165,10 @@ describe("runValueChainScenario", () => {
     expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe(
       "I'm Ben, by the way. I'm here to help you learn Wardley Mapping!",
     );
+    // relabeled to Part A/B/C right as the recipe beat hands off to Phase 7's introduction
+    expect(canvas.querySelector('[data-node-id="dependency-1"] .wd-node-label')!.textContent).toBe("Part A");
+    expect(canvas.querySelector('[data-node-id="dependency-2"] .wd-node-label')!.textContent).toBe("Part B");
+    expect(canvas.querySelector('[data-node-id="dependency-3"] .wd-node-label')!.textContent).toBe("Part C");
 
     clickNext(mascotHost);
     await flush();
