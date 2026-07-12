@@ -2,8 +2,8 @@ import type { WardleyDemo, EvolutionDragHandle } from "../engine/WardleyDemo";
 
 /**
  * named moments in the demo's current (built-so-far) flow that `index.html?skipTo=` can land on.
- * `intro`: skip the Phase 0 drag and all six of the resulting "Next" gates (Phase 0's "You made a
- * Value Chain!" caption, then Phase 5's User/Need/Capability walkthrough and its two-caption
+ * `intro`: skip the Phase 0 drag and all five of the resulting "Next" gates (Phase 0's "You made a
+ * Value Chain!" caption, then Phase 5's User/Need/Capability walkthrough and its one-caption
  * "recipe" beat), landing at Phase 7's "I'm Ben, by the way" introduction (its own "Nice to meet
  * you!" gate is left for a real click).
  * `phase10`: also click past Phase 7's "I'm Ben" introduction gate, land at the start of
@@ -12,8 +12,8 @@ import type { WardleyDemo, EvolutionDragHandle } from "../engine/WardleyDemo";
  * `phase20`: also click past the Phase 10->20 gate and the evolution-intro gate, land at today's
  * frontier.
  * `finale`: also auto-click every Phase 20 confirm-placement link, land at the placement celebration.
- * `thinking`: also click through Phase 25's explanatory gate and into Phase 30, auto-pick the
- * first option for every question, land at the Phase 30 celebration (its own final "What's
+ * `thinking`: also click through both of Phase 25's explanatory beats and into Phase 30, auto-pick
+ * the first option for every question, land at the Phase 30 celebration (its own final "What's
  * next →" is still left for a real click).
  * `recap`: also click that final "What's next →" gate, land on the closing recap + CTA link.
  */
@@ -71,10 +71,10 @@ function fillAndSubmit(field: HTMLElement): void {
  * the-more-of-the-peaceful-sky plan for why this exists instead of a resumable step machine.
  */
 export function attachAutopilot({ avatarHost, dialogHost, target }: AutopilotOptions): Autopilot {
-  // counts only the plain "Next" links -- Phase 0's opening caption, Phase 5's five gates (the
-  // User/Need/Capability walkthrough, plus its "recipe" beat which runs long enough to need two
-  // captions in a row), and the Phase 10->20 gate all share identical link text, so they can't be
-  // told apart by content the way every other gate below is (by its own distinct label).
+  // counts only the plain "Next" links -- Phase 0's opening caption, Phase 5's four gates (the
+  // User/Need/Capability walkthrough, plus its one-caption "recipe" beat), and the Phase 10->20
+  // gate all share identical link text, so they can't be told apart by content the way every other
+  // gate below is (by its own distinct label).
   let plainNextCount = 0;
 
   function disconnect(): void {
@@ -109,11 +109,11 @@ export function attachAutopilot({ avatarHost, dialogHost, target }: AutopilotOpt
       link!.click();
     } else if (linkText === "Next") {
       plainNextCount++;
-      if (plainNextCount <= 6) {
-        // Phase 0's opening caption, then Phase 5's five gates (User/Need/Capability, and the
-        // two-caption "recipe" beat) -- always skip past them, no target stops here
+      if (plainNextCount <= 5) {
+        // Phase 0's opening caption, then Phase 5's four gates (User/Need/Capability, and the
+        // "recipe" beat) -- always skip past them, no target stops here
         link!.click();
-      } else if (plainNextCount === 7) {
+      } else if (plainNextCount === 6) {
         // Phase 10 -> Phase 20 gate -- click through it for every target that reaches Phase 20.
         // Every target that stops here for good (celebrate/intro/phase10 never reach this count,
         // they disconnect earlier) still disconnects immediately, same as before this gate got a
@@ -121,10 +121,14 @@ export function attachAutopilot({ avatarHost, dialogHost, target }: AutopilotOpt
         // evolution-intro gate below before it lands at today's frontier
         if (target === "phase20" || target === "finale" || target === "thinking" || target === "recap") link!.click();
         if (target !== "finale" && target !== "thinking" && target !== "recap" && target !== "phase20") disconnect();
-      } else if (plainNextCount === 8) {
+      } else if (plainNextCount === 7) {
         // Phase 20 -> Phase 25 gate (right after "You made a Wardley Map!") -- finale stops at
         // the placement celebration itself, so only thinking/recap click through into Phase 25's
-        // explanation before Phase 30's own "Let's get strategic →" gate
+        // first beat
+        if (target === "thinking" || target === "recap") link!.click();
+      } else if (plainNextCount === 8) {
+        // Phase 25's own internal gate, between its two beats -- thinking/recap click through
+        // into the second beat before Phase 30's own "Let's get strategic →" gate
         if (target === "thinking" || target === "recap") link!.click();
       }
     } else if (linkText === "Nice to meet you!") {
