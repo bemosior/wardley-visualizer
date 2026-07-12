@@ -561,15 +561,12 @@ describe("runValueChainScenario", () => {
     mascotHost.querySelectorAll<HTMLButtonElement>(".wd-panel-question-option")[index].click();
   }
 
-  /** the concept/node pairing gate always renders Yes/No/"Try something else" first, in that order (plus a trailing "Finish Up" once a finding exists) */
+  /** the concept/node pairing gate always renders Yes/"Try something else" first, in that order (plus a trailing "Finish Up" once a finding exists) */
   function clickYes(mascotHost: HTMLElement): void {
     clickOption(mascotHost, 0);
   }
-  function clickNo(mascotHost: HTMLElement): void {
-    clickOption(mascotHost, 1);
-  }
   function clickShuffle(mascotHost: HTMLElement): void {
-    clickOption(mascotHost, 2);
+    clickOption(mascotHost, 1);
   }
   function optionLabels(mascotHost: HTMLElement): (string | null)[] {
     return Array.from(mascotHost.querySelectorAll<HTMLButtonElement>(".wd-panel-question-option")).map(
@@ -577,7 +574,7 @@ describe("runValueChainScenario", () => {
     );
   }
 
-  it("shows a gate for the first concept/node pairing, offering only Yes/No/Try something else, and a No skips the whole concept", async () => {
+  it("shows a gate for the first concept/node pairing, offering only Yes/Try something else", async () => {
     vi.useFakeTimers();
     const canvas = document.createElement("div");
     const { mascotHost, avatarHost, dialogHost } = makeMascotHosts();
@@ -589,17 +586,7 @@ describe("runValueChainScenario", () => {
     expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(
       gatePrompt("right-methods", "Kettle"),
     );
-    expect(optionLabels(mascotHost)).toEqual(["Yes", "No", "Try something else"]);
-
-    clickNo(mascotHost);
-    await flush();
-
-    expect(mascotHost.querySelector(".wd-panel-placeholder-subheading")).toBeNull();
-    // No drops every remaining "right-methods" candidate, not just Kettle, so this lands on
-    // the next concept in the bank ("organizational inertia"), opening on Need
-    expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(
-      gatePrompt("inertia", NEED_CATALOG[0].label),
-    );
+    expect(optionLabels(mascotHost)).toEqual(["Yes", "Try something else"]);
     vi.useRealTimers();
   });
 
@@ -691,7 +678,7 @@ describe("runValueChainScenario", () => {
     });
     await reachThinkingStep(canvas, mascotHost);
 
-    expect(optionLabels(mascotHost)).toEqual(["Yes", "No", "Try something else"]);
+    expect(optionLabels(mascotHost)).toEqual(["Yes", "Try something else"]);
 
     clickYes(mascotHost);
     await flush();
@@ -701,13 +688,13 @@ describe("runValueChainScenario", () => {
     await flush();
 
     // back on a concept/node pairing gate ("organizational inertia" x Need); now that a finding
-    // exists, "Finish Up" is offered alongside Yes/No/Try something else
+    // exists, "Finish Up" is offered alongside Yes/Try something else
     expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(
       gatePrompt("inertia", NEED_CATALOG[0].label),
     );
-    expect(optionLabels(mascotHost)).toEqual(["Yes", "No", "Try something else", "Finish Up"]);
+    expect(optionLabels(mascotHost)).toEqual(["Yes", "Try something else", "Finish Up"]);
 
-    clickOption(mascotHost, 3); // "Finish Up"
+    clickOption(mascotHost, 2); // "Finish Up"
     await flush();
 
     const findingsHeading = mascotHost.querySelector(".wd-panel-findings")!.querySelector(".wd-panel-placeholder-heading");

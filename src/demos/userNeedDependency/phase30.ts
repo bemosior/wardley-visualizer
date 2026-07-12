@@ -35,23 +35,20 @@ const samePairing = (a: Pairing, b: Pairing): boolean =>
  * For each (concept, candidate node) pairing, in bank order thereafter: the mascot re-anchors to that node
  * and asks a gate question (`Mascot.showGate`) — "{concept.definition} Want to explore this with
  * {node}?" — passing `[concept.label, node.label]` as `showGate`'s `emphasize` list so both names
- * stand out from the surrounding prose (`Panel.renderWithEmphasis`); no subtitle. Yes, No, and
- * "Try something else" (shuffle — abandons the
- * current pairing and jumps to a uniformly random other still-unresolved pairing anywhere in the
- * bank) are always offered; once at least one annotation has been placed, a fourth "Finish Up"
- * option is added so a visitor who keeps choosing to continue isn't stuck clicking No/shuffle
- * forever to end the phase.
+ * stand out from the surrounding prose (`Panel.renderWithEmphasis`); no subtitle. Yes and
+ * "Try something else" (shuffle — abandons the current pairing and jumps to a uniformly random
+ * other still-unresolved pairing anywhere in the bank) are always offered; once at least one
+ * annotation has been placed, a third "Finish Up" option is added so a visitor who keeps choosing
+ * to continue isn't stuck shuffling forever to end the phase.
  *
  * Yes leads into that concept's fixed deep-dive multiple-choice question (`Mascot.showQuestion`,
  * unchanged). If the chosen answer carries an `annotation`, it's anchored permanently near that
  * node via `demo.addAnnotation`, pushed onto `findings`, and the mascot immediately pauses on a
  * "Nice insight!" gate (Keep Going / Finish Up) — only insight-producing answers interrupt the
  * flow; an answer with no annotation falls straight through to the next pairing. "Finish Up" ends
- * the phase right there, same as naturally exhausting the bank. No drops every remaining candidate
- * node for that concept, not just the current one, and advances straight to the next concept in
- * bank order — a decline is treated as "not interested in this concept," not "not this node."
- * Shuffle abandons only the current pairing and jumps to a uniformly random other still-unresolved
- * pairing anywhere in the bank, which may land back on the same concept with a different node.
+ * the phase right there, same as naturally exhausting the bank. Shuffle abandons only the current
+ * pairing and jumps to a uniformly random other still-unresolved pairing anywhere in the bank,
+ * which may land back on the same concept with a different node.
  *
  * The phase ends either via "Finish Up" or by naturally exhausting the whole bank (`remaining`
  * empties out). Either way, if any concept produced a finding, `Mascot.showFindings` renders a
@@ -74,7 +71,6 @@ export async function runPhase30(ctx: ScenarioContext): Promise<void> {
 
     const gateOptions: GateOption[] = [
       { id: "yes", label: "Yes" },
-      { id: "no", label: "No" },
       { id: "shuffle", label: "Try something else" },
     ];
     if (findings.length > 0) {
@@ -111,16 +107,9 @@ export async function runPhase30(ctx: ScenarioContext): Promise<void> {
       continue;
     }
 
-    if (choice === "no") {
-      // a decline means "not this concept," so drop every remaining candidate node for it and
-      // move straight to the next concept in bank order
-      remaining = remaining.filter((p) => p.concept.id !== current!.concept.id);
-      current = remaining[0];
-    } else {
-      // shuffle: abandon just this pairing and jump to a random other one still unresolved
-      remaining = remaining.filter((p) => !samePairing(p, current!));
-      current = remaining[Math.floor(Math.random() * remaining.length)];
-    }
+    // shuffle: abandon just this pairing and jump to a random other one still unresolved
+    remaining = remaining.filter((p) => !samePairing(p, current!));
+    current = remaining[Math.floor(Math.random() * remaining.length)];
   }
 
   if (findings.length > 0) {
