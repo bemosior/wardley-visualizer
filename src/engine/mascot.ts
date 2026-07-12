@@ -37,7 +37,7 @@ const CAPTION_MAX_CHARS = 80;
 
 /** shown in the avatar's caption whenever a panel-hosted ("big") method renders, so the visitor's
  * attention follows the mascot down to the dialog panel instead of the caption going stale */
-const POINT_TO_PANEL_TEXT = "Take a look below ↓";
+const POINT_TO_PANEL_TEXT = "Take a look below. ↓";
 
 /**
  * the mascot's guide presence -- a small avatar that tracks whichever node it's discussing, and
@@ -384,7 +384,7 @@ export class Mascot {
 
   showInstrumentPanel(heading: string, kind: EvolutionKind, initialStage: EvolutionStage, delayMs = 0, caption?: string): void {
     this.talk(delayMs);
-    this.pointToPanel(caption);
+    this.pointToPanel(caption ?? `Drag ${heading} into place. The info below will help. ↓`);
     this.panel.showInstrumentPanel(heading, kind, initialStage, delayMs);
   }
 
@@ -394,19 +394,19 @@ export class Mascot {
 
   showQuestion(heading: string, question: Question, caption?: string): Promise<QuestionOption> {
     this.talk();
-    this.pointToPanel(caption);
+    this.pointToPanel(caption ?? `Learn more about ${heading} below. ↓`);
     return this.panel.showQuestion(heading, question);
   }
 
   showGate(prompt: string, subtitle: string, options: GateOption[], emphasize?: string[], caption?: string): Promise<string> {
     this.talk();
-    this.pointToPanel(caption);
+    this.pointToPanel(caption ?? "Make a choice below. ↓");
     return this.panel.showGate(prompt, subtitle, options, emphasize);
   }
 
   showRecap(items: string[], cta: { label: string; href: string }, caption?: string): void {
     this.talk();
-    this.pointToPanel(caption);
+    this.pointToPanel(caption ?? "See your recap below. ↓");
     this.panel.showRecap(items, cta);
   }
 
@@ -417,7 +417,8 @@ export class Mascot {
 
   showFindings(findings: Finding[], heading: string, caption?: string): void {
     this.talk();
-    this.pointToPanel(caption);
+    const findingCount = findings.length;
+    this.pointToPanel(caption ?? `See your ${findingCount} finding${findingCount === 1 ? "" : "s"} below. ↓`);
     this.panel.showFindings(findings, heading);
   }
 
