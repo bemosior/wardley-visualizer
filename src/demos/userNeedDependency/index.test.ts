@@ -7,7 +7,7 @@ import { CELEBRATE_DURATION_MS } from "./phase7";
 
 function gatePrompt(conceptId: string, nodeLabel: string): string {
   const concept = CONCEPT_BANK.find((c) => c.id === conceptId)!;
-  return `${concept.definition}\n\nDo you think we could learn something from exploring ${concept.label} with ${nodeLabel}?`;
+  return `${concept.definition} Want to explore this with ${nodeLabel}?`;
 }
 
 function drag(handle: Element, to: { x: number; y: number }): void {
@@ -527,9 +527,7 @@ describe("runValueChainScenario", () => {
     expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(
       gatePrompt("right-methods", "Kettle"),
     );
-    expect(mascotHost.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe(
-      "Choosing is how you learn!",
-    );
+    expect(mascotHost.querySelector(".wd-panel-placeholder-subheading")).toBeNull();
     vi.useRealTimers();
   });
 
@@ -568,7 +566,7 @@ describe("runValueChainScenario", () => {
     );
   }
 
-  it("shows a gate for the first concept/node pairing, offering only Yes/No/Try something else, and a No skips the whole concept, switching the subtitle to 'Keep going!'", async () => {
+  it("shows a gate for the first concept/node pairing, offering only Yes/No/Try something else, and a No skips the whole concept", async () => {
     vi.useFakeTimers();
     const canvas = document.createElement("div");
     const { mascotHost, avatarHost, dialogHost } = makeMascotHosts();
@@ -576,9 +574,7 @@ describe("runValueChainScenario", () => {
     runValueChainScenario({ canvas, avatarHost, dialogHost });
     await reachThinkingStep(canvas, mascotHost);
 
-    expect(mascotHost.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe(
-      "Choosing is how you learn!",
-    );
+    expect(mascotHost.querySelector(".wd-panel-placeholder-subheading")).toBeNull();
     expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(
       gatePrompt("right-methods", "Kettle"),
     );
@@ -587,7 +583,7 @@ describe("runValueChainScenario", () => {
     clickNo(mascotHost);
     await flush();
 
-    expect(mascotHost.querySelector(".wd-panel-placeholder-subheading")!.textContent).toBe("Keep going!");
+    expect(mascotHost.querySelector(".wd-panel-placeholder-subheading")).toBeNull();
     // No drops every remaining "right-methods" candidate, not just Kettle, so this lands on
     // the next concept in the bank ("organizational inertia"), opening on Need
     expect(mascotHost.querySelector(".wd-panel-question-prompt")!.textContent).toBe(

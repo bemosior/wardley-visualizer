@@ -33,12 +33,10 @@ const samePairing = (a: Pairing, b: Pairing): boolean =>
  * built — otherwise every run opened on the same concept/node.
  *
  * For each (concept, candidate node) pairing, in bank order thereafter: the mascot re-anchors to that node
- * and asks a gate question (`Mascot.showGate`) — "{concept.definition} Do you think we could learn
- * something from exploring {concept.label} with {node}?" — passing `[concept.label,
- * node.label]` as `showGate`'s `emphasize` list so both names stand out from the surrounding
- * prose (`Panel.renderWithEmphasis`) — with subtitle "Choosing is how you
- * learn!" on the very first gate of the phase,
- * "Keep going!" on every one after. Yes, No, and "Try something else" (shuffle — abandons the
+ * and asks a gate question (`Mascot.showGate`) — "{concept.definition} Want to explore this with
+ * {node}?" — passing `[concept.label, node.label]` as `showGate`'s `emphasize` list so both names
+ * stand out from the surrounding prose (`Panel.renderWithEmphasis`); no subtitle. Yes, No, and
+ * "Try something else" (shuffle — abandons the
  * current pairing and jumps to a uniformly random other still-unresolved pairing anywhere in the
  * bank) are always offered; once at least one annotation has been placed, a fourth "Finish Up"
  * option is added so a visitor who keeps choosing to continue isn't stuck clicking No/shuffle
@@ -67,7 +65,6 @@ export async function runPhase30(ctx: ScenarioContext): Promise<void> {
   await mascot.confirmPlacement("Let's get strategic →");
 
   let remaining = buildPairings(chain, demo);
-  let gatesShown = 0;
   let current = remaining[Math.floor(Math.random() * remaining.length)];
   const findings: Finding[] = [];
 
@@ -75,7 +72,6 @@ export async function runPhase30(ctx: ScenarioContext): Promise<void> {
     const pos = demo.getNodePixelPosition(current.node.id);
     if (pos) mascot.moveTo(current.node.id, pos);
 
-    const subtitle = gatesShown++ === 0 ? "Choosing is how you learn!" : "Keep going!";
     const gateOptions: GateOption[] = [
       { id: "yes", label: "Yes" },
       { id: "no", label: "No" },
@@ -86,8 +82,8 @@ export async function runPhase30(ctx: ScenarioContext): Promise<void> {
     }
 
     const choice = await mascot.showGate(
-      `${current.concept.definition}\n\nDo you think we could learn something from exploring ${current.concept.label} with ${current.node.label}?`,
-      subtitle,
+      `${current.concept.definition} Want to explore this with ${current.node.label}?`,
+      "",
       gateOptions,
       [current.concept.label, current.node.label],
     );
