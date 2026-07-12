@@ -882,6 +882,10 @@ const CSS = `
   align-items: center;
   flex-wrap: wrap;
   gap: 0.4rem;
+  /* the caption text itself is a block element that would otherwise inherit whatever
+     text-align the host page sets on an ancestor (e.g. index.html's centered .hero) -- pin it
+     explicitly so multi-line captions always read left-aligned regardless of host page CSS. */
+  text-align: left;
   /* an absolutely-positioned flex container with no explicit width computes its shrink-to-fit
      size from the *narrowest* line its content can wrap to (effectively its widest single word)
      when combined with flex-wrap: wrap, not from max-width -- same shrink-to-fit gotcha the old
