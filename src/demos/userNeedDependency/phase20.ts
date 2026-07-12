@@ -34,10 +34,8 @@ function awaitEvolutionConfirm(
   });
 }
 
-const MASCOT_EVOLUTION_INTRO = {
-  heading: "Everything evolves.",
-  subheading: "As things evolve, they change! And that means the way we treat them should change, too.",
-};
+const MASCOT_EVOLUTION_INTRO =
+  "Everything evolves. As things evolve, they change! And that means the way we treat them should change, too.";
 
 /**
  * Phase 20: turn the value chain into a Wardley Map. Waits for the visitor to click the "Next"
@@ -68,7 +66,7 @@ export async function runPhase20(ctx: ScenarioContext): Promise<void> {
   demo.markPending(chain.capabilities.map((c) => c.id));
   demo.showMapBackdrop(scale);
 
-  mascot.say(`${MASCOT_EVOLUTION_INTRO.heading} ${MASCOT_EVOLUTION_INTRO.subheading}`);
+  mascot.say(MASCOT_EVOLUTION_INTRO);
   await mascot.confirmPlacement("Let's try it →");
 
   // guards every delayed mascot.moveTo below (the Need's slide, and each capability's, further

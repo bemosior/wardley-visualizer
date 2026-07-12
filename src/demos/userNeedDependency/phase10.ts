@@ -2,7 +2,7 @@ import { relabelCapability, relabelNeed, relabelUser } from "../../domain/valueC
 import { NEED_CATALOG } from "../../domain/needCatalog";
 import type { ScenarioContext } from "./index";
 
-const MASCOT_CHAIN_COMPLETE = { heading: "Value Chain done!", subheading: "Now let's turn this into a Wardley Map." };
+const MASCOT_CHAIN_COMPLETE = "Value Chain done! Now let's turn this into a Wardley Map.";
 
 /**
  * Phase 10: personalize the value chain. Starts right after Phase 5's own "Next" gate
@@ -91,7 +91,7 @@ export async function runPhase10(ctx: ScenarioContext): Promise<void> {
     demo.relabelNode(capability.id, capabilityLabel);
   }
   
-  mascot.say(`${MASCOT_CHAIN_COMPLETE.heading} ${MASCOT_CHAIN_COMPLETE.subheading}`);
+  mascot.say(MASCOT_CHAIN_COMPLETE);
   demo.celebrateAll();
   options.onCelebrate?.();
 }

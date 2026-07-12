@@ -17,10 +17,7 @@ const seedValueChain = createValueChain({
 /** the mascot's Phase 0 -> Phase 5 "waiting for Next" pause, once labels are revealed. Carries the
  * "what's a Value Chain?" payoff (a one-shot "it's a recipe" summary); the User/Need/Capability
  * walkthrough that explains the chain piece-by-piece continues from here in `phase5.ts`. */
-const MASCOT_NEED_PLACED = {
-  heading: "Oh cool!",
-  subheading: "I see you just made a Value Chain — a recipe for delivering value.",
-};
+const MASCOT_NEED_PLACED = "Oh cool! I see you just made a Value Chain — a recipe for delivering value.";
 
 /**
  * Phase 0: drag the Need into place. The Need node itself renders already on the canvas, out of
@@ -70,7 +67,7 @@ export async function runPhase0(options: ValueChainScenarioOptions): Promise<Sce
   if (needPlacedPos) mascot.moveTo(chain.need.id, needPlacedPos);
 
   demo.revealNodeLabels();
-  await mascot.arrive(() => mascot.say(`${MASCOT_NEED_PLACED.heading} ${MASCOT_NEED_PLACED.subheading}`));
+  await mascot.arrive(() => mascot.say(MASCOT_NEED_PLACED));
   await mascot.confirmPlacement("Next");
 
   return { demo, mascot, chain, options };

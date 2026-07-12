@@ -2,30 +2,20 @@ import { relabelCapability } from "../../domain/valueChain";
 import { DEFAULT_CAPABILITY_GAP } from "../../application/valueChainLayout";
 import type { ScenarioContext } from "./index";
 
-const MASCOT_USER = {
-  heading: "This is a User.",
-  subheading: "In a value chain, it's who we choose to help.",
-};
+const MASCOT_USER = "This is a User. In a value chain, it's who we choose to help.";
 
-const MASCOT_USER_NEED = {
-  heading: "This is a User Need.",
-  subheading: "It's what the user expects to get.",
-};
+const MASCOT_USER_NEED = "This is a User Need. It's what the user expects to get.";
 
-const MASCOT_CAPABILITY = {
-  heading: "This is a Capability.",
-  subheading: "It's how we meet the user need.",
-};
+const MASCOT_CAPABILITY = "This is a Capability. It's how we meet the user need.";
 
 /** placeholder labels for the three Capability nodes while this phase explains their number,
  * before Phase 10's form overwrites them with the visitor's own answers. Assigned left-to-right
  * by final screen position, not domain id order — see the sort in `runPhase5` below. */
 const PART_LABELS = ["Part A", "Part B", "Part C"];
 
-const MASCOT_MULTIPLE_PARTS = {
-  heading: "A Value Chain is like a recipe.",
-  subheading: "It often takes multiple capabilities to come together to meet the user need.",
-};
+const MASCOT_MULTIPLE_PARTS_INTRO = "A Value Chain is like a recipe.";
+const MASCOT_MULTIPLE_PARTS_DETAIL =
+  "It often takes multiple capabilities to come together to meet the user need.";
 
 /**
  * Phase 5: between Phase 0 (drag the Need into place) and Phase 10 (personalize via the form).
@@ -62,19 +52,19 @@ export async function runPhase5(ctx: ScenarioContext): Promise<void> {
 
   const userPos = demo.getNodePixelPosition(ctx.chain.user.id);
   if (userPos) mascot.moveTo(ctx.chain.user.id, userPos);
-  mascot.say(`${MASCOT_USER.heading} ${MASCOT_USER.subheading}`);
+  mascot.say(MASCOT_USER);
   await mascot.confirmPlacement("Next");
 
   const needPos = demo.getNodePixelPosition(ctx.chain.need.id);
   if (needPos) mascot.moveTo(ctx.chain.need.id, needPos);
-  mascot.say(`${MASCOT_USER_NEED.heading} ${MASCOT_USER_NEED.subheading}`);
+  mascot.say(MASCOT_USER_NEED);
   await mascot.confirmPlacement("Next");
 
   const capabilities = ctx.chain.capabilities;
   const anchor = capabilities.find((capability) => demo.hasNode(capability.id))!;
   const anchorPixelPos = demo.getNodePixelPosition(anchor.id);
   if (anchorPixelPos) mascot.moveTo(anchor.id, anchorPixelPos);
-  mascot.say(`${MASCOT_CAPABILITY.heading} ${MASCOT_CAPABILITY.subheading}`);
+  mascot.say(MASCOT_CAPABILITY);
   await mascot.confirmPlacement("Next");
 
   const missing = capabilities.filter((capability) => !demo.hasNode(capability.id));
@@ -109,8 +99,8 @@ export async function runPhase5(ctx: ScenarioContext): Promise<void> {
   const rightPos = demo.getNodePixelPosition(right.id);
   if (rightPos) mascot.moveTo(right.id, rightPos);
 
-  mascot.say(MASCOT_MULTIPLE_PARTS.heading);
+  mascot.say(MASCOT_MULTIPLE_PARTS_INTRO);
   await mascot.confirmPlacement("Next");
-  mascot.say(MASCOT_MULTIPLE_PARTS.subheading);
+  mascot.say(MASCOT_MULTIPLE_PARTS_DETAIL);
   await mascot.confirmPlacement("Next");
 }
