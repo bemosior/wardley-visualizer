@@ -507,16 +507,25 @@ describe("runValueChainScenario", () => {
     expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe("You just made a Wardley Map! Nice work!");
     expect(resolved).toBe(false);
 
-    // the placement finale's confirm link lands on Phase 25's explanation rather than resolving the scenario
+    // the placement finale's confirm link lands on Phase 25's first beat rather than resolving the scenario
     clickNext(mascotHost);
     await flush();
 
     expect(resolved).toBe(false);
     expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe(
-      "Use the map to think. To make a strategy, we ask the map special questions that help us think strategically.",
+      "Now we gather around the map to think and discuss our strategy together.",
     );
 
-    // Phase 25's own confirm link starts Phase 30's Q&A, opening on the first concept/node gate --
+    // Phase 25's own confirm link advances to its second beat
+    clickNext(mascotHost);
+    await flush();
+
+    expect(resolved).toBe(false);
+    expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe(
+      "We use dozens of special questions to find gaps and surface new ideas. Want to try?",
+    );
+
+    // Phase 25's second confirm link starts Phase 30's Q&A, opening on the first concept/node gate --
     // Phase 30 picks that opening pairing at random, so pin Math.random to land on index 0
     const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0);
     clickNext(mascotHost);
@@ -540,6 +549,8 @@ describe("runValueChainScenario", () => {
     await confirmEvolutionStep(canvas, mascotHost, "dependency-1", 150, 157);
     await confirmEvolutionStep(canvas, mascotHost, "dependency-2", 150, 157);
     await confirmEvolutionStep(canvas, mascotHost, "dependency-3", 150, 157);
+    clickNext(mascotHost);
+    await flush();
     clickNext(mascotHost);
     await flush();
     const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0);
