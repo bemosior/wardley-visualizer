@@ -118,7 +118,7 @@ describe("runValueChainScenario", () => {
     expect(gateLink!.textContent).toBe("Next");
   });
 
-  it("walks the user through User/Need/Capability, explains multi-part needs (two captions in a row) before relabeling, then relabels the three Capability nodes to Part A/B/C and has the mascot introduce itself before the form", async () => {
+  it("walks the user through User/Need/Capability, says the recipe line before relabeling, then relabels the three Capability nodes to Part A/B/C right as it explains multi-part needs, and has the mascot introduce itself before the form", async () => {
     const { canvas, mascotHost } = buildScenario(vi.fn());
     const needNode = canvas.querySelector('[data-node-id="need"]')!;
     drag(needNode, { x: 200, y: 76 });
@@ -155,9 +155,13 @@ describe("runValueChainScenario", () => {
 
     clickNext(mascotHost);
     await flush();
+    // relabeled to Part A/B/C right as the row grows/second caption plays, not delayed further
     expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe(
       "It often takes multiple capabilities to come together to meet the user need.",
     );
+    expect(canvas.querySelector('[data-node-id="dependency-1"] .wd-node-label')!.textContent).toBe("Part A");
+    expect(canvas.querySelector('[data-node-id="dependency-2"] .wd-node-label')!.textContent).toBe("Part B");
+    expect(canvas.querySelector('[data-node-id="dependency-3"] .wd-node-label')!.textContent).toBe("Part C");
 
     clickNext(mascotHost);
     await flush();
@@ -165,10 +169,6 @@ describe("runValueChainScenario", () => {
     expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe(
       "I'm Ben, by the way. I'm here to help you learn Wardley Mapping!",
     );
-    // relabeled to Part A/B/C right as the recipe beat hands off to Phase 7's introduction
-    expect(canvas.querySelector('[data-node-id="dependency-1"] .wd-node-label')!.textContent).toBe("Part A");
-    expect(canvas.querySelector('[data-node-id="dependency-2"] .wd-node-label')!.textContent).toBe("Part B");
-    expect(canvas.querySelector('[data-node-id="dependency-3"] .wd-node-label')!.textContent).toBe("Part C");
 
     clickNext(mascotHost);
     await flush();
@@ -177,7 +177,7 @@ describe("runValueChainScenario", () => {
     expect(mascotHost.querySelector(".wd-panel-form-prompt")!.textContent).toBe("Who should we help today?");
   });
 
-  it("with a host config that renders only one Capability node, says the recipe line while still one node, then grows the row to three right as it explains why", async () => {
+  it("with a host config that renders only one Capability node, says the recipe line while still one node, then grows the row to three already labeled Part A/B/C as it explains why", async () => {
     const canvas = document.createElement("div");
     const { mascotHost, avatarHost, dialogHost } = makeMascotHosts();
     document.body.append(canvas, mascotHost);
@@ -223,14 +223,16 @@ describe("runValueChainScenario", () => {
     clickNext(mascotHost);
     await flush();
 
-    // the row grows to three right as the second caption explains why
+    // the row grows to three, already relabeled Part A/B/C by final screen position, right as the
+    // second caption explains why -- the pre-existing dependency-1 node (screen-center, x: 200)
+    // loses its original label too, not just the two newly-faded-in nodes either side of it
     expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe(
       "It often takes multiple capabilities to come together to meet the user need.",
     );
     expect(canvas.querySelectorAll('[data-node-id^="dependency-"]')).toHaveLength(3);
-    expect(canvas.querySelector('[data-node-id="dependency-1"] .wd-node-label')!.textContent).toBe(
-      "Something that satisfies their need",
-    );
+    expect(canvas.querySelector('[data-node-id="dependency-1"] .wd-node-label')!.textContent).toBe("Part B");
+    expect(canvas.querySelector('[data-node-id="dependency-2"] .wd-node-label')!.textContent).toBe("Part A");
+    expect(canvas.querySelector('[data-node-id="dependency-3"] .wd-node-label')!.textContent).toBe("Part C");
   });
 
   it("does not advance to the form sequence if the Need is dropped away from its target", async () => {

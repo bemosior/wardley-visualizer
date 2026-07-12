@@ -63,22 +63,23 @@ function rightOfChainPoint(ctx: ScenarioContext, rightmostCapabilityPos: Point):
  * from where the *eventual* three-Capability row will end up, not just the one node currently
  * there, so the mascot doesn't have to jump again once the row fills in) and says the recipe line
  * ("A Value Chain is like a recipe.") while the chain still shows only one Capability. *Only on the
- * next "Next"* does it reuse that one node's position to add whichever of the three Capability
- * nodes aren't already there, spreading any missing ones into the empty slots on either side (that
- * node becomes the row's visual center — `DEFAULT_CAPABILITY_GAP` on either side, same spacing
- * `valueChainLayout.ts` uses when it renders all three from the start), fading each new node in
- * (`demo.addNode`'s `animateIn` option) rather than having it pop straight into existence beside
- * the one that's already there, and connecting each new node to the Need (nothing to do here for
- * `index.html`'s default layout, which already renders all three from Phase 0 — the "missing" list
- * is just empty) — then says the second half of the beat ("It often takes multiple capabilities to
- * come together...", split into its own caption since together the two would exceed `Mascot.say`'s
- * char guard) once the full row is visible, so the row visibly grows from one to three right as the
- * visitor hears why. *Only after both captions* relabels the three nodes "Part A"/"Part B"/"Part C"
- * *by final left-to-right screen position* (not by domain id order, since a host config's
- * pre-existing node isn't necessarily `dependency-1`) -- the visitor hears the "it's a recipe with
- * multiple parts" idea, watches the parts appear, and only then sees them get named, rather than
- * the reverse. Waits for a final "Next" gate before returning, so the caller (`phase10.ts`) can
- * start directly with "What does the user need?" instead of also showing its own opening caption.
+ * next "Next"* does it relabel all three Capabilities "Part A"/"Part B"/"Part C" *by final
+ * left-to-right screen position* (not by domain id order, since a host config's pre-existing node
+ * isn't necessarily `dependency-1`) and reuses that one node's position to add whichever of the
+ * three aren't already there -- already labeled with their own final Part name, not the generic
+ * placeholder, so a newly-added node never briefly shows the wrong label -- spreading any missing
+ * ones into the empty slots on either side (that node becomes the row's visual center —
+ * `DEFAULT_CAPABILITY_GAP` on either side, same spacing `valueChainLayout.ts` uses when it renders
+ * all three from the start), fading each new node in (`demo.addNode`'s `animateIn` option) rather
+ * than having it pop straight into existence beside the one that's already there, and connecting
+ * each new node to the Need (nothing to do here for `index.html`'s default layout, which already
+ * renders all three from Phase 0 — the "missing" list is just empty) — then says the second half of
+ * the beat ("It often takes multiple capabilities to come together...", split into its own caption
+ * since together the two would exceed `Mascot.say`'s char guard) once the full row is visible and
+ * already named, so the visitor sees the row grow to three Parts at once, right as they hear why,
+ * rather than watching it grow under a stale placeholder label first. Waits for a final "Next" gate
+ * before returning, so the caller (`phase10.ts`) can start directly with "What does the user need?"
+ * instead of also showing its own opening caption.
  */
 export async function runPhase5(ctx: ScenarioContext): Promise<void> {
   const { demo, mascot } = ctx;
@@ -119,32 +120,34 @@ export async function runPhase5(ctx: ScenarioContext): Promise<void> {
   const byScreenX = capabilities
     .map((capability) => ({ capability, pos: finalPositions.get(capability.id)! }))
     .sort((a, b) => a.pos.x - b.pos.x);
+  const partLabels = new Map(byScreenX.map(({ capability }, i) => [capability.id, PART_LABELS[i]]));
 
   const { x, y } = rightOfChainPoint(ctx, byScreenX[2].pos);
   mascot.moveToViewBoxPoint(x, y);
   mascot.say(MASCOT_MULTIPLE_PARTS_INTRO);
   await mascot.confirmPlacement("Next");
 
-  if (missing.length > 0) {
-    missing.forEach((capability, i) => {
-      demo.addNode(
-        {
-          id: capability.id,
-          label: capability.label,
-          x: anchorPos.x + sideOffsets[i] * DEFAULT_CAPABILITY_GAP,
-          y: anchorPos.y,
-          draggable: false,
-        },
-        { animateIn: true },
-      );
-      demo.addConnection({ from: ctx.chain.need.id, to: capability.id });
-    });
-  }
+  byScreenX.forEach(({ capability }) => {
+    const label = partLabels.get(capability.id)!;
+    ctx.chain = relabelCapability(ctx.chain, capability.id, label);
+    // already-rendered nodes (the anchor, and -- for a config that renders all three from the
+    // start -- its siblings too) get relabeled directly; still-missing ones get their final Part
+    // label baked into `addNode` below instead, so they never briefly show the generic placeholder
+    if (demo.hasNode(capability.id)) demo.relabelNode(capability.id, label);
+  });
+  missing.forEach((capability, i) => {
+    demo.addNode(
+      {
+        id: capability.id,
+        label: partLabels.get(capability.id)!,
+        x: anchorPos.x + sideOffsets[i] * DEFAULT_CAPABILITY_GAP,
+        y: anchorPos.y,
+        draggable: false,
+      },
+      { animateIn: true },
+    );
+    demo.addConnection({ from: ctx.chain.need.id, to: capability.id });
+  });
   mascot.say(MASCOT_MULTIPLE_PARTS_DETAIL);
   await mascot.confirmPlacement("Next");
-
-  byScreenX.forEach(({ capability }, i) => {
-    ctx.chain = relabelCapability(ctx.chain, capability.id, PART_LABELS[i]);
-    demo.relabelNode(capability.id, PART_LABELS[i]);
-  });
 }
