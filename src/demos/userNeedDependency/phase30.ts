@@ -46,14 +46,14 @@ const samePairing = (a: Pairing, b: Pairing): boolean =>
  * node via `demo.addAnnotation` (which hands back the callout's own viewBox position), pushed onto
  * `findings`, and the mascot re-anchors onto that callout (`moveToViewBoxPoint`) before pausing on
  * a "Nice insight!" gate (Keep Going / Finish Up) — only insight-producing answers interrupt the
- * flow that way. That gate's own caption is overridden to "Made a note of it here." (`showGate`'s
- * `caption` param) instead of the usual "Make a choice below. ↓", so the callout and the Keep
- * Going/Finish Up choice read as one beat rather than a caption aside the visitor has to
- * separately click past. An answer with no annotation instead gets a quick "Nothing to note. Got
- * it." aside before falling through to the next pairing. "Finish Up" ends the phase right there,
- * same as naturally exhausting the bank. Shuffle abandons only the current pairing and jumps to a
- * uniformly random other still-unresolved pairing anywhere in the bank, which may land back on the
- * same concept with a different node.
+ * flow that way. That gate's own caption is overridden to "Made a note of it here — take a look
+ * below. ↓" (`showGate`'s `caption` param) instead of the usual "Make a choice below. ↓", so the
+ * callout and the Keep Going/Finish Up choice read as one beat, with its own "look below" redirect,
+ * rather than a caption aside the visitor has to separately click past. An answer with no
+ * annotation instead gets a quick "Nothing to note. Got it." aside before falling through to the
+ * next pairing. "Finish Up" ends the phase right there, same as naturally exhausting the bank.
+ * Shuffle abandons only the current pairing and jumps to a uniformly random other still-unresolved
+ * pairing anywhere in the bank, which may land back on the same concept with a different node.
  *
  * The phase ends either via "Finish Up" or by naturally exhausting the whole bank (`remaining`
  * empties out). Either way, if any concept produced a finding, `Mascot.showFindings` renders a
@@ -107,7 +107,7 @@ export async function runPhase30(ctx: ScenarioContext): Promise<void> {
             { id: "finishUp", label: "Finish Up" },
           ],
           undefined,
-          "Made a note of it here.",
+          "Made a note of it here — take a look below. ↓",
         );
         if (next === "finishUp") break;
       } else {
