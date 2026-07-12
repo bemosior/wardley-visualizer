@@ -922,6 +922,13 @@ const CSS = `
   right: calc(100% + 8px); /* matches mascot.ts's CAPTION_GAP */
 }
 
+/* Mascot.hideCaption's marker -- hides the caption box itself, not just its (already-cleared)
+   text, so no empty bubble lingers beside the avatar (e.g. Phase 7's celebration bounce) */
+.wd-mascot-caption--hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .wd-mascot-caption-action:empty {
   display: none;
 }

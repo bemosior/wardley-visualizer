@@ -42,6 +42,9 @@ export async function runPhase7(ctx: ScenarioContext): Promise<void> {
   mascot.moveToViewBoxPoint(x, y);
   mascot.say(MASCOT_INTRO);
   await mascot.confirmPlacement("Nice to meet you!");
+  // clears the "Nice to meet you!" caption immediately so nothing distracting lingers beside
+  // the mascot while it celebrates
+  mascot.hideCaption();
   mascot.setState("celebrating");
   await new Promise((resolve) => setTimeout(resolve, CELEBRATE_DURATION_MS));
 }

@@ -355,9 +355,22 @@ export class Mascot {
     // of the empty space this beat doesn't need.
     if (this.activeSurface === "panel") this.panel.showEmpty();
     this.activeSurface = "caption";
+    this.captionEl.classList.remove("wd-mascot-caption--hidden");
     this.captionTextEl.textContent = text;
     this.captionActionEl.replaceChildren();
     this.reposition();
+  }
+
+  /**
+   * hides the small caption entirely, rather than leaving an empty bubble floating beside the
+   * avatar -- for beats like Phase 7's post-confirm celebration bounce where nothing should
+   * visually compete with the mascot. Reverses automatically the next time `say()` or a
+   * panel-hosted method (via `pointToPanel`) renders new caption content.
+   */
+  hideCaption(): void {
+    this.captionTextEl.textContent = "";
+    this.captionActionEl.replaceChildren();
+    this.captionEl.classList.add("wd-mascot-caption--hidden");
   }
 
   /**
@@ -382,6 +395,7 @@ export class Mascot {
    * `confirmPlacement` at the panel. */
   private pointToPanel(caption: string = POINT_TO_PANEL_TEXT): void {
     this.activeSurface = "panel";
+    this.captionEl.classList.remove("wd-mascot-caption--hidden");
     this.captionTextEl.textContent = caption;
     this.captionActionEl.replaceChildren();
     this.reposition();
