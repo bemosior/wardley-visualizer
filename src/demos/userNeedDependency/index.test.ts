@@ -164,7 +164,7 @@ describe("runValueChainScenario", () => {
     await flush();
     // relabeled to Part A/B/C right as the row grows/second caption plays, not delayed further
     expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe(
-      "It often takes multiple capabilities to come together to meet the user need.",
+      "This value chain uses multiple capabilities to get the job done.",
     );
     expect(canvas.querySelector('[data-node-id="dependency-1"] .wd-node-label')!.textContent).toBe("Part A");
     expect(canvas.querySelector('[data-node-id="dependency-2"] .wd-node-label')!.textContent).toBe("Part B");
@@ -234,7 +234,7 @@ describe("runValueChainScenario", () => {
     // second caption explains why -- the pre-existing dependency-1 node (screen-center, x: 200)
     // loses its original label too, not just the two newly-faded-in nodes either side of it
     expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe(
-      "It often takes multiple capabilities to come together to meet the user need.",
+      "This value chain uses multiple capabilities to get the job done.",
     );
     expect(canvas.querySelectorAll('[data-node-id^="dependency-"]')).toHaveLength(3);
     expect(canvas.querySelector('[data-node-id="dependency-1"] .wd-node-label')!.textContent).toBe("Part B");

@@ -13,9 +13,8 @@ const MASCOT_CAPABILITY = "This is a Capability. It's how we meet the user need.
  * by final screen position, not domain id order — see the sort in `runPhase5` below. */
 const PART_LABELS = ["Part A", "Part B", "Part C"];
 
-const MASCOT_MULTIPLE_PARTS_INTRO = "A Value Chain is like a recipe.";
 const MASCOT_MULTIPLE_PARTS_DETAIL =
-  "It often takes multiple capabilities to come together to meet the user need.";
+  "This value chain uses multiple capabilities to get the job done.";
 
 /**
  * an open patch of canvas whitespace to the right of the whole value chain, in viewBox
@@ -124,8 +123,6 @@ export async function runPhase5(ctx: ScenarioContext): Promise<void> {
 
   const { x, y } = rightOfChainPoint(ctx, byScreenX[2].pos);
   mascot.moveToViewBoxPoint(x, y);
-  mascot.say(MASCOT_MULTIPLE_PARTS_INTRO);
-  await mascot.confirmPlacement("Next");
 
   byScreenX.forEach(({ capability }) => {
     const label = partLabels.get(capability.id)!;
