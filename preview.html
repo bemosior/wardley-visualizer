@@ -110,7 +110,7 @@
         color: #eee;
         border-radius: 10px;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-        padding: 0.85rem 1rem;
+        padding: 1.6rem 1rem 0.85rem;
         text-align: center;
       }
       .credits.is-visible {
@@ -124,6 +124,29 @@
         to {
           opacity: 1;
         }
+      }
+      /* sits inside .credits (already position:absolute, so it's a valid containing block for
+         this without any extra positioning rule) -- lets a visitor dismiss the panel without
+         waiting for the scroll loop to finish. */
+      .credits-close {
+        position: absolute;
+        top: 0.35rem;
+        right: 0.4rem;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        background: none;
+        color: #999;
+        font-size: 1rem;
+        line-height: 1;
+        padding: 0;
+        cursor: pointer;
+      }
+      .credits-close:hover {
+        color: #fff;
       }
       .credits-heading {
         font-family: var(--font-ui);
@@ -188,6 +211,7 @@
             <div id="demo-a" class="wd-canvas">
               <div id="mascot-avatar-host-a" class="wd-mascot-avatar-host"></div>
               <section class="credits">
+                <button type="button" class="credits-close" aria-label="Dismiss credits">&times;</button>
                 <p class="credits-heading">Thank you to everyone who gave feedback</p>
                 <div class="credits-scroll">
                   <ul>
@@ -215,6 +239,10 @@
     <script>
       var avatarHost = document.getElementById("mascot-avatar-host-a");
       var dialogHost = document.getElementById("mascot-dialog-host-a");
+
+      document.querySelector(".credits-close").addEventListener("click", function () {
+        document.querySelector(".credits").classList.remove("is-visible");
+      });
 
       // Dev-only test shortcut: pick a moment from the dropdown (or load with
       // ?skipTo=intro|phase10|celebrate|phase20|finale|thinking|recap) to jump straight past earlier phases
