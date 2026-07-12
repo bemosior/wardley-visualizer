@@ -2,7 +2,7 @@ import { relabelCapability, relabelNeed, relabelUser } from "../../domain/valueC
 import { NEED_CATALOG } from "../../domain/needCatalog";
 import type { ScenarioContext } from "./index";
 
-const MASCOT_CHAIN_COMPLETE = { heading: "Value Chain done!", subheading: "Now let's turn this into a Wardley Map." };
+const MASCOT_CHAIN_COMPLETE = "Value Chain done! Now let's turn this into a Wardley Map.";
 
 /**
  * Phase 10: personalize the value chain. Starts right after Phase 5's own "Next" gate
@@ -18,13 +18,16 @@ export async function runPhase10(ctx: ScenarioContext): Promise<void> {
 
   const userPos = demo.getNodePixelPosition(ctx.chain.user.id);
   if (userPos) mascot.moveTo(ctx.chain.user.id, userPos);
-  const userLabel = await mascot.showField({
-    type: "choice",
-    prompt: "Who should we help today?",
-    // several NEED_CATALOG entries deliberately share a user (that user's other needs) --
-    // dedupe so each user gets exactly one pill, not one per need they have.
-    options: [...new Set(NEED_CATALOG.map((need) => need.user))],
-  });
+  const userLabel = await mascot.showField(
+    {
+      type: "choice",
+      prompt: "Who should we help today?",
+      // several NEED_CATALOG entries deliberately share a user (that user's other needs) --
+      // dedupe so each user gets exactly one pill, not one per need they have.
+      options: [...new Set(NEED_CATALOG.map((need) => need.user))],
+    },
+    "Pick a user to help below. ↓",
+  );
   ctx.chain = relabelUser(ctx.chain, userLabel);
   demo.relabelNode(ctx.chain.user.id, ctx.chain.user.label);
 
@@ -38,11 +41,14 @@ export async function runPhase10(ctx: ScenarioContext): Promise<void> {
 
   const needPos = demo.getNodePixelPosition(ctx.chain.need.id);
   if (needPos) mascot.moveTo(ctx.chain.need.id, needPos);
-  const needLabel = await mascot.showField({
-    type: "choice",
-    prompt: "What does " + userLabel + " need?",
-    options: relevantNeeds.map((need) => need.label),
-  });
+  const needLabel = await mascot.showField(
+    {
+      type: "choice",
+      prompt: "What does " + userLabel + " need?",
+      options: relevantNeeds.map((need) => need.label),
+    },
+    "Pick their user need below. ↓",
+  );
   ctx.chain = relabelNeed(ctx.chain, needLabel);
   demo.relabelNode(ctx.chain.need.id, ctx.chain.need.label);
 
@@ -81,17 +87,20 @@ export async function runPhase10(ctx: ScenarioContext): Promise<void> {
     const remainingCapabilities = needOption.capabilityOptions.filter(
       (label) => !usedCapabilityLabels.has(label.toLowerCase()),
     );
-    const capabilityLabel = await mascot.showField({
-      type: "choice",
-      prompt: `What's something ${i > 0 ? "else " : ""}they depend on to get their "${needLabel}" need met? \r\n(${i + 1} of ${capabilityCount})`,
-      options: remainingCapabilities,
-    });
+    const capabilityLabel = await mascot.showField(
+      {
+        type: "choice",
+        prompt: `What's something ${i > 0 ? "else " : ""}they depend on to get their "${needLabel}" need met? \r\n(${i + 1} of ${capabilityCount})`,
+        options: remainingCapabilities,
+      },
+      "Pick three capabilities below. ↓",
+    );
     usedCapabilityLabels.add(capabilityLabel.trim().toLowerCase());
     ctx.chain = relabelCapability(ctx.chain, capability.id, capabilityLabel);
     demo.relabelNode(capability.id, capabilityLabel);
   }
   
-  mascot.say(`${MASCOT_CHAIN_COMPLETE.heading} ${MASCOT_CHAIN_COMPLETE.subheading}`);
+  mascot.say(MASCOT_CHAIN_COMPLETE);
   demo.celebrateAll();
   options.onCelebrate?.();
 }

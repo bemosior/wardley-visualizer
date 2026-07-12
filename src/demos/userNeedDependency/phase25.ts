@@ -1,10 +1,7 @@
 import type { ScenarioContext } from "./index";
 
-const MASCOT_THINKING_STRATEGICALLY = {
-  heading: "Use the map to think",
-  subheading:
-    "To make a strategy, we ask the map special questions that help us think strategically. ",
-};
+const MASCOT_THINKING_STRATEGICALLY =
+  "Use the map to think. To make a strategy, we ask the map special questions that help us think strategically.";
 
 /**
  * Phase 25: between Phase 20 (evolution placement) and Phase 30 (the Q&A loop). Waits for the
@@ -17,5 +14,5 @@ export async function runPhase25(ctx: ScenarioContext): Promise<void> {
 
   await mascot.confirmPlacement("Next");
   mascot.setState("idle");
-  mascot.say(`${MASCOT_THINKING_STRATEGICALLY.heading} ${MASCOT_THINKING_STRATEGICALLY.subheading}`);
+  mascot.say(MASCOT_THINKING_STRATEGICALLY);
 }

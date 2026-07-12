@@ -111,14 +111,14 @@ describe("runValueChainScenario", () => {
       false,
     );
     expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe(
-      "You just made a Value Chain! A value chain is a recipe for delivering value.",
+      "Oh cool! I see you just made a Value Chain — a recipe for delivering value.",
     );
     const gateLink = mascotHost.querySelector<HTMLButtonElement>(".wd-next-link");
     expect(gateLink).not.toBeNull();
     expect(gateLink!.textContent).toBe("Next");
   });
 
-  it("walks the user through User/Need/Capability, relabels the three Capability nodes to Part A/B/C, explains multi-part needs (two captions in a row), then has the mascot introduce itself before the form", async () => {
+  it("walks the user through User/Need/Capability, says the recipe line before relabeling, then relabels the three Capability nodes to Part A/B/C right as it explains multi-part needs, and has the mascot introduce itself before the form", async () => {
     const { canvas, mascotHost } = buildScenario(vi.fn());
     const needNode = canvas.querySelector('[data-node-id="need"]')!;
     drag(needNode, { x: 200, y: 76 });
@@ -145,17 +145,23 @@ describe("runValueChainScenario", () => {
     clickNext(mascotHost);
     await flush();
 
+    // the recipe beat is said before the three Capability nodes are relabeled -- they're still
+    // under their generic placeholder label at this point
     expect(mascotHost.querySelector("form")).toBeNull();
     expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe("A Value Chain is like a recipe.");
-    expect(canvas.querySelector('[data-node-id="dependency-1"] .wd-node-label')!.textContent).toBe("Part A");
-    expect(canvas.querySelector('[data-node-id="dependency-2"] .wd-node-label')!.textContent).toBe("Part B");
-    expect(canvas.querySelector('[data-node-id="dependency-3"] .wd-node-label')!.textContent).toBe("Part C");
+    expect(canvas.querySelector('[data-node-id="dependency-1"] .wd-node-label')!.textContent).toBe("Capability");
+    expect(canvas.querySelector('[data-node-id="dependency-2"] .wd-node-label')!.textContent).toBe("Capability");
+    expect(canvas.querySelector('[data-node-id="dependency-3"] .wd-node-label')!.textContent).toBe("Capability");
 
     clickNext(mascotHost);
     await flush();
+    // relabeled to Part A/B/C right as the row grows/second caption plays, not delayed further
     expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe(
       "It often takes multiple capabilities to come together to meet the user need.",
     );
+    expect(canvas.querySelector('[data-node-id="dependency-1"] .wd-node-label')!.textContent).toBe("Part A");
+    expect(canvas.querySelector('[data-node-id="dependency-2"] .wd-node-label')!.textContent).toBe("Part B");
+    expect(canvas.querySelector('[data-node-id="dependency-3"] .wd-node-label')!.textContent).toBe("Part C");
 
     clickNext(mascotHost);
     await flush();
@@ -169,6 +175,64 @@ describe("runValueChainScenario", () => {
     await passCelebrateDelay();
     expect(mascotHost.querySelector(".wd-panel-form")).not.toBeNull();
     expect(mascotHost.querySelector(".wd-panel-form-prompt")!.textContent).toBe("Who should we help today?");
+  });
+
+  it("with a host config that renders only one Capability node, says the recipe line while still one node, then grows the row to three already labeled Part A/B/C as it explains why", async () => {
+    const canvas = document.createElement("div");
+    const { mascotHost, avatarHost, dialogHost } = makeMascotHosts();
+    document.body.append(canvas, mascotHost);
+    runValueChainScenario({
+      canvas,
+      avatarHost,
+      dialogHost,
+      onCelebrate: vi.fn(),
+      config: {
+        viewBox: { width: 400, height: 520 },
+        snapThreshold: 30,
+        nodes: [
+          { id: "user", label: "Someone we care about", x: 200, y: 100, draggable: false },
+          { id: "need", label: "Something they need", x: 200, y: 284, draggable: true, start: { x: 25, y: 237 } },
+          { id: "dependency-1", label: "Something that satisfies their need", x: 200, y: 468, draggable: false },
+        ],
+        connections: [
+          { from: "user", to: "need" },
+          { from: "need", to: "dependency-1" },
+        ],
+      },
+    });
+
+    const needNode = canvas.querySelector('[data-node-id="need"]')!;
+    drag(needNode, { x: 200, y: 284 });
+    await flush();
+    for (let i = 0; i < 3; i++) {
+      clickNext(mascotHost);
+      await flush();
+    }
+    expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe(
+      "This is a Capability. It's how we meet the user need.",
+    );
+
+    clickNext(mascotHost);
+    await flush();
+
+    // the recipe line is said while the row still shows only the one Capability the host config
+    // rendered -- the other two haven't faded in yet
+    expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe("A Value Chain is like a recipe.");
+    expect(canvas.querySelectorAll('[data-node-id^="dependency-"]')).toHaveLength(1);
+
+    clickNext(mascotHost);
+    await flush();
+
+    // the row grows to three, already relabeled Part A/B/C by final screen position, right as the
+    // second caption explains why -- the pre-existing dependency-1 node (screen-center, x: 200)
+    // loses its original label too, not just the two newly-faded-in nodes either side of it
+    expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe(
+      "It often takes multiple capabilities to come together to meet the user need.",
+    );
+    expect(canvas.querySelectorAll('[data-node-id^="dependency-"]')).toHaveLength(3);
+    expect(canvas.querySelector('[data-node-id="dependency-1"] .wd-node-label')!.textContent).toBe("Part B");
+    expect(canvas.querySelector('[data-node-id="dependency-2"] .wd-node-label')!.textContent).toBe("Part A");
+    expect(canvas.querySelector('[data-node-id="dependency-3"] .wd-node-label')!.textContent).toBe("Part C");
   });
 
   it("does not advance to the form sequence if the Need is dropped away from its target", async () => {
@@ -452,7 +516,7 @@ describe("runValueChainScenario", () => {
 
     await confirmEvolutionStep(canvas, mascotHost, "dependency-3", 150, 157);
 
-    expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe("You made a Wardley Map!");
+    expect(mascotHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe("You just made a Wardley Map! Nice work!");
     expect(resolved).toBe(false);
 
     // the placement finale's confirm link lands on Phase 25's explanation rather than resolving the scenario

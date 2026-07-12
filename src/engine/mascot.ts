@@ -3,7 +3,7 @@ import { createMascotAvatar, type MascotState } from "./mascotAvatar";
 import { showNextLink } from "./nextLink";
 import { prefersReducedMotion } from "./animate";
 import { shiftRect } from "./geometry";
-import { pickMascotPlacement } from "./mascotPlacement";
+import { DIRECTION_PRIORITY, pickMascotPlacement, type CompassDirection } from "./mascotPlacement";
 import type { WardleyDemo } from "./WardleyDemo";
 import type { EvolutionStage } from "../domain/evolution";
 import type { Question, QuestionOption } from "../domain/questionBank";
@@ -37,7 +37,7 @@ const CAPTION_MAX_CHARS = 80;
 
 /** shown in the avatar's caption whenever a panel-hosted ("big") method renders, so the visitor's
  * attention follows the mascot down to the dialog panel instead of the caption going stale */
-const POINT_TO_PANEL_TEXT = "Take a look below ↓";
+const POINT_TO_PANEL_TEXT = "Take a look below. ↓";
 
 /**
  * the mascot's guide presence -- a small avatar that tracks whichever node it's discussing, and
@@ -78,6 +78,8 @@ export class Mascot {
   private currentAnchorNodeId: string | null = null;
   private viewBoxAnchor: { x: number; y: number } | null = null;
   private lastPos: { x: number; y: number; radius?: number } | null = null;
+  /** which compass directions `reposition` may consider -- see `moveTo`'s `directions` option */
+  private lastDirections: CompassDirection[] = DIRECTION_PRIORITY;
   private hasPositioned = false;
   /** which surface last rendered content -- `confirmPlacement` targets whichever one this is */
   private activeSurface: "caption" | "panel" = "caption";
@@ -167,11 +169,18 @@ export class Mascot {
    * positions the avatar just below (or above, if there's no room) `pos` (container-pixel space,
    * from `WardleyDemo.getNodePixelPosition`), offset by `pos.radius` so it's planted clear of the
    * node's circle instead of covering it, and remembers `nodeId` so a window resize re-tracks it.
+   *
+   * `directions`, if given, narrows which compass directions `reposition` may choose among instead
+   * of the full 8 (`NON_ROW_DIRECTIONS`, e.g., for Phase 20's evolution-axis anchors, which must
+   * never sit beside the node -- it's about to slide freely through that exact spot). Persists
+   * across the window-resize re-anchor (`trackAnchor`) until the next explicit `moveTo`/
+   * `moveToViewBoxPoint` call resets it.
    */
-  moveTo(nodeId: string, pos: { x: number; y: number; radius?: number }): void {
+  moveTo(nodeId: string, pos: { x: number; y: number; radius?: number }, directions: CompassDirection[] = DIRECTION_PRIORITY): void {
     this.currentAnchorNodeId = nodeId;
     this.viewBoxAnchor = null;
     this.lastPos = pos;
+    this.lastDirections = directions;
     this.reposition();
     this.scrollIntoViewIfNeeded();
   }
@@ -188,6 +197,7 @@ export class Mascot {
     this.currentAnchorNodeId = null;
     this.viewBoxAnchor = { x, y };
     this.lastPos = this.demo.getViewBoxPixelPosition(x, y);
+    this.lastDirections = DIRECTION_PRIORITY;
     this.reposition();
     this.scrollIntoViewIfNeeded();
   }
@@ -236,6 +246,7 @@ export class Mascot {
       bounds,
       CAPTION_GAP,
       NODE_CLEARANCE,
+      this.lastDirections,
     );
     let { avatarRect, captionRect } = placement;
 
@@ -294,7 +305,13 @@ export class Mascot {
     }
     if (!this.demo || !this.currentAnchorNodeId) return;
     const pos = this.demo.getNodePixelPosition(this.currentAnchorNodeId);
-    if (pos) this.moveTo(this.currentAnchorNodeId, pos);
+    // updates lastPos and re-derives placement directly, rather than going through the public
+    // `moveTo` (which would reset `lastDirections` to the full 8-direction default and silently
+    // drop a Phase-20-style row restriction if the visitor resizes mid-drag)
+    if (pos) {
+      this.lastPos = pos;
+      this.reposition();
+    }
   }
 
   /**
@@ -338,9 +355,22 @@ export class Mascot {
     // of the empty space this beat doesn't need.
     if (this.activeSurface === "panel") this.panel.showEmpty();
     this.activeSurface = "caption";
+    this.captionEl.classList.remove("wd-mascot-caption--hidden");
     this.captionTextEl.textContent = text;
     this.captionActionEl.replaceChildren();
     this.reposition();
+  }
+
+  /**
+   * hides the small caption entirely, rather than leaving an empty bubble floating beside the
+   * avatar -- for beats like Phase 7's post-confirm celebration bounce where nothing should
+   * visually compete with the mascot. Reverses automatically the next time `say()` or a
+   * panel-hosted method (via `pointToPanel`) renders new caption content.
+   */
+  hideCaption(): void {
+    this.captionTextEl.textContent = "";
+    this.captionActionEl.replaceChildren();
+    this.captionEl.classList.add("wd-mascot-caption--hidden");
   }
 
   /**
@@ -359,29 +389,33 @@ export class Mascot {
   }
 
   /** points the avatar's caption at the dialog panel below -- called by every panel-hosted method
-   * so a phase author gets the "look below" redirect for free, without wiring it per call site. */
-  private pointToPanel(): void {
+   * so a phase author gets the "look below" redirect for free, without wiring it per call site.
+   * `caption`, if passed, overrides the default `POINT_TO_PANEL_TEXT` for phases that want the
+   * small caption to say something more specific than "look below" while still routing
+   * `confirmPlacement` at the panel. */
+  private pointToPanel(caption: string = POINT_TO_PANEL_TEXT): void {
     this.activeSurface = "panel";
-    this.captionTextEl.textContent = POINT_TO_PANEL_TEXT;
+    this.captionEl.classList.remove("wd-mascot-caption--hidden");
+    this.captionTextEl.textContent = caption;
     this.captionActionEl.replaceChildren();
     this.reposition();
   }
 
-  showDragHandles(slots: PanelDragSlot[], intro?: { heading: string; subheading: string }): PanelDragHandle {
+  showDragHandles(slots: PanelDragSlot[], intro?: { heading: string; subheading: string }, caption?: string): PanelDragHandle {
     this.talk();
-    this.pointToPanel();
+    this.pointToPanel(caption);
     return this.panel.showDragHandles(slots, intro);
   }
 
-  showField(field: PanelField): Promise<string> {
+  showField(field: PanelField, caption?: string): Promise<string> {
     this.talk();
-    this.pointToPanel();
+    this.pointToPanel(caption);
     return this.panel.showField(field);
   }
 
-  showInstrumentPanel(heading: string, kind: EvolutionKind, initialStage: EvolutionStage, delayMs = 0): void {
+  showInstrumentPanel(heading: string, kind: EvolutionKind, initialStage: EvolutionStage, delayMs = 0, caption?: string): void {
     this.talk(delayMs);
-    this.pointToPanel();
+    this.pointToPanel(caption ?? `Drag ${heading} into place. The info below will help. ↓`);
     this.panel.showInstrumentPanel(heading, kind, initialStage, delayMs);
   }
 
@@ -389,38 +423,39 @@ export class Mascot {
     this.panel.updateInstrumentPanel(stage);
   }
 
-  showQuestion(heading: string, question: Question): Promise<QuestionOption> {
+  showQuestion(heading: string, question: Question, caption?: string): Promise<QuestionOption> {
     this.talk();
-    this.pointToPanel();
+    this.pointToPanel(caption ?? `Learn more about ${heading} below. ↓`);
     return this.panel.showQuestion(heading, question);
   }
 
-  showGate(prompt: string, subtitle: string, options: GateOption[], emphasize?: string[]): Promise<string> {
+  showGate(prompt: string, subtitle: string, options: GateOption[], emphasize?: string[], caption?: string): Promise<string> {
     this.talk();
-    this.pointToPanel();
+    this.pointToPanel(caption ?? "Make a choice below. ↓");
     return this.panel.showGate(prompt, subtitle, options, emphasize);
   }
 
-  showRecap(items: string[], cta: { label: string; href: string }): void {
+  showRecap(items: string[], cta: { label: string; href: string }, caption?: string): void {
     this.talk();
-    this.pointToPanel();
+    this.pointToPanel(caption ?? "See your recap below. ↓");
     this.panel.showRecap(items, cta);
   }
 
-  showEmpty(): void {
-    this.pointToPanel();
+  showEmpty(caption?: string): void {
+    this.pointToPanel(caption);
     this.panel.showEmpty();
   }
 
-  showFindings(findings: Finding[], heading: string): void {
+  showFindings(findings: Finding[], heading: string, caption?: string): void {
     this.talk();
-    this.pointToPanel();
+    const findingCount = findings.length;
+    this.pointToPanel(caption ?? `See your ${findingCount} finding${findingCount === 1 ? "" : "s"} below. ↓`);
     this.panel.showFindings(findings, heading);
   }
 
-  showPlaceholder(heading: string, subheading: string, delayMs = 0): void {
+  showPlaceholder(heading: string, subheading: string, delayMs = 0, caption?: string): void {
     this.talk(delayMs);
-    this.pointToPanel();
+    this.pointToPanel(caption);
     this.panel.showPlaceholder(heading, subheading, delayMs);
   }
 }

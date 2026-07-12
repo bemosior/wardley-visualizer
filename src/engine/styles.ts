@@ -34,6 +34,14 @@ const CSS = `
   z-index: 1;
 }
 
+/* pins the panel's own text alignment regardless of whatever text-align a host page sets on an
+   ancestor (e.g. index.html's centered .hero) -- same reasoning as .wd-mascot-caption's own pin
+   below. Individual elements that want to be centered (the recap CTA, a next-link) already set
+   their own explicit text-align: center and win over this via direct styling, not inheritance. */
+.wd-panel {
+  text-align: left;
+}
+
 .wardley-demo-root svg {
   display: block;
   width: 100%;
@@ -882,6 +890,10 @@ const CSS = `
   align-items: center;
   flex-wrap: wrap;
   gap: 0.4rem;
+  /* the caption text itself is a block element that would otherwise inherit whatever
+     text-align the host page sets on an ancestor (e.g. index.html's centered .hero) -- pin it
+     explicitly so multi-line captions always read left-aligned regardless of host page CSS. */
+  text-align: left;
   /* an absolutely-positioned flex container with no explicit width computes its shrink-to-fit
      size from the *narrowest* line its content can wrap to (effectively its widest single word)
      when combined with flex-wrap: wrap, not from max-width -- same shrink-to-fit gotcha the old
@@ -908,6 +920,13 @@ const CSS = `
 .wd-mascot-caption--flip {
   left: auto;
   right: calc(100% + 8px); /* matches mascot.ts's CAPTION_GAP */
+}
+
+/* Mascot.hideCaption's marker -- hides the caption box itself, not just its (already-cleared)
+   text, so no empty bubble lingers beside the avatar (e.g. Phase 7's celebration bounce) */
+.wd-mascot-caption--hidden {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .wd-mascot-caption-action:empty {
@@ -946,6 +965,14 @@ const CSS = `
 
 .wd-mascot-dialog--arriving {
   opacity: 0;
+}
+
+/* Panel.showEmpty (and the panel's own never-rendered starting state, see the wd-panel--empty
+   class added in Panel's constructor) collapses the dialog box entirely -- an empty bordered/
+   shadowed strip below the canvas whenever the mascot has nothing to say there (e.g. mid-caption
+   beats via say()) reads as a stray UI glitch, not an intentional empty state. */
+.wd-mascot-dialog.wd-panel--empty {
+  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

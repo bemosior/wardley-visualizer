@@ -1,5 +1,6 @@
 import type { WardleyDemo } from "../../engine/WardleyDemo";
 import type { Mascot } from "../../engine/mascot";
+import { NON_ROW_DIRECTIONS } from "../../engine/mascotPlacement";
 import type { ScenarioContext, ValueChainScenarioOptions } from "./index";
 
 /**
@@ -34,10 +35,8 @@ function awaitEvolutionConfirm(
   });
 }
 
-const MASCOT_EVOLUTION_INTRO = {
-  heading: "Everything evolves.",
-  subheading: "As things evolve, they change! And that means the way we treat them should change, too.",
-};
+const MASCOT_EVOLUTION_INTRO =
+  "Everything evolves. As things evolve, they change! And that means the way we treat them should change, too.";
 
 /**
  * Phase 20: turn the value chain into a Wardley Map. Waits for the visitor to click the "Next"
@@ -68,7 +67,7 @@ export async function runPhase20(ctx: ScenarioContext): Promise<void> {
   demo.markPending(chain.capabilities.map((c) => c.id));
   demo.showMapBackdrop(scale);
 
-  mascot.say(`${MASCOT_EVOLUTION_INTRO.heading} ${MASCOT_EVOLUTION_INTRO.subheading}`);
+  mascot.say(MASCOT_EVOLUTION_INTRO);
   await mascot.confirmPlacement("Let's try it →");
 
   // guards every delayed mascot.moveTo below (the Need's slide, and each capability's, further
@@ -86,8 +85,10 @@ export async function runPhase20(ctx: ScenarioContext): Promise<void> {
     if (!allPlaced) {
       const pos = demo.getNodePixelPosition(chain.need.id);
       // the Need is about to drag freely along the evolution axis below while the avatar stays
-      // put, tracking its pre-drag position rather than chasing it pixel-by-pixel.
-      if (pos) mascot.moveTo(chain.need.id, pos);
+      // put, tracking its pre-drag position rather than chasing it pixel-by-pixel -- restricted to
+      // NON_ROW_DIRECTIONS so it never plants itself beside the node, directly in the path of that
+      // horizontal drag (see NON_ROW_DIRECTIONS' doc comment).
+      if (pos) mascot.moveTo(chain.need.id, pos, NON_ROW_DIRECTIONS);
     }
   });
   demo.beckonNode(chain.need.id);
@@ -104,14 +105,14 @@ export async function runPhase20(ctx: ScenarioContext): Promise<void> {
     demo.slideToGenesis(capability.id, undefined, () => {
       if (!allPlaced) {
         const pos = demo.getNodePixelPosition(capability.id);
-        if (pos) mascot.moveTo(capability.id, pos);
+        if (pos) mascot.moveTo(capability.id, pos, NON_ROW_DIRECTIONS);
       }
     });
     await awaitEvolutionConfirm(demo, mascot, capability.id, options.onEvolutionStep);
   }
 
   allPlaced = true;
-  mascot.say("You made a Wardley Map!");
+  mascot.say("You just made a Wardley Map! Nice work!");
   mascot.setState("celebrating");
   demo.celebrateAll(2);
 }

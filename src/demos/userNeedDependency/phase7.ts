@@ -1,10 +1,6 @@
 import type { ScenarioContext } from "./index";
 
-const MASCOT_INTRO = {
-  heading: "I'm Ben, by the way.",
-  subheading:
-    "I'm here to help you learn Wardley Mapping!",
-};
+const MASCOT_INTRO = "I'm Ben, by the way. I'm here to help you learn Wardley Mapping!";
 
 /** matches `wd-mascot-celebrate`'s duration (styles.ts) so the bounce finishes before Phase 10
  * starts talking again and overrides the mascot's state; exported so tests can advance past it */
@@ -44,8 +40,11 @@ export async function runPhase7(ctx: ScenarioContext): Promise<void> {
 
   const { x, y } = stepBackPoint(ctx);
   mascot.moveToViewBoxPoint(x, y);
-  mascot.say(`${MASCOT_INTRO.heading} ${MASCOT_INTRO.subheading}`);
+  mascot.say(MASCOT_INTRO);
   await mascot.confirmPlacement("Nice to meet you!");
+  // clears the "Nice to meet you!" caption immediately so nothing distracting lingers beside
+  // the mascot while it celebrates
+  mascot.hideCaption();
   mascot.setState("celebrating");
   await new Promise((resolve) => setTimeout(resolve, CELEBRATE_DURATION_MS));
 }

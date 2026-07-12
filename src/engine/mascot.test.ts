@@ -321,7 +321,7 @@ describe("Mascot delegation to the composed Panel", () => {
     const active = dialogHost.querySelector(".wd-panel-slot--active");
     expect(active).not.toBeNull();
     expect(handle.activeElement).toBe(active);
-    expect(avatarHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe("Take a look below ↓");
+    expect(avatarHost.querySelector(".wd-mascot-caption-text")!.textContent).toBe("Take a look below. ↓");
   });
 
   it("showField renders the prompt and resolves with the submitted value", async () => {
